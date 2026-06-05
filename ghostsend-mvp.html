@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostSend — L'envoi, réinventé</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0d0d0d;
+    --white: #ffffff;
+    --gray-50: #f9f9f9;
+    --gray-100: #f0f0f0;
+    --gray-200: #e0e0e0;
+    --gray-400: #9e9e9e;
+    --gray-600: #555;
+    --accent: #0d0d0d;
+    --radius: 20px;
+    --radius-sm: 12px;
+    --radius-lg: 28px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--white);
+    color: var(--black);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── TYPOGRAPHY ─── */
+  h1, h2, h3, .brand { font-family: 'Fredoka', sans-serif; letter-spacing: -0.01em; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1.5px solid var(--gray-200);
+    padding: 0 40px;
+    height: 68px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--black);
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none;
+  }
+  .nav-brand .ghost-icon {
+    width: 36px; height: 36px;
+    background: var(--black);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px;
+    position: relative;
+  }
+  .nav-brand .ghost-icon::before {
+    content: '👻';
+    font-size: 20px;
+  }
+
+  .nav-links { display: flex; align-items: center; gap: 8px; }
+  .nav-links a {
+    font-size: 15px; font-weight: 600; color: var(--gray-600);
+    text-decoration: none; padding: 8px 16px; border-radius: var(--radius-sm);
+    transition: all 0.2s;
+  }
+  .nav-links a:hover { background: var(--gray-100); color: var(--black); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 24px; border-radius: var(--radius-sm);
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px; font-weight: 700;
+    text-decoration: none; cursor: pointer;
+    border: none; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--black); color: white; }
+  .btn-primary:hover { background: #333; transform: translateY(-1px); }
+  .btn-outline {
+    background: white; color: var(--black);
+    border: 2px solid var(--black);
+  }
+  .btn-outline:hover { background: var(--gray-100); }
+  .btn-lg { padding: 15px 32px; font-size: 17px; border-radius: var(--radius); }
+
+  /* ─── PAGES ─── */
+  .page { display: none; min-height: 100vh; padding-top: 68px; }
+  .page.active { display: block; }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: calc(100vh - 68px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 60px 24px;
+    background: var(--white);
+    position: relative; overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 20%, #f5f5f5 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--gray-100); border: 1.5px solid var(--gray-200);
+    border-radius: 100px; padding: 8px 20px;
+    font-size: 14px; font-weight: 700; color: var(--gray-600);
+    margin-bottom: 32px; letter-spacing: 0.02em;
+  }
+
+  .hero h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: clamp(56px, 8vw, 100px);
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--black);
+    max-width: 900px;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 span {
+    position: relative;
+    display: inline-block;
+  }
+  .hero h1 span::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: 4px;
+    height: 6px; background: var(--black); border-radius: 3px;
+    opacity: 0.15;
+  }
+
+  .hero-sub {
+    font-size: 20px; font-weight: 500; color: var(--gray-600);
+    max-width: 560px; line-height: 1.6; margin-bottom: 44px;
+  }
+
+  .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+  .hero-stats {
+    display: flex; gap: 48px; margin-top: 72px;
+    padding: 28px 48px;
+    background: var(--gray-50); border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 36px; font-weight: 700; color: var(--black);
+  }
+  .stat-label { font-size: 14px; font-weight: 600; color: var(--gray-400); margin-top: 2px; }
+
+  /* ─── HOW IT WORKS ─── */
+  .section { padding: 100px 40px; max-width: 1100px; margin: 0 auto; }
+  .section-tag {
+    display: inline-block;
+    background: var(--black); color: white;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 100px; margin-bottom: 20px;
+  }
+  .section-title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: clamp(36px, 4vw, 56px); font-weight: 700;
+    line-height: 1.1; margin-bottom: 16px;
+  }
+  .section-sub { font-size: 18px; color: var(--gray-600); line-height: 1.6; max-width: 540px; }
+
+  .steps-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px; margin-top: 56px;
+  }
+  .step-card {
+    background: var(--gray-50); border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius); padding: 32px 28px;
+    position: relative; overflow: hidden;
+    transition: all 0.25s;
+  }
+  .step-card:hover { border-color: var(--black); transform: translateY(-3px); }
+  .step-num {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 72px; font-weight: 700; color: var(--gray-100);
+    position: absolute; top: 12px; right: 20px; line-height: 1;
+  }
+  .step-emoji { font-size: 36px; margin-bottom: 16px; display: block; }
+  .step-card h3 { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .step-card p { font-size: 15px; color: var(--gray-600); line-height: 1.6; }
+
+  /* ─── PARTNER SECTION ─── */
+  .partner-section {
+    background: var(--black); color: white;
+    padding: 100px 40px;
+    position: relative; overflow: hidden;
+  }
+  .partner-section::before {
+    content: '👻';
+    position: absolute; right: -40px; top: -40px;
+    font-size: 300px; opacity: 0.04;
+  }
+  .partner-inner { max-width: 1100px; margin: 0 auto; }
+  .partner-tag { background: white; color: var(--black); }
+  .partner-title { color: white; }
+  .partner-sub { color: rgba(255,255,255,0.6); }
+
+  .partner-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px; margin-top: 52px;
+  }
+  .partner-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius); padding: 28px 24px;
+    transition: all 0.25s;
+  }
+  .partner-card:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
+  .partner-card-icon { font-size: 32px; margin-bottom: 16px; }
+  .partner-card h3 {
+    font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700;
+    color: white; margin-bottom: 10px;
+  }
+  .partner-card p { font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.6; }
+
+  .partner-benefits {
+    margin-top: 48px;
+    display: flex; flex-wrap: wrap; gap: 16px;
+  }
+  .benefit-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 100px; padding: 10px 20px;
+    font-size: 14px; font-weight: 600; color: white;
+  }
+  .benefit-pill::before { content: '✓'; font-weight: 800; }
+
+  .partner-cta {
+    margin-top: 56px; display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  .btn-white { background: white; color: var(--black); }
+  .btn-white:hover { background: var(--gray-100); }
+  .btn-ghost-outline {
+    background: transparent; color: white;
+    border: 2px solid rgba(255,255,255,0.35);
+  }
+  .btn-ghost-outline:hover { border-color: white; }
+
+  /* ─── AUTH MODAL ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: var(--radius-lg);
+    padding: 48px 40px; max-width: 440px; width: 100%;
+    position: relative; animation: modalIn 0.3s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: var(--gray-100); border: none; cursor: pointer;
+    width: 36px; height: 36px; border-radius: 50%;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .modal-close:hover { background: var(--gray-200); }
+
+  .modal-logo { font-family: 'Fredoka', sans-serif; font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+  .modal-sub { text-align: center; color: var(--gray-400); font-size: 15px; margin-bottom: 32px; }
+
+  .tabs {
+    display: flex; background: var(--gray-100); border-radius: var(--radius-sm);
+    padding: 4px; gap: 4px; margin-bottom: 28px;
+  }
+  .tab {
+    flex: 1; padding: 10px; border: none; background: none; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+    border-radius: 9px; transition: all 0.2s; color: var(--gray-400);
+  }
+  .tab.active { background: white; color: var(--black); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 14px; font-weight: 700; color: var(--black); margin-bottom: 6px; }
+  .form-input {
+    width: 100%; padding: 12px 16px;
+    border: 2px solid var(--gray-200); border-radius: var(--radius-sm);
+    font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--black);
+    transition: all 0.2s; outline: none; background: white;
+  }
+  .form-input:focus { border-color: var(--black); }
+  .form-error { color: #e53e3e; font-size: 13px; font-weight: 600; margin-top: 6px; display: none; }
+
+  .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
+  .divider span { font-size: 13px; color: var(--gray-400); font-weight: 600; }
+
+  /* ─── DASHBOARD ─── */
+  .dashboard { padding: 40px; max-width: 1200px; margin: 0 auto; }
+  .dash-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 36px; flex-wrap: wrap; gap: 16px;
+  }
+  .dash-welcome { font-family: 'Fredoka', sans-serif; font-size: 36px; font-weight: 700; }
+  .dash-welcome span { color: var(--gray-400); }
+
+  .dash-stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--gray-50); border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius); padding: 24px 20px;
+  }
+  .stat-card-label { font-size: 13px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .stat-card-value { font-family: 'Fredoka', sans-serif; font-size: 36px; font-weight: 700; color: var(--black); }
+  .stat-card-sub { font-size: 13px; color: var(--gray-400); margin-top: 4px; }
+
+  .dash-grid {
+    display: grid; grid-template-columns: 1fr 380px;
+    gap: 24px; align-items: start;
+  }
+  @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--gray-50); border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius); padding: 28px;
+  }
+  .panel-title {
+    font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700;
+    margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  }
+
+  /* Integrations */
+  .integration-list { display: flex; flex-direction: column; gap: 12px; }
+  .integration-item {
+    display: flex; align-items: center; gap: 14px;
+    background: white; border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    transition: all 0.2s;
+  }
+  .integration-item:hover { border-color: var(--black); }
+  .integration-logo {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .integration-info { flex: 1; min-width: 0; }
+  .integration-name { font-weight: 700; font-size: 15px; color: var(--black); }
+  .integration-status { font-size: 13px; color: var(--gray-400); margin-top: 2px; }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 5px;
+  }
+  .dot-green { background: #22c55e; }
+  .dot-gray { background: var(--gray-200); }
+
+  .connect-btn {
+    padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    border: 2px solid; cursor: pointer; transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .connect-btn.connected { border-color: #22c55e; color: #22c55e; background: none; }
+  .connect-btn.not-connected { border-color: var(--black); color: var(--black); background: none; }
+  .connect-btn.not-connected:hover { background: var(--black); color: white; }
+  .connect-btn.connecting {
+    border-color: var(--gray-400); color: var(--gray-400); background: none;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* Shipments Table */
+  .shipments-table { width: 100%; border-collapse: collapse; }
+  .shipments-table th {
+    text-align: left; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--gray-400); padding: 0 0 12px 0;
+    border-bottom: 1.5px solid var(--gray-200);
+  }
+  .shipments-table td {
+    padding: 14px 0; border-bottom: 1px solid var(--gray-100);
+    font-size: 14px;
+  }
+  .shipments-table tr:last-child td { border-bottom: none; }
+  .tracking-id { font-family: monospace; font-size: 12px; color: var(--gray-400); }
+  .status-badge {
+    display: inline-block; padding: 4px 10px; border-radius: 100px;
+    font-size: 12px; font-weight: 700;
+  }
+  .badge-transit { background: #fef3c7; color: #92400e; }
+  .badge-delivered { background: #d1fae5; color: #065f46; }
+  .badge-pending { background: #f0f0f0; color: #555; }
+
+  /* API Key Modal */
+  .api-input-wrap { position: relative; }
+  .api-input-wrap .form-input { font-family: monospace; font-size: 13px; padding-right: 48px; }
+  .api-reveal { position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 16px; color: var(--gray-400); }
+
+  /* Real-time badge */
+  .realtime-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #d1fae5; color: #065f46;
+    font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 100px;
+  }
+  .realtime-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: blink 1.5s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--black); color: white;
+    padding: 14px 24px; border-radius: var(--radius-sm);
+    font-size: 15px; font-weight: 600;
+    z-index: 999; transition: transform 0.3s ease;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Partner Form */
+  .partner-form-section { padding: 100px 40px; max-width: 700px; margin: 0 auto; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    nav { padding: 0 20px; }
+    .hero-stats { flex-direction: column; gap: 24px; padding: 24px 28px; }
+    .modal { padding: 32px 24px; }
+    .dashboard { padding: 24px 20px; }
+  }
+
+  /* Loading spinner */
+  .spinner {
+    width: 40px; height: 40px; border: 3px solid var(--gray-200);
+    border-top-color: var(--black); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Shipment detail */
+  .ship-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+  .ship-detail-row:last-child { border-bottom: none; }
+  .ship-detail-label { font-size: 14px; color: var(--gray-400); font-weight: 600; }
+  .ship-detail-val { font-size: 14px; font-weight: 700; }
+
+  /* Tabs landing */
+  .nav-tab-active { color: var(--black) !important; font-weight: 700 !important; }
+  .nav-tab-active::after {
+    content: ''; display: block;
+    height: 2px; background: var(--black); border-radius: 1px;
+    margin-top: 2px;
+  }
+
+  .empty-state { text-align: center; padding: 48px 20px; }
+  .empty-state .big-emoji { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-family: 'Fredoka', sans-serif; font-size: 22px; margin-bottom: 8px; }
+  .empty-state p { color: var(--gray-400); font-size: 15px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="#" onclick="showPage('home'); return false;">
+    <div class="ghost-icon" style="width:36px;height:36px;background:var(--black);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;display:flex;align-items:center;justify-content:center;"></div>
+    GhostSend
+  </a>
+  <div class="nav-links" id="navLinks">
+    <a href="#" onclick="showPage('home'); return false;" id="nav-home">Accueil</a>
+    <a href="#how" onclick="showPage('home'); setTimeout(()=>document.getElementById('how')?.scrollIntoView({behavior:'smooth'}),100); return false;">Comment ça marche</a>
+    <a href="#" onclick="showPage('partner-form'); return false;" id="nav-partner">Devenir partenaire</a>
+    <a href="#" onclick="openAuthModal('login')" class="btn btn-outline" id="nav-login">Se connecter</a>
+    <a href="#" onclick="openAuthModal('signup')" class="btn btn-primary" id="nav-signup">Commencer →</a>
+  </div>
+  <div class="nav-links" id="navLinksAuth" style="display:none;">
+    <div class="realtime-badge"><div class="realtime-dot"></div>Live</div>
+    <a href="#" onclick="showPage('dashboard'); return false;" class="btn btn-outline">Dashboard</a>
+    <a href="#" onclick="logout()" class="btn btn-primary">Déconnexion</a>
+  </div>
+</nav>
+
+<!-- ═══════════════ PAGE HOME ═══════════════ -->
+<div class="page active" id="page-home">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-tag">👻 Le Stripe des colis est arrivé</div>
+    <h1>L'envoi de colis,<br><span>enfin simple</span></h1>
+    <p class="hero-sub">Tu vends sur Vinted, eBay ou Leboncoin ? On gère tout le reste. Transporteurs, étiquettes, suivi, retours — tout automatisé.</p>
+    <div class="hero-actions">
+      <a href="#" class="btn btn-primary btn-lg" onclick="openAuthModal('signup')">Créer mon compte gratuit →</a>
+      <a href="#how" class="btn btn-outline btn-lg" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'}); return false;">Voir comment ça marche</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-num">3</div><div class="stat-label">Plateformes connectées</div></div>
+      <div class="stat-item"><div class="stat-num">2min</div><div class="stat-label">Pour créer un envoi</div></div>
+      <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Automatisé</div></div>
+      <div class="stat-item"><div class="stat-num">0€</div><div class="stat-label">Pour commencer</div></div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" style="background: var(--gray-50); padding: 100px 40px;">
+    <div style="max-width: 1100px; margin: 0 auto;">
+      <div class="section-tag">Comment ça marche</div>
+      <h2 class="section-title">Simple comme un message</h2>
+      <p class="section-sub">Plus besoin de te prendre la tête avec la logistique. GhostSend fait tout pour toi.</p>
+      <div class="steps-grid">
+        <div class="step-card">
+          <span class="step-num">01</span>
+          <span class="step-emoji">🔗</span>
+          <h3>Connecte tes plateformes</h3>
+          <p>Shopify, eBay, Vinted, Leboncoin — relie tes comptes en quelques clics. Tes ventes apparaissent automatiquement.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">02</span>
+          <span class="step-emoji">📦</span>
+          <h3>Vends normalement</h3>
+          <p>Continue à vendre comme tu le fais. GhostSend détecte tes nouvelles ventes et prépare l'expédition en arrière-plan.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">03</span>
+          <span class="step-emoji">🏷️</span>
+          <h3>On génère l'étiquette</h3>
+          <p>Meilleur transporteur, meilleur prix — on choisit et on génère l'étiquette automatiquement. T'as juste à imprimer.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">04</span>
+          <span class="step-emoji">🚀</span>
+          <h3>Dépose et oublie</h3>
+          <p>Notre réseau de partenaires GhostSend peut même venir récupérer le colis chez toi. Zéro déplacement.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Platform logos -->
+  <section style="padding: 60px 40px; border-top: 1.5px solid var(--gray-200);">
+    <div style="max-width: 900px; margin: 0 auto; text-align: center;">
+      <p style="font-size: 14px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 32px;">Plateformes compatibles</p>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap;">
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; opacity: 0.35;">Shopify</div>
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; opacity: 0.35;">eBay</div>
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; opacity: 0.35;">Vinted</div>
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; opacity: 0.35;">Leboncoin</div>
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; opacity: 0.35; font-style: italic;">+ bientôt</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Partner section -->
+  <section class="partner-section" id="partner-home">
+    <div class="partner-inner">
+      <div class="section-tag partner-tag">Réseau de partenaires</div>
+      <h2 class="section-title partner-title">Deviens un point GhostSend 👻</h2>
+      <p class="section-sub partner-sub" style="max-width: 580px;">Tu gères un tabac, une pharmacie, un commerce de proximité ? Rejoins notre réseau et génère des revenus supplémentaires en devenant point de collecte ou de livraison.</p>
+      <div class="partner-cards">
+        <div class="partner-card">
+          <div class="partner-card-icon">🏪</div>
+          <h3>Point de collecte</h3>
+          <p>Les vendeurs déposent leurs colis dans ton commerce. Tu scans, tu encaisses. C'est tout.</p>
+        </div>
+        <div class="partner-card">
+          <div class="partner-card-icon">🚗</div>
+          <h3>Collecte à domicile</h3>
+          <p>Tu te déplaces chez les vendeurs pour récupérer leurs colis. Idéal si tu as déjà des tournées.</p>
+        </div>
+        <div class="partner-card">
+          <div class="partner-card-icon">📍</div>
+          <h3>Point relais GhostSend</h3>
+          <p>Deviens un relais officiel et apparais sur notre carte interactive. Attirez de nouveaux clients dans ton commerce.</p>
+        </div>
+      </div>
+      <div class="partner-benefits">
+        <div class="benefit-pill">Revenus complémentaires immédiats</div>
+        <div class="benefit-pill">Zéro investissement requis</div>
+        <div class="benefit-pill">Application dédiée partenaires</div>
+        <div class="benefit-pill">Support 7j/7</div>
+        <div class="benefit-pill">Tableau de bord en temps réel</div>
+      </div>
+      <div class="partner-cta">
+        <a href="#" class="btn btn-white btn-lg" onclick="showPage('partner-form'); return false;">Rejoindre le réseau →</a>
+        <a href="#" class="btn btn-ghost-outline btn-lg" onclick="openAuthModal('signup')">Créer un compte d'abord</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="padding: 40px; border-top: 1.5px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700;">👻 GhostSend</div>
+    <div style="font-size: 14px; color: var(--gray-400);">© 2025 GhostSend — L'envoi réinventé</div>
+    <div style="display: flex; gap: 20px;">
+      <a href="#" style="font-size: 14px; color: var(--gray-400); text-decoration: none;">CGU</a>
+      <a href="#" style="font-size: 14px; color: var(--gray-400); text-decoration: none;">Confidentialité</a>
+      <a href="#" style="font-size: 14px; color: var(--gray-400); text-decoration: none;">Contact</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══════════════ PAGE DASHBOARD ═══════════════ -->
+<div class="page" id="page-dashboard">
+  <div class="dashboard">
+    <div class="dash-header">
+      <div>
+        <div class="dash-welcome">Bonjour, <span id="userDisplayName">—</span> 👋</div>
+        <div style="color: var(--gray-400); font-size: 15px; margin-top: 4px;">Voici un résumé de ton activité en temps réel.</div>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div class="realtime-badge"><div class="realtime-dot"></div>Temps réel</div>
+        <button class="btn btn-primary" onclick="openNewShipmentModal()">+ Nouvel envoi</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="dash-stats" id="dashStats">
+      <div class="stat-card">
+        <div class="stat-card-label">Envois ce mois</div>
+        <div class="stat-card-value" id="stat-total">—</div>
+        <div class="stat-card-sub">depuis Firebase</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">En transit</div>
+        <div class="stat-card-value" id="stat-transit">—</div>
+        <div class="stat-card-sub">colis en route</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Livrés</div>
+        <div class="stat-card-value" id="stat-delivered">—</div>
+        <div class="stat-card-sub">ce mois</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Plateformes actives</div>
+        <div class="stat-card-value" id="stat-integrations">—</div>
+        <div class="stat-card-sub">connectées</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <!-- Left: Shipments -->
+      <div>
+        <div class="panel">
+          <div class="panel-title">📦 Mes envois <div class="realtime-badge" style="margin-left: auto; font-size: 11px;"><div class="realtime-dot"></div>live</div></div>
+          <div id="shipmentsContainer">
+            <div class="empty-state">
+              <div class="spinner"></div>
+              <p style="margin-top: 16px; color: var(--gray-400);">Chargement depuis Firebase...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Integrations -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="panel">
+          <div class="panel-title">🔗 Mes intégrations</div>
+          <div class="integration-list" id="integrationList">
+            <div class="integration-item">
+              <div class="integration-logo" style="background:#96bf48;">🛍️</div>
+              <div class="integration-info">
+                <div class="integration-name">Shopify</div>
+                <div class="integration-status" id="shopify-status"><span class="status-dot dot-gray"></span>Non connecté</div>
+              </div>
+              <button class="connect-btn not-connected" id="shopify-btn" onclick="connectIntegration('shopify')">Connecter</button>
+            </div>
+            <div class="integration-item">
+              <div class="integration-logo" style="background:#f5af02;">🏷️</div>
+              <div class="integration-info">
+                <div class="integration-name">eBay</div>
+                <div class="integration-status" id="ebay-status"><span class="status-dot dot-gray"></span>Non connecté</div>
+              </div>
+              <button class="connect-btn not-connected" id="ebay-btn" onclick="connectIntegration('ebay')">Connecter</button>
+            </div>
+            <div class="integration-item">
+              <div class="integration-logo" style="background:#09b4a6;">👗</div>
+              <div class="integration-info">
+                <div class="integration-name">Vinted</div>
+                <div class="integration-status" id="vinted-status"><span class="status-dot dot-gray"></span>Non connecté</div>
+              </div>
+              <button class="connect-btn not-connected" id="vinted-btn" onclick="connectIntegration('vinted')">Bientôt</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Keys panel -->
+        <div class="panel">
+          <div class="panel-title">🔑 Clés API</div>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+              <div class="form-label">Shopify API Key</div>
+              <div class="api-input-wrap">
+                <input type="password" class="form-input" id="shopify-api-key" placeholder="shpat_xxxxxxxxxxxx">
+                <button class="api-reveal" onclick="toggleApiKey('shopify-api-key', this)">👁️</button>
+              </div>
+            </div>
+            <div>
+              <div class="form-label">eBay Client ID</div>
+              <div class="api-input-wrap">
+                <input type="password" class="form-input" id="ebay-api-key" placeholder="YourEbay-ClientId-xxx">
+                <button class="api-reveal" onclick="toggleApiKey('ebay-api-key', this)">👁️</button>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="saveApiKeys()">Sauvegarder les clés</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE PARTNER FORM ═══════════════ -->
+<div class="page" id="page-partner-form">
+  <div class="partner-form-section">
+    <div style="margin-bottom: 48px;">
+      <div class="section-tag">Devenir partenaire GhostSend</div>
+      <h1 style="font-family: 'Fredoka', sans-serif; font-size: 48px; font-weight: 700; line-height: 1.1; margin: 16px 0;">Rejoins notre réseau 👻</h1>
+      <p style="font-size: 18px; color: var(--gray-600); line-height: 1.6;">Remplis ce formulaire et on te recontacte sous 48h pour discuter des modalités de partenariat.</p>
+    </div>
+
+    <div class="panel">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label">Prénom *</label>
+          <input type="text" class="form-input" id="p-firstname" placeholder="Théo">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nom *</label>
+          <input type="text" class="form-input" id="p-lastname" placeholder="Martin">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" class="form-input" id="p-email" placeholder="theo@commerce.fr">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Téléphone</label>
+        <input type="tel" class="form-input" id="p-phone" placeholder="06 XX XX XX XX">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom de ton commerce *</label>
+        <input type="text" class="form-input" id="p-business" placeholder="Tabac du Centre, Épicerie Dupont...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type de commerce *</label>
+        <select class="form-input" id="p-type">
+          <option value="">Sélectionne ton type de commerce</option>
+          <option value="tabac">Tabac / Presse</option>
+          <option value="pharmacie">Pharmacie / Parapharmacie</option>
+          <option value="epicerie">Épicerie / Superette</option>
+          <option value="auto">Auto-entrepreneur / Indépendant</option>
+          <option value="restaurant">Restaurant / Café</option>
+          <option value="autre">Autre commerce</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Adresse du commerce *</label>
+        <input type="text" class="form-input" id="p-address" placeholder="12 rue de la Paix, 75001 Paris">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quel type de partenariat t'intéresse ?</label>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="p-collecte" style="width: 18px; height: 18px; cursor: pointer;">
+            <span style="font-size: 15px; font-weight: 600;">🏪 Point de collecte (dépôt chez toi)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="p-domicile" style="width: 18px; height: 18px; cursor: pointer;">
+            <span style="font-size: 15px; font-weight: 600;">🚗 Collecte à domicile (je me déplace)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="p-relais" style="width: 18px; height: 18px; cursor: pointer;">
+            <span style="font-size: 15px; font-weight: 600;">📍 Point relais officiel</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message (optionnel)</label>
+        <textarea class="form-input" id="p-message" rows="3" placeholder="Dis-nous en plus sur ton projet, ta situation..." style="resize: vertical;"></textarea>
+      </div>
+      <div id="partner-error" class="form-error" style="display: none; margin-bottom: 12px; font-size: 14px; color: #e53e3e;"></div>
+      <button class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;" onclick="submitPartnerForm()">Envoyer ma candidature →</button>
+      <p style="text-align: center; font-size: 13px; color: var(--gray-400); margin-top: 16px;">On te répond sous 48h. Aucun engagement, juste une conversation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ AUTH MODAL ═══════════════ -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    <div class="modal-logo">👻 GhostSend</div>
+    <div class="modal-sub" id="modalSub">Crée ton compte pour commencer</div>
+
+    <div class="tabs">
+      <button class="tab" id="tab-login" onclick="switchTab('login')">Se connecter</button>
+      <button class="tab active" id="tab-signup" onclick="switchTab('signup')">Créer un compte</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="form-login" style="display: none;">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="login-email" placeholder="toi@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <input type="password" class="form-input" id="login-password" placeholder="••••••••">
+      </div>
+      <div class="form-error" id="login-error">Email ou mot de passe incorrect.</div>
+      <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;" onclick="doLogin()" id="login-submit-btn">Se connecter</button>
+    </div>
+
+    <!-- Signup form -->
+    <div id="form-signup">
+      <div class="form-group">
+        <label class="form-label">Prénom</label>
+        <input type="text" class="form-input" id="signup-name" placeholder="Théo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="signup-email" placeholder="toi@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <input type="password" class="form-input" id="signup-password" placeholder="Minimum 6 caractères">
+      </div>
+      <div class="form-error" id="signup-error"></div>
+      <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;" onclick="doSignup()" id="signup-submit-btn">Créer mon compte →</button>
+    </div>
+
+    <div class="divider"><span>ou</span></div>
+    <button class="btn btn-outline" style="width: 100%; justify-content: center;" onclick="doGoogleLogin()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Continuer avec Google
+    </button>
+  </div>
+</div>
+
+<!-- API KEY CONNECT MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal" style="max-width: 480px;">
+    <button class="modal-close" onclick="document.getElementById('apiModal').classList.remove('open')">✕</button>
+    <div class="modal-logo" id="apiModalTitle">Connecter Shopify</div>
+    <div class="modal-sub" id="apiModalSub">Entre ta clé API pour synchroniser tes ventes</div>
+    <div class="form-group" style="margin-top: 24px;">
+      <label class="form-label" id="apiKeyLabel">API Key</label>
+      <div class="api-input-wrap">
+        <input type="password" class="form-input" id="api-modal-key" placeholder="">
+        <button class="api-reveal" onclick="toggleApiKey('api-modal-key', this)">👁️</button>
+      </div>
+      <p style="font-size: 13px; color: var(--gray-400); margin-top: 8px;" id="apiKeyHint"></p>
+    </div>
+    <div id="api-modal-error" class="form-error"></div>
+    <div style="display: flex; gap: 12px; margin-top: 20px;">
+      <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="document.getElementById('apiModal').classList.remove('open')">Annuler</button>
+      <button class="btn btn-primary" style="flex: 1; justify-content: center;" id="api-modal-save-btn" onclick="saveIntegrationKey()">Connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SHIPMENT MODAL -->
+<div class="modal-overlay" id="shipmentModal">
+  <div class="modal" style="max-width: 500px;">
+    <button class="modal-close" onclick="document.getElementById('shipmentModal').classList.remove('open')">✕</button>
+    <div class="modal-logo" style="text-align: left; margin-bottom: 4px;">📦 Nouvel envoi</div>
+    <div class="modal-sub" style="text-align: left; margin-bottom: 24px;">Remplis les infos du colis</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+      <div class="form-group" style="grid-column: span 2;">
+        <label class="form-label">Destinataire *</label>
+        <input type="text" class="form-input" id="s-recipient" placeholder="Nom du destinataire">
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label class="form-label">Adresse de livraison *</label>
+        <input type="text" class="form-input" id="s-address" placeholder="Adresse complète">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Plateforme</label>
+        <select class="form-input" id="s-platform">
+          <option value="manual">Manuel</option>
+          <option value="shopify">Shopify</option>
+          <option value="ebay">eBay</option>
+          <option value="vinted">Vinted</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Poids (kg)</label>
+        <input type="number" class="form-input" id="s-weight" placeholder="0.5" step="0.1" min="0.1">
+      </div>
+    </div>
+    <div id="shipment-error" class="form-error"></div>
+    <button class="btn btn-primary btn-lg" style="width: 100%; justify-content: center; margin-top: 16px;" onclick="createShipment()">Créer l'envoi →</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Action effectuée</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getDatabase, ref, set, get, onValue, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+    authDomain: "ghostly-fbe01.firebaseapp.com",
+    databaseURL: "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "ghostly-fbe01",
+    storageBucket: "ghostly-fbe01.firebasestorage.app",
+    messagingSenderId: "290927219079",
+    appId: "1:290927219079:web:d7cd006945d9fe84a74322",
+    measurementId: "G-N1XNN4GC7B"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  let currentUser = null;
+  let shipmentsListener = null;
+  let currentIntegration = null;
+
+  // ─── AUTH STATE ───
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+      document.getElementById('navLinks').style.display = 'none';
+      document.getElementById('navLinksAuth').style.display = 'flex';
+      document.getElementById('userDisplayName').textContent = user.displayName || user.email.split('@')[0];
+      closeAuthModal();
+      showPage('dashboard');
+      loadDashboard(user.uid);
+    } else {
+      document.getElementById('navLinks').style.display = 'flex';
+      document.getElementById('navLinksAuth').style.display = 'none';
+      if (shipmentsListener) { shipmentsListener(); shipmentsListener = null; }
+    }
+  });
+
+  // ─── AUTH ACTIONS ───
+  window.doLogin = async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const pwd = document.getElementById('login-password').value;
+    const errEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-submit-btn');
+    errEl.style.display = 'none';
+    if (!email || !pwd) { errEl.textContent = 'Remplis tous les champs.'; errEl.style.display = 'block'; return; }
+    btn.textContent = 'Connexion...'; btn.disabled = true;
+    try {
+      await signInWithEmailAndPassword(auth, email, pwd);
+    } catch (e) {
+      errEl.textContent = 'Email ou mot de passe incorrect.';
+      errEl.style.display = 'block';
+    }
+    btn.textContent = 'Se connecter'; btn.disabled = false;
+  };
+
+  window.doSignup = async () => {
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const pwd = document.getElementById('signup-password').value;
+    const errEl = document.getElementById('signup-error');
+    const btn = document.getElementById('signup-submit-btn');
+    errEl.style.display = 'none';
+    if (!name || !email || !pwd) { errEl.textContent = 'Remplis tous les champs.'; errEl.style.display = 'block'; return; }
+    if (pwd.length < 6) { errEl.textContent = 'Le mot de passe doit faire au moins 6 caractères.'; errEl.style.display = 'block'; return; }
+    btn.textContent = 'Création...'; btn.disabled = true;
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+      await updateProfile(cred.user, { displayName: name });
+      await set(ref(db, `users/${cred.user.uid}/profile`), { name, email, createdAt: Date.now() });
+    } catch (e) {
+      errEl.textContent = e.code === 'auth/email-already-in-use' ? 'Cet email est déjà utilisé.' : 'Erreur lors de la création.';
+      errEl.style.display = 'block';
+    }
+    btn.textContent = 'Créer mon compte →'; btn.disabled = false;
+  };
+
+  window.doGoogleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      await set(ref(db, `users/${user.uid}/profile`), { name: user.displayName, email: user.email, createdAt: Date.now() });
+    } catch (e) {
+      console.error('Google login error:', e);
+      showToast('❌ Erreur Google Sign-In');
+    }
+  };
+
+  window.logout = async () => {
+    await signOut(auth);
+    showPage('home');
+    showToast('👋 Déconnecté');
+  };
+
+  // ─── DASHBOARD LOAD ───
+  function loadDashboard(uid) {
+    // Real-time integrations
+    onValue(ref(db, `users/${uid}/integrations`), (snap) => {
+      const data = snap.val() || {};
+      updateIntegrationUI('shopify', data.shopify);
+      updateIntegrationUI('ebay', data.ebay);
+      updateIntegrationUI('vinted', data.vinted);
+      const active = Object.values(data).filter(v => v && v.connected).length;
+      document.getElementById('stat-integrations').textContent = active;
+    });
+
+    // Real-time shipments
+    if (shipmentsListener) shipmentsListener();
+    shipmentsListener = onValue(ref(db, `users/${uid}/shipments`), (snap) => {
+      const data = snap.val() || {};
+      const shipments = Object.entries(data).map(([id, s]) => ({ id, ...s }))
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      renderShipments(shipments);
+      document.getElementById('stat-total').textContent = shipments.length;
+      document.getElementById('stat-transit').textContent = shipments.filter(s => s.status === 'transit').length;
+      document.getElementById('stat-delivered').textContent = shipments.filter(s => s.status === 'delivered').length;
+    });
+  }
+
+  function updateIntegrationUI(platform, data) {
+    const statusEl = document.getElementById(`${platform}-status`);
+    const btnEl = document.getElementById(`${platform}-btn`);
+    if (!statusEl || !btnEl) return;
+    if (data && data.connected) {
+      statusEl.innerHTML = `<span class="status-dot dot-green"></span>Connecté`;
+      btnEl.textContent = '✓ Actif';
+      btnEl.className = 'connect-btn connected';
+      btnEl.onclick = null;
+    } else {
+      statusEl.innerHTML = `<span class="status-dot dot-gray"></span>Non connecté`;
+      btnEl.textContent = platform === 'vinted' ? 'Bientôt' : 'Connecter';
+      btnEl.className = `connect-btn ${platform === 'vinted' ? 'not-connected' : 'not-connected'}`;
+      if (platform !== 'vinted') btnEl.onclick = () => connectIntegration(platform);
+    }
+  }
+
+  function renderShipments(shipments) {
+    const container = document.getElementById('shipmentsContainer');
+    if (!shipments.length) {
+      container.innerHTML = `<div class="empty-state"><div class="big-emoji">📦</div><h3>Aucun envoi pour l'instant</h3><p>Crée ton premier envoi avec le bouton ci-dessus !</p></div>`;
+      return;
+    }
+    const statusLabel = { transit: 'En transit', delivered: 'Livré', pending: 'En attente' };
+    const statusClass = { transit: 'badge-transit', delivered: 'badge-delivered', pending: 'badge-pending' };
+    container.innerHTML = `
+      <table class="shipments-table">
+        <thead><tr><th>Destinataire</th><th>Plateforme</th><th>Statut</th><th>ID</th></tr></thead>
+        <tbody>
+          ${shipments.map(s => `
+            <tr>
+              <td style="font-weight: 700;">${s.recipient || '—'}</td>
+              <td style="color: var(--gray-600); text-transform: capitalize;">${s.platform || 'Manuel'}</td>
+              <td><span class="status-badge ${statusClass[s.status] || 'badge-pending'}">${statusLabel[s.status] || 'En attente'}</span></td>
+              <td class="tracking-id">${s.id.slice(-6).toUpperCase()}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // ─── INTEGRATIONS ───
+  window.connectIntegration = (platform) => {
+    currentIntegration = platform;
+    const configs = {
+      shopify: { title: 'Connecter Shopify', sub: 'Génère une clé API dans ton admin Shopify → Paramètres → Apps → Accès API', label: 'Shopify API Key', placeholder: 'shpat_xxxxxxxxxxxx', hint: 'Admin Shopify → Apps & Sales Channels → Develop apps → API credentials' },
+      ebay: { title: 'Connecter eBay', sub: 'Récupère ton Client ID depuis le portail développeur eBay', label: 'eBay Client ID', placeholder: 'YourEbay-ClientId-Production-xxx', hint: 'developer.ebay.com → Mon compte → Application keys' }
+    };
+    const c = configs[platform];
+    document.getElementById('apiModalTitle').textContent = c.title;
+    document.getElementById('apiModalSub').textContent = c.sub;
+    document.getElementById('apiKeyLabel').textContent = c.label;
+    document.getElementById('api-modal-key').placeholder = c.placeholder;
+    document.getElementById('apiKeyHint').textContent = c.hint;
+    document.getElementById('api-modal-key').value = '';
+    document.getElementById('api-modal-error').style.display = 'none';
+    document.getElementById('apiModal').classList.add('open');
+  };
+
+  window.saveIntegrationKey = async () => {
+    const key = document.getElementById('api-modal-key').value.trim();
+    const errEl = document.getElementById('api-modal-error');
+    const btn = document.getElementById('api-modal-save-btn');
+    errEl.style.display = 'none';
+    if (!key) { errEl.textContent = 'Entre une clé API.'; errEl.style.display = 'block'; return; }
+    if (!currentUser) { errEl.textContent = 'Tu dois être connecté.'; errEl.style.display = 'block'; return; }
+    btn.textContent = 'Connexion...'; btn.disabled = true;
+    try {
+      // Store partial key (security: only store last 4 chars visible)
+      await set(ref(db, `users/${currentUser.uid}/integrations/${currentIntegration}`), {
+        connected: true,
+        keyPreview: '••••' + key.slice(-4),
+        connectedAt: Date.now()
+      });
+      document.getElementById('apiModal').classList.remove('open');
+      showToast(`✅ ${currentIntegration} connecté avec succès !`);
+    } catch (e) {
+      errEl.textContent = 'Erreur lors de la sauvegarde.';
+      errEl.style.display = 'block';
+    }
+    btn.textContent = 'Connecter'; btn.disabled = false;
+  };
+
+  window.saveApiKeys = async () => {
+    if (!currentUser) { showToast('❌ Connecte-toi d\'abord'); return; }
+    const shopify = document.getElementById('shopify-api-key').value.trim();
+    const ebay = document.getElementById('ebay-api-key').value.trim();
+    if (!shopify && !ebay) { showToast('❌ Entre au moins une clé API'); return; }
+    if (shopify) {
+      await set(ref(db, `users/${currentUser.uid}/integrations/shopify`), { connected: true, keyPreview: '••••' + shopify.slice(-4), connectedAt: Date.now() });
+    }
+    if (ebay) {
+      await set(ref(db, `users/${currentUser.uid}/integrations/ebay`), { connected: true, keyPreview: '••••' + ebay.slice(-4), connectedAt: Date.now() });
+    }
+    showToast('✅ Clés API sauvegardées !');
+  };
+
+  // ─── CREATE SHIPMENT ───
+  window.createShipment = async () => {
+    const recipient = document.getElementById('s-recipient').value.trim();
+    const address = document.getElementById('s-address').value.trim();
+    const platform = document.getElementById('s-platform').value;
+    const weight = document.getElementById('s-weight').value;
+    const errEl = document.getElementById('shipment-error');
+    errEl.style.display = 'none';
+    if (!recipient || !address) { errEl.textContent = 'Destinataire et adresse sont requis.'; errEl.style.display = 'block'; return; }
+    if (!currentUser) { errEl.textContent = 'Tu dois être connecté.'; errEl.style.display = 'block'; return; }
+    try {
+      const statuses = ['pending', 'transit', 'delivered'];
+      await push(ref(db, `users/${currentUser.uid}/shipments`), {
+        recipient, address, platform, weight: parseFloat(weight) || 0.5,
+        status: 'pending',
+        createdAt: Date.now()
+      });
+      document.getElementById('shipmentModal').classList.remove('open');
+      document.getElementById('s-recipient').value = '';
+      document.getElementById('s-address').value = '';
+      showToast('✅ Envoi créé ! Étiquette en cours de génération...');
+    } catch (e) {
+      errEl.textContent = 'Erreur lors de la création.';
+      errEl.style.display = 'block';
+    }
+  };
+
+  // ─── PARTNER FORM ───
+  window.submitPartnerForm = async () => {
+    const firstname = document.getElementById('p-firstname').value.trim();
+    const lastname = document.getElementById('p-lastname').value.trim();
+    const email = document.getElementById('p-email').value.trim();
+    const business = document.getElementById('p-business').value.trim();
+    const type = document.getElementById('p-type').value;
+    const address = document.getElementById('p-address').value.trim();
+    const errEl = document.getElementById('partner-error');
+    errEl.style.display = 'none';
+    if (!firstname || !lastname || !email || !business || !type || !address) {
+      errEl.textContent = 'Merci de remplir tous les champs obligatoires (*).';
+      errEl.style.display = 'block'; return;
+    }
+    try {
+      await push(ref(db, 'partner_applications'), {
+        firstname, lastname, email, business, type, address,
+        phone: document.getElementById('p-phone').value.trim(),
+        message: document.getElementById('p-message').value.trim(),
+        collecte: document.getElementById('p-collecte').checked,
+        domicile: document.getElementById('p-domicile').checked,
+        relais: document.getElementById('p-relais').checked,
+        submittedAt: Date.now()
+      });
+      showPage('home');
+      showToast('🎉 Candidature envoyée ! On te répond sous 48h.');
+    } catch (e) {
+      errEl.textContent = 'Erreur lors de l\'envoi. Réessaie.';
+      errEl.style.display = 'block';
+    }
+  };
+
+  window.openNewShipmentModal = () => {
+    document.getElementById('shipmentModal').classList.add('open');
+  };
+</script>
+
+<script>
+  // ─── PAGE NAVIGATION ───
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name)?.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // ─── AUTH MODAL ───
+  function openAuthModal(tab) {
+    switchTab(tab);
+    document.getElementById('authModal').classList.add('open');
+  }
+  function closeAuthModal() {
+    document.getElementById('authModal').classList.remove('open');
+  }
+  function switchTab(tab) {
+    document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+    document.getElementById('tab-login').className = 'tab' + (tab === 'login' ? ' active' : '');
+    document.getElementById('tab-signup').className = 'tab' + (tab === 'signup' ? ' active' : '');
+    document.getElementById('modalSub').textContent = tab === 'login' ? 'Content de te revoir 👋' : 'Crée ton compte pour commencer';
+  }
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+  });
+
+  // Enter key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+  });
+
+  // ─── UTILS ───
+  function toggleApiKey(id, btn) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+    btn.textContent = el.type === 'password' ? '👁️' : '🙈';
+  }
+  window.toggleApiKey = toggleApiKey;
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+  window.showToast = showToast;
+  window.showPage = showPage;
+  window.openAuthModal = openAuthModal;
+  window.closeAuthModal = closeAuthModal;
+  window.switchTab = switchTab;
+</script>
+
+</body>
+</html>
