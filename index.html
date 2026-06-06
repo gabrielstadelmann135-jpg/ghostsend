@@ -268,17 +268,31 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
    📱 MOBILE — STYLE APPLICATION
    ═══════════════════════════════════════ */
 
-/* ─ VARIABLES MOBILE ─ */
+/* Burger animation — s'applique partout (nécessaire) */
+.nav-burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-burger.open span:nth-child(2) { opacity: 0; }
+.nav-burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.nav-burger span { transition: transform .2s, opacity .2s; }
+
+/* Desktop — cacher les éléments mobile */
+@media (min-width: 769px) {
+  .nav-burger { display: none; }
+  .mobile-bottom-nav { display: none; }
+  #mobileMenu { display: none !important; }
+}
+
+/* ═══════════════════════════════════════
+   TOUT LE RESTE = MOBILE UNIQUEMENT
+   ═══════════════════════════════════════ */
 @media (max-width: 768px) {
+
+  /* ─ VARIABLES ─ */
   :root {
     --r: 14px;
     --r-lg: 20px;
   }
-}
 
-/* ─ NAV MOBILE ─ */
-/* ─ NAV MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ NAV ─ */
   nav {
     height: 56px;
     padding: 0 16px;
@@ -286,14 +300,10 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .nav-brand {
     font-size: 22px;
   }
-
-  /* Cacher TOUT le contenu nav sur mobile — seulement logo + burger visibles */
   #navPublic,
   #navAuth {
     display: none !important;
   }
-
-  /* Quand connecté, afficher juste 2 boutons compacts */
   #navAuth.mobile-visible {
     display: flex !important;
     gap: 6px;
@@ -308,50 +318,6 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     padding: 7px 14px;
     font-size: 13px;
   }
-}
-
-  /* Masquer les liens nav en mobile */
-  #navPublic .nav-links-center,
-  .nav-links a:not(.btn-black):not(.btn-outline) {
-    display: none;
-  }
-
-  /* Menu burger — liens empilés */
-  #navPublic {
-    display: none;
-    flex-direction: column;
-    position: fixed;
-    top: 56px;
-    left: 0;
-    right: 0;
-    background: white;
-    border-bottom: 1.5px solid var(--gray-200);
-    padding: 16px;
-    gap: 8px;
-    z-index: 199;
-  }
-  #navPublic.mobile-open {
-    display: flex;
-  }
-  #navPublic .nav-links {
-    flex-direction: column;
-    width: 100%;
-  }
-  #navPublic .nav-links a {
-    width: 100%;
-    text-align: center;
-    padding: 12px;
-    font-size: 15px;
-  }
-  #navAuth {
-    gap: 8px;
-  }
-  #navAuth .plan-badge,
-  #navAuth .live-badge {
-    display: none;
-  }
-
-  /* Bouton burger */
   .nav-burger {
     display: flex;
     flex-direction: column;
@@ -367,15 +333,9 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     height: 2px;
     background: var(--black);
     border-radius: 2px;
-    transition: .2s;
   }
-}
-@media (min-width: 769px) {
-  .nav-burger { display: none; }
-}
 
-/* ─ HERO MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ HERO ─ */
   .hero {
     padding: 40px 16px 48px;
     min-height: auto;
@@ -412,10 +372,8 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .h-stat:nth-child(3),
   .h-stat:nth-child(4) { border-bottom: none; }
   .h-stat-num { font-size: 24px; }
-}
 
-/* ─ SECTIONS GÉNÉRIQUES MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ SECTIONS ─ */
   .section {
     padding: 48px 16px;
   }
@@ -434,10 +392,8 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     text-align: center;
     gap: 12px;
   }
-}
 
-/* ─ PRICING MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ PRICING ─ */
   .pricing-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -445,12 +401,10 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .pricing-card {
     padding: 28px 20px;
   }
-}
 
-/* ─ DASHBOARD MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ DASHBOARD ─ */
   .dash {
-    padding: 16px 16px 80px; /* padding bottom = espace pour nav bottom */
+    padding: 16px 16px 80px;
   }
   .dash-header {
     flex-direction: column;
@@ -487,12 +441,13 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .panel {
     padding: 18px 14px;
   }
-}
 
-/* ─ TABLE ENVOIS MOBILE → CARDS ─ */
-@media (max-width: 768px) {
+  /* ─ TABLE ENVOIS → CARDS ─ */
   .ship-table thead { display: none; }
-  .ship-table, .ship-table tbody, .ship-table tr, .ship-table td {
+  .ship-table,
+  .ship-table tbody,
+  .ship-table tr,
+  .ship-table td {
     display: block;
     width: 100%;
   }
@@ -513,10 +468,8 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     font-weight: 800;
     margin-bottom: 4px;
   }
-}
 
-/* ─ MODALS MOBILE — STYLE BOTTOM SHEET ─ */
-@media (max-width: 768px) {
+  /* ─ MODALS BOTTOM SHEET ─ */
   .overlay {
     align-items: flex-end;
     padding: 0;
@@ -531,9 +484,8 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   }
   @keyframes slideUp {
     from { transform: translateY(100%); opacity: 0; }
-    to   { transform: translateY(0);   opacity: 1; }
+    to   { transform: translateY(0); opacity: 1; }
   }
-  /* Poignée visuelle */
   .modal::before {
     content: '';
     display: block;
@@ -546,14 +498,11 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .modal-lg {
     max-width: 100%;
   }
-  /* Grille 2 cols → 1 col dans le modal shipment */
   #shipmentModal .modal > div[style*="grid"] {
     grid-template-columns: 1fr !important;
   }
-}
 
-/* ─ ALGO MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ ALGO ─ */
   .algo-inputs {
     grid-template-columns: 1fr;
   }
@@ -564,20 +513,16 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .algo-btn {
     width: 100%;
   }
-}
 
-/* ─ PARTENAIRE FORM MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ PARTENAIRE FORM ─ */
   #page-partenaire-form > div {
     padding: 40px 16px 60px !important;
   }
   #page-partenaire-form .panel > div[style*="grid"] {
     grid-template-columns: 1fr !important;
   }
-}
 
-/* ─ HOW STEPS MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ HOW STEPS ─ */
   .how-step {
     grid-template-columns: 56px 1fr;
     gap: 14px;
@@ -591,10 +536,8 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .step-content h3 {
     font-size: 18px;
   }
-}
 
-/* ─ PARTNER DASH MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ PARTNER DASH ─ */
   .pickup-card {
     padding: 14px;
   }
@@ -608,10 +551,8 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .time-slots {
     grid-template-columns: repeat(2, 1fr);
   }
-}
 
-/* ─ BARRE DE NAV INFÉRIEURE (app mobile) ─ */
-@media (max-width: 768px) {
+  /* ─ BOTTOM NAV ─ */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
@@ -647,22 +588,18 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     color: var(--black);
     background: var(--gray-100);
   }
-}
-@media (min-width: 769px) {
-  .mobile-bottom-nav { display: none; }
-}
 
-/* ─ TOAST MOBILE ─ */
-@media (max-width: 768px) {
+  /* ─ TOAST ─ */
   .toast {
-    bottom: 72px; /* au-dessus de la bottom nav */
+    bottom: 72px;
     width: calc(100% - 32px);
     text-align: center;
     white-space: normal;
   }
-}
 
-/* ─ TOUCH — supprimer les :hover sur mobile ─ */
+} /* ← FIN @media (max-width: 768px) */
+
+/* ─ TOUCH — pas de hover sur mobile ─ */
 @media (hover: none) {
   .btn:hover, .pricing-card:hover, .partner-card:hover,
   .pickup-card:hover, .int-item:hover, .t-card:hover {
@@ -670,22 +607,6 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     box-shadow: none;
   }
 }
-
-
-
-/* Burger animation */
-.nav-burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.nav-burger.open span:nth-child(2) { opacity: 0; }
-.nav-burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-.nav-burger span { transition: transform .2s, opacity .2s; }
-
-/* Cacher le menu mobile quand connecté (le burger affiche navAuth à la place) */
-@media (min-width: 769px) {
-  #mobileMenu { display: none !important; }
-  .nav-burger { display: none; }
-}
-
-
 
   
 </style>
