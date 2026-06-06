@@ -434,7 +434,7 @@ h1, h2, h3 { font-family: 'Fredoka', sans-serif; }
       </ol>
     </div>
 
-    <button class="btn btn-green" id="validateBtn" onclick="validateCollect()">
+    <button class="btn btn-green" id="validateBtn" onclick="openConfirmModal()">
       ✓ Valider la collecte
     </button>
     <button class="btn btn-outline" onclick="window.location.href='/'">
@@ -683,7 +683,114 @@ window.validateCollect = async () => {
     showToast('❌ Erreur. Réessaie.');
   }
 };
+
+
+function openConfirmModal() {
+  document.getElementById('modal-step1').style.display = 'block';
+  document.getElementById('modal-step2').style.display = 'none';
+  document.getElementById('streetInput').value = '';
+  const modal = document.getElementById('confirm-modal');
+  modal.style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('confirm-modal').style.display = 'none';
+}
+
+function checkAddress() {
+  const input = document.getElementById('streetInput').value.trim();
+  if (!input) { showToast('⚠️ Saisis le numéro de rue'); return; }
+  
+  // Extraire le numéro de rue de l'adresse stockée
+  const addressStored = missionData.address || '';
+  const storedNumber = addressStored.match(/^\d+/)?.[0] || '';
+  
+  if (storedNumber && input !== storedNumber) {
+    showToast('❌ Numéro incorrect. Vérifie l\'adresse.');
+    return;
+  }
+
+  // Afficher récap
+  document.getElementById('recap-recipient').textContent = missionData.recipient || '—';
+  document.getElementById('recap-address').textContent = addressStored;
+  document.getElementById('modal-step1').style.display = 'none';
+  document.getElementById('modal-step2').style.display = 'block';
+}
+
+window.doValidate = async () => {
+  if (!missionKey || !missionData) return;
+  closeModal();
+
+  const btn = document.getElementById('validateBtn');
+  btn.textContent = 'Validation...';
+  btn.disabled = true;
+
+  try {
+    const updates = {
+      status: 'collected',
+      doneAt: Date.now(),
+      addressConfirmed: true,
+      addressInput: document.getElementById('streetInput').value.trim(),
+    };
+    if (currentUser) {
+      updates.collectorUid = currentUser.uid;
+      updates.collectorName = currentUser.displayName || currentUser.email;
+    }
+
+    await update(ref(db, `all_missions/${missionKey}`), updates);
+    // ... reste de ta logique (mise à jour seller, etc.)
+
+    showState('success');
+    showToast('✅ Collecte validée !');
+  } catch (err) {
+    console.error(err);
+    btn.textContent = '✓ Valider la collecte';
+    btn.disabled = false;
+    showToast('❌ Erreur. Réessaie.');
+  }
+};
+
+
+
+  
 </script>
 
+
+
+
+<!-- Ajoute ce modal dans ton <body>, avant </body> -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:flex-end;justify-content:center;">
+  <div style="background:white;width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:28px 20px 36px;">
+    
+    <!-- ÉTAPE 1 : confirmer le numéro de rue -->
+    <div id="modal-step1">
+      <div style="font-family:'Fredoka',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">🔒 Confirme l'adresse</div>
+      <div style="font-size:13px;color:#555;margin-bottom:20px">Saisis le <strong>numéro de rue</strong> de l'adresse de collecte pour prouver ta présence sur place.</div>
+      <div style="font-size:12px;font-weight:700;color:#9e9e9e;text-transform:uppercase;margin-bottom:6px">Numéro de rue vu sur place</div>
+      <input id="streetInput" type="number" placeholder="Ex: 14" style="width:100%;font-size:28px;text-align:center;padding:14px;border:2px solid #e4e4e4;border-radius:14px;outline:none;margin-bottom:16px;font-family:'Fredoka',sans-serif;letter-spacing:.1em">
+      <button class="btn btn-black" onclick="checkAddress()">Suivant →</button>
+      <button class="btn btn-outline" onclick="closeModal()" style="margin-top:8px">Annuler</button>
+    </div>
+
+    <!-- ÉTAPE 2 : récap + confirmer -->
+    <div id="modal-step2" style="display:none">
+      <div style="font-family:'Fredoka',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">✅ Tout est correct ?</div>
+      <div style="font-size:13px;color:#555;margin-bottom:16px">Vérifie avant de valider définitivement.</div>
+      <div style="background:#f8f8f8;border-radius:14px;padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;color:#9e9e9e;font-weight:700;text-transform:uppercase;margin-bottom:8px">Récapitulatif</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px" id="recap-recipient">—</div>
+        <div style="font-size:13px;color:#555;margin-bottom:4px" id="recap-address">—</div>
+        <div style="font-size:12px;color:#16a34a;font-weight:700">📍 Numéro confirmé sur place</div>
+      </div>
+      <button class="btn btn-green" onclick="doValidate()">🔒 Confirmer définitivement</button>
+      <button class="btn btn-outline" onclick="closeModal()" style="margin-top:8px">Annuler</button>
+    </div>
+
+  </div>
+</div>
+
+
+
+  
 </body>
 </html>
