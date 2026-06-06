@@ -1215,9 +1215,8 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;"><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">Total à payer</span><span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;" id="sp-total">—</span></div>
     </div>
     <div style="color:#dc2626;font-size:12px;font-weight:600;display:none;margin-top:10px;" id="ship-err"></div>
-    <button class="btn btn-black btn-lg" style="width:100%;justify-content:center;margin-top:16px;" onclick="createShipment()">Créer l'envoi et trouver un collecteur →</button>
+    <button class="btn btn-black btn-lg" style="width:100%;justify-content:center;margin-top:16px;" onclick="createShipmentWithQuota()">Créer l'envoi et trouver un collecteur →</button>
   </div>
-</div>
 
 <!-- SCHEDULE MODAL -->
 <div class="overlay" id="schedModal">
@@ -1295,7 +1294,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('dName').textContent = user.displayName || user.email.split('@')[0];
     closeModal('authModal');
     showPage('dashboard');
-    loadDashboard(user.uid);
+  loadDashboardWithQuota(user.uid);
     loadPartnerDash(user.uid);
     initPayPal(user.uid);
   } else {
@@ -1872,6 +1871,174 @@ window.closeMobileMenu = closeMobileMenu;
   </a>
 </nav>
 
+
+<script>
+// ══════════════════════════════════════════════════
+// 🚫 QUOTA SYSTEM — Limite d'envois par plan
+// ══════════════════════════════════════════════════
+
+const QUOTAS = { free: 5, pro: 50, business: 9999 };
+
+async function checkQuota(uid, plan) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  
+  const shipmentsSnap = await get(ref(db, `users/${uid}/shipments`));
+  const all = shipmentsSnap.val() || {};
+  
+  const thisMonthCount = Object.values(all).filter(
+    s => s.createdAt >= startOfMonth
+  ).length;
+  
+  const quota = QUOTAS[plan] || 5;
+  const remaining = quota - thisMonthCount;
+  
+  return { thisMonthCount, quota, remaining };
+}
+
+function updateQuotaUI(thisMonthCount, quota, remaining, plan) {
+  // ── KPI ──
+  const kt = document.getElementById('k-total');
+  const kq = document.getElementById('k-quota');
+  if (kt) kt.textContent = thisMonthCount;
+  if (kq) {
+    kq.textContent = `/ ${quota === 9999 ? '∞' : quota} ce mois`;
+    kq.style.color = '';
+    if (remaining <= 1 && quota !== 9999) {
+      kq.style.color = 'var(--orange)';
+      kq.textContent += ` — ⚠️ Plus que ${remaining} envoi(s) !`;
+    }
+    if (remaining <= 0) {
+      kq.style.color = '#dc2626';
+      kq.textContent = `/ ${quota} — 🚫 Limite atteinte !`;
+    }
+  }
+
+  // ── Bannière alerte ──
+  const alert = document.getElementById('quotaAlert');
+  const msg   = document.getElementById('quotaAlertMsg');
+  if (!alert || !msg || plan === 'business') return;
+
+  if (remaining <= 0) {
+    alert.style.display = 'flex';
+    alert.style.background = '#fef2f2';
+    alert.style.borderColor = '#fca5a5';
+    msg.textContent = `Limite atteinte — plus aucun envoi disponible ce mois.`;
+  } else if (remaining <= 2) {
+    alert.style.display = 'flex';
+    alert.style.background = '#fff7ed';
+    alert.style.borderColor = '#fed7aa';
+    msg.textContent = `Plus que ${remaining} envoi(s) gratuit(s) ce mois !`;
+  } else {
+    alert.style.display = 'none';
+  }
+}
+
+// ── Injecter la bannière dans le dashboard ──
+function injectQuotaBanner() {
+  const dashHeader = document.querySelector('#page-dashboard .dash-header');
+  if (!dashHeader || document.getElementById('quotaAlert')) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'quotaAlert';
+  banner.style.cssText = `
+    display: none;
+    background: #fff7ed;
+    border: 1.5px solid #fed7aa;
+    border-radius: var(--r);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  `;
+  banner.innerHTML = `
+    <div>
+      <div style="font-weight:700;font-size:15px;">
+        ⚠️ <span id="quotaAlertMsg"></span>
+      </div>
+      <div style="font-size:13px;color:var(--gray-600);margin-top:3px;">
+        Passe en Pro pour continuer à envoyer sans interruption.
+      </div>
+    </div>
+    <button class="btn btn-black" onclick="showPage('tarifs')"
+            style="font-size:13px;padding:8px 16px;white-space:nowrap;">
+      ⬆️ Passer Pro — 9,90€/mois
+    </button>
+  `;
+  dashHeader.insertAdjacentElement('afterend', banner);
+}
+
+// ── Vérification quota dans createShipment ──
+// On override la fonction originale pour y injecter le check
+const _originalCreateShipment = window.createShipment;
+
+window.createShipmentWithQuota = async () => {
+  if (!CU) {
+    document.getElementById('ship-err').textContent = 'Connecte-toi d\'abord.';
+    document.getElementById('ship-err').style.display = 'block';
+    return;
+  }
+
+  // Récupérer le plan
+  const profileSnap = await get(ref(db, `users/${CU.uid}/profile`));
+  const plan = profileSnap.val()?.plan || 'free';
+
+  // Vérifier le quota
+  const { thisMonthCount, quota, remaining } = await checkQuota(CU.uid, plan);
+
+  if (remaining <= 0) {
+    const err = document.getElementById('ship-err');
+    err.innerHTML = `
+      🚫 Tu as atteint la limite de <strong>${quota} envois</strong> ce mois-ci.<br>
+      <a href="#" onclick="closeModal('shipmentModal');showPage('tarifs');return false;"
+         style="color:var(--black);font-weight:800;text-decoration:underline;display:inline-block;margin-top:6px;">
+        ⬆️ Passer en Pro pour 50 envois → 9,90€/mois
+      </a>
+    `;
+    err.style.display = 'block';
+    return;
+  }
+
+  // Quota ok → créer l'envoi normalement
+  await window.createShipment();
+
+  // Rafraîchir l'UI quota après création
+  const updated = await checkQuota(CU.uid, plan);
+  updateQuotaUI(updated.thisMonthCount, updated.quota, updated.remaining, plan);
+};
+
+// ── Remplacer le bouton dans le modal ──
+document.addEventListener('DOMContentLoaded', () => {
+  injectQuotaBanner();
+
+  // Remplacer onclick du bouton "Créer l'envoi"
+  const createBtn = document.querySelector('#shipmentModal .btn-black[onclick*="createShipment"]');
+  if (createBtn) {
+    createBtn.setAttribute('onclick', 'createShipmentWithQuota()');
+  }
+});
+
+// ── Hook dans loadDashboard pour afficher le quota ──
+const _originalLoadDashboard = window.loadDashboard;
+window.loadDashboardWithQuota = async (uid) => {
+  // Appeler le dashboard original
+  if (_originalLoadDashboard) _originalLoadDashboard(uid);
+
+  // Récupérer plan + quota
+  const profileSnap = await get(ref(db, `users/${uid}/profile`));
+  const plan = profileSnap.val()?.plan || 'free';
+  const { thisMonthCount, quota, remaining } = await checkQuota(uid, plan);
+
+  injectQuotaBanner();
+  updateQuotaUI(thisMonthCount, quota, remaining, plan);
+};
+</script>
+
+
+
+  
   
 </body>
 </html>
