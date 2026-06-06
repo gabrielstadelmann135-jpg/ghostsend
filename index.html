@@ -1847,7 +1847,7 @@ window.showQR = function(id, recipient) {
   document.getElementById('qrCode').textContent = code;
   document.getElementById('qrDiv').innerHTML = '<div id="qr-inner"></div>';
   if (typeof QRCode !== 'undefined') {
-    new QRCode(document.getElementById('qr-inner'), { text: JSON.stringify({tracking:code,recipient}), width:200, height:200, colorDark:'#0d0d0d', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
+    new QRCode(document.getElementById('qr-inner'), { text: `https://ghostsend.fr/scan.html?id=${code}&r=${encodeURIComponent(recipient)}`, width:200, height:200, colorDark:'#0d0d0d', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
   }
   document.getElementById('qrModal').classList.add('open');
 };
