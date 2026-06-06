@@ -274,11 +274,17 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .nav-burger { display: none !important; }
   #mobileMenu { display: none !important; }
   .mobile-bottom-nav { display: none !important; }
-  #navPublic { display: flex !important; }
+  
+  /* Quand PAS connecté */
+  #navPublic { display: flex; }
   #navAuth { display: none; }
+  
+  /* Quand connecté — auth-visible override le display:none du mobile */
   #navAuth.auth-visible { display: flex !important; }
+  
+  /* Sur desktop connecté, cacher le burger */
+  #navPublic[style*="display: none"] ~ .nav-burger { display: none !important; }
 }
-
 /* ═══════════════════════════════════════
    MOBILE
    ═══════════════════════════════════════ */
