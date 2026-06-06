@@ -1,4 +1,4 @@
-cat > /mnt/user-data/outputs/ghostsend-mvp.html << 'HTMLEOF'
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -263,11 +263,412 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
 
 @media(max-width:900px){ .dash-grid{grid-template-columns:1fr} }
 @media(max-width:640px){ nav{padding:0 16px} .dash{padding:20px 16px} .hero-stats{flex-direction:column;gap:0} .h-stat{border-right:none;border-bottom:1.5px solid var(--gray-200)} }
+
+/* ═══════════════════════════════════════
+   📱 MOBILE — STYLE APPLICATION
+   ═══════════════════════════════════════ */
+
+/* ─ VARIABLES MOBILE ─ */
+@media (max-width: 768px) {
+  :root {
+    --r: 14px;
+    --r-lg: 20px;
+  }
+}
+
+/* ─ NAV MOBILE ─ */
+@media (max-width: 768px) {
+  nav {
+    height: 56px;
+    padding: 0 16px;
+  }
+  .nav-brand {
+    font-size: 22px;
+  }
+
+  /* Masquer les liens nav en mobile */
+  #navPublic .nav-links-center,
+  .nav-links a:not(.btn-black):not(.btn-outline) {
+    display: none;
+  }
+
+  /* Menu burger — liens empilés */
+  #navPublic {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: white;
+    border-bottom: 1.5px solid var(--gray-200);
+    padding: 16px;
+    gap: 8px;
+    z-index: 199;
+  }
+  #navPublic.mobile-open {
+    display: flex;
+  }
+  #navPublic .nav-links {
+    flex-direction: column;
+    width: 100%;
+  }
+  #navPublic .nav-links a {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    font-size: 15px;
+  }
+  #navAuth {
+    gap: 8px;
+  }
+  #navAuth .plan-badge,
+  #navAuth .live-badge {
+    display: none;
+  }
+
+  /* Bouton burger */
+  .nav-burger {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 6px;
+    background: none;
+    border: none;
+  }
+  .nav-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--black);
+    border-radius: 2px;
+    transition: .2s;
+  }
+}
+@media (min-width: 769px) {
+  .nav-burger { display: none; }
+}
+
+/* ─ HERO MOBILE ─ */
+@media (max-width: 768px) {
+  .hero {
+    padding: 40px 16px 48px;
+    min-height: auto;
+  }
+  .hero h1 {
+    font-size: clamp(36px, 11vw, 56px);
+  }
+  .hero-sub {
+    font-size: 16px;
+  }
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+    margin-bottom: 40px;
+  }
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .hero-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-radius: var(--r);
+    overflow: hidden;
+  }
+  .h-stat {
+    width: 50%;
+    padding: 16px 12px;
+    border-right: 1.5px solid var(--gray-200);
+    border-bottom: 1.5px solid var(--gray-200);
+  }
+  .h-stat:nth-child(2n) { border-right: none; }
+  .h-stat:nth-child(3),
+  .h-stat:nth-child(4) { border-bottom: none; }
+  .h-stat-num { font-size: 24px; }
+}
+
+/* ─ SECTIONS GÉNÉRIQUES MOBILE ─ */
+@media (max-width: 768px) {
+  .section {
+    padding: 48px 16px;
+  }
+  .section-title {
+    font-size: clamp(26px, 7vw, 36px);
+  }
+  .partner-dark {
+    padding: 48px 16px;
+  }
+  .partner-cards {
+    grid-template-columns: 1fr;
+  }
+  footer {
+    padding: 28px 16px !important;
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+}
+
+/* ─ PRICING MOBILE ─ */
+@media (max-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .pricing-card {
+    padding: 28px 20px;
+  }
+}
+
+/* ─ DASHBOARD MOBILE ─ */
+@media (max-width: 768px) {
+  .dash {
+    padding: 16px 16px 80px; /* padding bottom = espace pour nav bottom */
+  }
+  .dash-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .dash-welcome {
+    font-size: 24px;
+  }
+  .dash-actions {
+    width: 100%;
+  }
+  .dash-actions .btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+  .kpis {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    padding: 14px 12px;
+  }
+  .kpi-value {
+    font-size: 24px;
+  }
+  .dash-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .panel {
+    padding: 18px 14px;
+  }
+}
+
+/* ─ TABLE ENVOIS MOBILE → CARDS ─ */
+@media (max-width: 768px) {
+  .ship-table thead { display: none; }
+  .ship-table, .ship-table tbody, .ship-table tr, .ship-table td {
+    display: block;
+    width: 100%;
+  }
+  .ship-table tr {
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--r);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .ship-table td {
+    padding: 3px 0;
+    border: none;
+    font-size: 13px;
+  }
+  .ship-table td:first-child {
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+}
+
+/* ─ MODALS MOBILE — STYLE BOTTOM SHEET ─ */
+@media (max-width: 768px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal {
+    border-radius: 24px 24px 0 0;
+    max-width: 100%;
+    width: 100%;
+    max-height: 92vh;
+    padding: 28px 20px 36px;
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+  }
+  /* Poignée visuelle */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .modal-lg {
+    max-width: 100%;
+  }
+  /* Grille 2 cols → 1 col dans le modal shipment */
+  #shipmentModal .modal > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─ ALGO MOBILE ─ */
+@media (max-width: 768px) {
+  .algo-inputs {
+    grid-template-columns: 1fr;
+  }
+  .transporter-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .algo-btn {
+    width: 100%;
+  }
+}
+
+/* ─ PARTENAIRE FORM MOBILE ─ */
+@media (max-width: 768px) {
+  #page-partenaire-form > div {
+    padding: 40px 16px 60px !important;
+  }
+  #page-partenaire-form .panel > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─ HOW STEPS MOBILE ─ */
+@media (max-width: 768px) {
+  .how-step {
+    grid-template-columns: 56px 1fr;
+    gap: 14px;
+    padding: 24px 0;
+  }
+  .step-circle {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+  .step-content h3 {
+    font-size: 18px;
+  }
+}
+
+/* ─ PARTNER DASH MOBILE ─ */
+@media (max-width: 768px) {
+  .pickup-card {
+    padding: 14px;
+  }
+  .pickup-actions {
+    flex-direction: column;
+  }
+  .pickup-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .time-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ─ BARRE DE NAV INFÉRIEURE (app mobile) ─ */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: rgba(255,255,255,.97);
+    backdrop-filter: blur(14px);
+    border-top: 1.5px solid var(--gray-200);
+    height: 60px;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+  }
+  .mobile-bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gray-400);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 10px;
+    transition: .15s;
+  }
+  .mobile-bottom-nav a .nav-icon {
+    font-size: 20px;
+  }
+  .mobile-bottom-nav a.active {
+    color: var(--black);
+    background: var(--gray-100);
+  }
+}
+@media (min-width: 769px) {
+  .mobile-bottom-nav { display: none; }
+}
+
+/* ─ TOAST MOBILE ─ */
+@media (max-width: 768px) {
+  .toast {
+    bottom: 72px; /* au-dessus de la bottom nav */
+    width: calc(100% - 32px);
+    text-align: center;
+    white-space: normal;
+  }
+}
+
+/* ─ TOUCH — supprimer les :hover sur mobile ─ */
+@media (hover: none) {
+  .btn:hover, .pricing-card:hover, .partner-card:hover,
+  .pickup-card:hover, .int-item:hover, .t-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+
+
+
+
+
+
+  
 </style>
 </head>
 <body>
 
 <!-- ══════════ NAV ══════════ -->
+
+
+
+
+
+
+
+
+
+  
 <nav>
   <a class="nav-brand" href="#" onclick="showPage('home');return false;">
     <img src="logo.jpg" alt="GhostSend" style="width:38px;height:38px;object-fit:contain;border-radius:8px;" onerror="this.style.display='none'">
@@ -289,6 +690,14 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     <a href="#" onclick="showPage('partenaire-dash');return false;" class="btn btn-outline" style="padding:8px 16px;font-size:13px;">Espace partenaire</a>
     <a href="#" onclick="doLogout()" class="btn btn-black" style="padding:8px 16px;font-size:13px;">Déconnexion</a>
   </div>
+
+
+<button class="nav-burger" id="burgerBtn" onclick="toggleMobileNav()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
+
+  
 </nav>
 
 <!-- ══════════ HOME ══════════ -->
@@ -1414,6 +1823,42 @@ window.printQR = function() {
 
 // Run algo on page load
 setTimeout(()=>{ if(document.getElementById('page-algo').classList.contains('active')) runAlgo(); }, 100);
+
+
+
+  function toggleMobileNav() {
+  const nav = document.getElementById('navPublic');
+  nav.classList.toggle('mobile-open');
+}
+// Afficher bottom nav sur mobile
+if (window.innerWidth <= 768) {
+  document.getElementById('mobileBottomNav').style.display = 'flex';
+}
+// Afficher les liens dashboard quand connecté
+// Dans ton onAuthStateChanged, ajoute :
+// document.getElementById('bnDash').style.display = 'flex';
+// document.getElementById('bnPartner').style.display = 'flex';
 </script>
+
+
+<nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none;">
+  <a href="#" onclick="showPage('home');return false;" class="active">
+    <span class="nav-icon">🏠</span>Accueil
+  </a>
+  <a href="#" onclick="showPage('tarifs');return false;">
+    <span class="nav-icon">💳</span>Tarifs
+  </a>
+  <a href="#" onclick="showPage('dashboard');return false;" id="bnDash" style="display:none;">
+    <span class="nav-icon">📦</span>Envois
+  </a>
+  <a href="#" onclick="showPage('partenaire-dash');return false;" id="bnPartner" style="display:none;">
+    <span class="nav-icon">🏪</span>Partenaire
+  </a>
+  <a href="#" onclick="openAuth('signup')">
+    <span class="nav-icon">👤</span>Compte
+  </a>
+</nav>
+
+  
 </body>
 </html>
