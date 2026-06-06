@@ -507,7 +507,28 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   border-radius: 2px; 
 }
 
-
+/* Déconnexion mobile — visible seulement quand connecté */
+.mobile-logout {
+  display: none;
+  position: fixed;
+  top: 10px;
+  right: 56px;
+  z-index: 201;
+}
+body.auth-on .mobile-logout {
+  display: flex !important;
+}
+.mobile-logout button {
+  background: var(--black);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
 
   
 </style>
@@ -537,6 +558,12 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     <a href="#" onclick="showPage('partenaire-dash');return false;" class="btn btn-outline" style="padding:8px 16px;font-size:13px;">Espace partenaire</a>
     <a href="#" onclick="doLogout()" class="btn btn-black" style="padding:8px 16px;font-size:13px;">Déconnexion</a>
   </div>
+
+<div class="mobile-logout">
+  <button onclick="doLogout()">🚪 Déco</button>
+</div>
+
+  
   <button class="nav-burger" id="burgerBtn" onclick="toggleMobileNav()" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
