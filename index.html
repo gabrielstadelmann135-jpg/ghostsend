@@ -1215,7 +1215,7 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;"><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">Total à payer</span><span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;" id="sp-total">—</span></div>
     </div>
     <div style="color:#dc2626;font-size:12px;font-weight:600;display:none;margin-top:10px;" id="ship-err"></div>
-    <button class="btn btn-black btn-lg" style="width:100%;justify-content:center;margin-top:16px;" onclick="createShipmentWithQuota()">Créer l'envoi et trouver un collecteur →</button>
+    <button class="btn btn-black btn-lg" style="width:100%;justify-content:center;margin-top:16px;" onclick="onclick="onclick="createShipment()">Créer l'envoi et trouver un collecteur →</button>
   </div>
 
 <!-- SCHEDULE MODAL -->
@@ -1294,7 +1294,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('dName').textContent = user.displayName || user.email.split('@')[0];
     closeModal('authModal');
     showPage('dashboard');
-  loadDashboardWithQuota(user.uid);
+ loadDashboard(user.uid);
     loadPartnerDash(user.uid);
     initPayPal(user.uid);
   } else {
