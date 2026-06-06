@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostSend — Suivi de colis</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0d0d0d;
+  --white: #fff;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --green-dark: #14532d;
+  --gray-50: #f9f9f9;
+  --gray-100: #f0f0f0;
+  --gray-200: #e4e4e4;
+  --gray-400: #9e9e9e;
+  --gray-600: #555;
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --orange: #ea580c;
+  --orange-light: #fff7ed;
+}
+html, body {
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  background: var(--gray-50);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--black);
+  padding: 0 28px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; color: white; text-decoration: none; }
+.header-right { font-size: 12px; color: rgba(255,255,255,.4); font-weight: 600; }
+
+/* ── MAIN ── */
+.main { max-width: 560px; margin: 0 auto; padding: 32px 20px 60px; }
+
+/* ── SEARCH BOX ── */
+.search-card {
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 20px;
+  padding: 28px 24px;
+  margin-bottom: 28px;
+}
+.search-title { font-family: 'Fredoka', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+.search-sub { font-size: 14px; color: var(--gray-400); margin-bottom: 20px; line-height: 1.5; }
+.search-row { display: flex; gap: 10px; }
+.search-input {
+  flex: 1;
+  padding: 13px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  transition: .2s;
+  color: var(--black);
+  background: white;
+}
+.search-input:focus { border-color: var(--black); }
+.search-input::placeholder { color: var(--gray-400); font-weight: 600; }
+.search-btn {
+  padding: 13px 20px;
+  background: var(--black);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .2s;
+  white-space: nowrap;
+}
+.search-btn:hover { background: #222; transform: translateY(-1px); }
+
+/* ── RÉSULTAT ── */
+.result { display: none; }
+.result.visible { display: block; }
+
+/* ── COLIS INFO ── */
+.colis-card {
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.colis-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; gap: 12px; }
+.colis-code { font-family: monospace; font-size: 12px; font-weight: 700; color: var(--gray-400); letter-spacing: .08em; background: var(--gray-100); padding: 4px 10px; border-radius: 100px; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 100px;
+}
+.s-pending { background: var(--gray-100); color: var(--gray-600); }
+.s-accepted { background: var(--blue-light); color: var(--blue); }
+.s-transit { background: #fef3c7; color: #92400e; }
+.s-delivered { background: var(--green-light); color: var(--green-dark); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.s-delivered .status-dot, .s-pending .status-dot { animation: none; }
+
+.colis-recipient { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.colis-carrier { font-size: 13px; color: var(--gray-600); font-weight: 600; }
+
+.colis-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.meta-item { background: var(--gray-50); border-radius: 10px; padding: 11px 13px; }
+.meta-label { font-size: 10px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.meta-value { font-family: 'Fredoka', sans-serif; font-size: 16px; font-weight: 700; color: var(--black); }
+
+/* ── TIMELINE ── */
+.timeline-card {
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.timeline-title { font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 22px; }
+.timeline { display: flex; flex-direction: column; gap: 0; position: relative; }
+.tl-item { display: flex; gap: 16px; position: relative; padding-bottom: 28px; }
+.tl-item:last-child { padding-bottom: 0; }
+
+/* Ligne verticale */
+.tl-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 36px;
+  bottom: 0;
+  width: 2px;
+  background: var(--gray-200);
+}
+.tl-item.done:not(:last-child)::after { background: var(--green); }
+.tl-item.active:not(:last-child)::after { background: var(--gray-200); }
+
+.tl-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  position: relative;
+  z-index: 1;
+  border: 2px solid var(--gray-200);
+  background: white;
+}
+.tl-item.done .tl-dot {
+  background: var(--green);
+  border-color: var(--green);
+  font-size: 14px;
+}
+.tl-item.active .tl-dot {
+  background: white;
+  border-color: var(--black);
+  border-width: 2.5px;
+  box-shadow: 0 0 0 4px rgba(13,13,13,.08);
+}
+.tl-item.pending .tl-dot {
+  background: var(--gray-50);
+  border-color: var(--gray-200);
+  opacity: .6;
+}
+
+.tl-content { flex: 1; padding-top: 6px; }
+.tl-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 2px;
+}
+.tl-item.pending .tl-label { color: var(--gray-400); }
+.tl-desc { font-size: 13px; color: var(--gray-600); line-height: 1.5; }
+.tl-item.pending .tl-desc { color: var(--gray-200); }
+.tl-time { font-size: 11px; color: var(--gray-400); font-weight: 700; margin-top: 4px; }
+
+/* ── BOUTON TRANSPORTEUR ── */
+.carrier-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--black);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: .2s;
+  margin-bottom: 10px;
+}
+.carrier-btn:hover { background: #222; transform: translateY(-1px); }
+.carrier-btn-sub { font-size: 11px; opacity: .6; font-weight: 600; margin-top: 2px; }
+.carrier-arrow { font-size: 18px; opacity: .7; }
+
+/* ── ERREUR ── */
+.error-card {
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 20px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.error-emoji { font-size: 44px; margin-bottom: 14px; }
+.error-title { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.error-sub { font-size: 14px; color: var(--gray-400); line-height: 1.6; }
+
+/* ── LOADING ── */
+.spinner { width: 36px; height: 36px; border: 3px solid var(--gray-200); border-top-color: var(--black); border-radius: 50%; animation: spin .8s linear infinite; margin: 40px auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--black); color: white; padding: 12px 22px; border-radius: 12px; font-size: 14px; font-weight: 700; z-index: 999; transition: .3s; white-space: nowrap; pointer-events: none; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.footer { text-align: center; padding: 20px; font-size: 12px; color: var(--gray-400); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a class="brand" href="/">👻 GhostSend</a>
+  <div class="header-right">Suivi de colis</div>
+</div>
+
+<div class="main">
+
+  <!-- SEARCH -->
+  <div class="search-card">
+    <div class="search-title">Suivre mon colis 📦</div>
+    <div class="search-sub">Entre le code de suivi GhostSend reçu par email, ou le numéro du transporteur indiqué sur ton ticket relais.</div>
+    <div class="search-row">
+      <input
+        class="search-input"
+        id="searchInput"
+        type="text"
+        placeholder="Ex: GS-MPHFFP ou 22018700123456"
+        onkeydown="if(event.key==='Enter') searchTracking()"
+      >
+      <button class="search-btn" onclick="searchTracking()">Suivre →</button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loadingEl" style="display:none;"><div class="spinner"></div></div>
+
+  <!-- RÉSULTAT -->
+  <div class="result" id="resultEl">
+
+    <!-- INFOS COLIS -->
+    <div class="colis-card">
+      <div class="colis-header">
+        <div>
+          <div class="colis-code" id="r-code">—</div>
+          <div class="colis-recipient" id="r-recipient" style="margin-top:8px;">—</div>
+          <div class="colis-carrier" id="r-carrier">—</div>
+        </div>
+        <div class="status-pill s-pending" id="r-status-pill">
+          <div class="status-dot"></div>
+          <span id="r-status-text">En attente</span>
+        </div>
+      </div>
+      <div class="colis-meta">
+        <div class="meta-item">
+          <div class="meta-label">Poids</div>
+          <div class="meta-value" id="r-weight">—</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Plateforme</div>
+          <div class="meta-value" id="r-platform">—</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Créneau collecte</div>
+          <div class="meta-value" id="r-slot" style="font-size:13px;">—</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Collecteur</div>
+          <div class="meta-value" id="r-collector" style="font-size:13px;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="timeline-card">
+      <div class="timeline-title">Progression</div>
+      <div class="timeline" id="timelineEl"></div>
+    </div>
+
+    <!-- BOUTON SUIVI TRANSPORTEUR -->
+    <div id="carrierTrackEl" style="display:none;">
+      <a class="carrier-btn" id="carrierTrackBtn" href="#" target="_blank">
+        <div>
+          <div id="carrierBtnLabel">Suivre sur Mondial Relay</div>
+          <div class="carrier-btn-sub" id="carrierBtnSub">Ouvre le site officiel du transporteur</div>
+        </div>
+        <div class="carrier-arrow">↗</div>
+      </a>
+    </div>
+
+    <a href="/" style="display:block;text-align:center;font-size:13px;color:var(--gray-400);font-weight:700;text-decoration:none;margin-top:10px;">← Retour à l'accueil</a>
+  </div>
+
+  <!-- ERREUR -->
+  <div id="errorEl" style="display:none;">
+    <div class="error-card">
+      <div class="error-emoji">🔍</div>
+      <div class="error-title" id="errorTitle">Colis introuvable</div>
+      <div class="error-sub" id="errorSub">Vérifie le code de suivi et réessaie. Si le problème persiste, contacte Ghost.send86@gmail.com</div>
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="/" style="font-size:13px;color:var(--gray-400);font-weight:700;text-decoration:none;">← Retour à l'accueil</a>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">👻 GhostSend · Ghost.send86@gmail.com</footer>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain: "ghostly-fbe01.firebaseapp.com",
+  databaseURL: "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ghostly-fbe01",
+  storageBucket: "ghostly-fbe01.firebasestorage.app",
+  messagingSenderId: "290927219079",
+  appId: "1:290927219079:web:d7cd006945d9fe84a74322"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function getTrackingUrl(carrier, number) {
+  if (!number) return null;
+  const c = (carrier || '').toLowerCase();
+  if (c.includes('mondial')) return `https://www.mondialrelay.fr/suivi-de-colis/?numeroExpedition=${number}`;
+  if (c.includes('colissimo') || c.includes('poste')) return `https://www.laposte.fr/outils/suivre-vos-envois?code=${number}`;
+  if (c.includes('chronopost')) return `https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT=${number}`;
+  if (c.includes('dpd')) return `https://trace.dpd.fr/fr/trace/${number}`;
+  if (c.includes('ups')) return `https://www.ups.com/track?tracknum=${number}`;
+  return `https://www.mondialrelay.fr/suivi-de-colis/?numeroExpedition=${number}`;
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Statuts et étapes
+const STEPS = [
+  {
+    key: 'created',
+    icon: '📦',
+    doneIcon: '✓',
+    label: 'Envoi créé',
+    desc: 'Ton colis a été enregistré sur GhostSend.',
+    timeKey: 'createdAt'
+  },
+  {
+    key: 'accepted',
+    icon: '🤝',
+    doneIcon: '✓',
+    label: 'Collecteur assigné',
+    desc: 'Un collecteur a accepté de récupérer ton colis.',
+    timeKey: 'acceptedAt'
+  },
+  {
+    key: 'collected',
+    icon: '🚶',
+    doneIcon: '✓',
+    label: 'Colis collecté',
+    desc: 'Le collecteur a récupéré ton colis et l\'a déposé au point relais.',
+    timeKey: 'doneAt'
+  },
+  {
+    key: 'transit',
+    icon: '🚚',
+    doneIcon: '✓',
+    label: 'En transit',
+    desc: 'Ton colis est pris en charge par le transporteur.',
+    timeKey: null
+  },
+  {
+    key: 'delivered',
+    icon: '🎉',
+    doneIcon: '✓',
+    label: 'Livré',
+    desc: 'Ton colis a été livré à destination.',
+    timeKey: null
+  }
+];
+
+// Ordre des statuts
+const STATUS_ORDER = { pending: 0, accepted: 1, collected: 2, transit: 3, delivered: 4 };
+
+function renderTimeline(shipment) {
+  const currentLevel = STATUS_ORDER[shipment.status] ?? 0;
+  const el = document.getElementById('timelineEl');
+
+  el.innerHTML = STEPS.map((step, i) => {
+    const stepLevel = i; // 0=created, 1=accepted, 2=collected, 3=transit, 4=delivered
+    const isDone = stepLevel < currentLevel;
+    const isActive = stepLevel === currentLevel;
+    const isPending = stepLevel > currentLevel;
+
+    const cls = isDone ? 'done' : isActive ? 'active' : 'pending';
+    const dotContent = isDone ? '✓' : step.icon;
+    const time = step.timeKey && shipment[step.timeKey] ? formatDate(shipment[step.timeKey]) : '';
+
+    return `
+      <div class="tl-item ${cls}">
+        <div class="tl-dot">${dotContent}</div>
+        <div class="tl-content">
+          <div class="tl-label">${step.label}</div>
+          <div class="tl-desc">${step.desc}</div>
+          ${time ? `<div class="tl-time">${time}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderStatus(status) {
+  const pill = document.getElementById('r-status-pill');
+  const text = document.getElementById('r-status-text');
+  const map = {
+    pending:   { cls: 's-pending',   label: 'En attente' },
+    accepted:  { cls: 's-accepted',  label: 'Collecteur assigné' },
+    collected: { cls: 's-transit',   label: 'Déposé au relais' },
+    transit:   { cls: 's-transit',   label: 'En transit' },
+    delivered: { cls: 's-delivered', label: '✓ Livré' }
+  };
+  const s = map[status] || map.pending;
+  pill.className = 'status-pill ' + s.cls;
+  text.textContent = s.label;
+}
+
+window.searchTracking = async () => {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) { showToast('⚠️ Entre un code de suivi'); return; }
+
+  document.getElementById('resultEl').classList.remove('visible');
+  document.getElementById('errorEl').style.display = 'none';
+  document.getElementById('loadingEl').style.display = 'block';
+
+  try {
+    let found = null;
+    let foundKey = null;
+    let source = null; // 'mission' ou 'shipment'
+
+    // 1. Cherche dans all_missions par code GS ou numéro transporteur
+    const missSnap = await get(ref(db, 'all_missions'));
+    if (missSnap.exists()) {
+      for (const [key, val] of Object.entries(missSnap.val())) {
+        const gsCode = 'GS-' + key.slice(-8).toUpperCase();
+        if (
+          gsCode === query.toUpperCase() ||
+          (val.trackingNumber && val.trackingNumber === query)
+        ) {
+          found = val;
+          foundKey = key;
+          source = 'mission';
+          break;
+        }
+      }
+    }
+
+    document.getElementById('loadingEl').style.display = 'none';
+
+    if (!found) {
+      document.getElementById('errorEl').style.display = 'block';
+      document.getElementById('errorTitle').textContent = 'Colis introuvable';
+      document.getElementById('errorSub').textContent = `Aucun colis trouvé pour "${query}". Vérifie le code et réessaie.`;
+      return;
+    }
+
+    // Remplir les infos
+    const gsCode = 'GS-' + foundKey.slice(-8).toUpperCase();
+    document.getElementById('r-code').textContent = gsCode;
+    document.getElementById('r-recipient').textContent = found.recipient || '—';
+    document.getElementById('r-carrier').textContent = (found.carrier || 'Mondial Relay') + ' · ' + (found.weight || '?') + ' kg';
+    document.getElementById('r-weight').textContent = (found.weight || '?') + ' kg';
+    document.getElementById('r-platform').textContent = found.platform || 'Manuel';
+    document.getElementById('r-slot').textContent = found.slot || 'À définir';
+    document.getElementById('r-collector').textContent = found.collectorName || 'En recherche...';
+
+    renderStatus(found.status || 'pending');
+    renderTimeline(found);
+
+    // Bouton suivi transporteur
+    if (found.trackingUrl || found.trackingNumber) {
+      const url = found.trackingUrl || getTrackingUrl(found.carrier, found.trackingNumber);
+      const btn = document.getElementById('carrierTrackBtn');
+      btn.href = url;
+      const carrierName = (found.carrier || 'Mondial Relay').split(' ').slice(0,2).join(' ');
+      document.getElementById('carrierBtnLabel').textContent = `Suivre sur ${carrierName} →`;
+      if (found.trackingNumber) {
+        document.getElementById('carrierBtnSub').textContent = `N° ${found.trackingNumber}`;
+      }
+      document.getElementById('carrierTrackEl').style.display = 'block';
+    } else {
+      document.getElementById('carrierTrackEl').style.display = 'none';
+    }
+
+    document.getElementById('resultEl').classList.add('visible');
+
+    // Met à jour l'URL sans recharger
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set('id', gsCode);
+    window.history.replaceState({}, '', newUrl);
+
+  } catch(err) {
+    console.error(err);
+    document.getElementById('loadingEl').style.display = 'none';
+    document.getElementById('errorEl').style.display = 'block';
+    document.getElementById('errorTitle').textContent = 'Erreur de connexion';
+    document.getElementById('errorSub').textContent = 'Impossible de contacter la base de données. Vérifie ta connexion.';
+  }
+};
+
+// Auto-search si ?id= dans l'URL
+const urlParams = new URLSearchParams(window.location.search);
+const urlId = urlParams.get('id') || urlParams.get('tracking');
+if (urlId) {
+  document.getElementById('searchInput').value = urlId;
+  window.searchTracking();
+}
+</script>
+
+</body>
+</html>
