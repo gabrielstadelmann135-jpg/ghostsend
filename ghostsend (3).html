@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostSend — Plus besoin d'aller au point relais</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&vault=true&intent=subscription&currency=EUR"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0d0d0d; --white: #fff;
+  --gray-50: #f8f8f8; --gray-100: #f0f0f0; --gray-200: #e4e4e4;
+  --gray-400: #9e9e9e; --gray-600: #555;
+  --green: #16a34a; --green-light: #dcfce7; --green-dark: #14532d;
+  --orange: #ea580c; --orange-light: #fff7ed;
+  --blue: #2563eb; --blue-light: #eff6ff;
+  --r: 18px; --r-sm: 12px; --r-lg: 26px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--white); color: var(--black); overflow-x: hidden; }
+h1,h2,h3 { font-family: 'Fredoka', sans-serif; }
+
+/* ─── NAV ─── */
+nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255,255,255,.95); backdrop-filter: blur(14px); border-bottom: 1.5px solid var(--gray-200); height:66px; display:flex; align-items:center; justify-content:space-between; padding:0 32px; }
+.nav-brand { font-family:'Fredoka',sans-serif; font-size:26px; font-weight:700; color:var(--black); text-decoration:none; display:flex; align-items:center; gap:10px; }
+.nav-links { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.nav-links a { font-size:14px; font-weight:700; color:var(--gray-600); text-decoration:none; padding:8px 14px; border-radius:10px; transition:.2s; }
+.nav-links a:hover { background:var(--gray-100); color:var(--black); }
+
+/* ─── BUTTONS ─── */
+.btn { display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:var(--r-sm); font-family:'Nunito',sans-serif; font-size:15px; font-weight:700; text-decoration:none; cursor:pointer; border:none; transition:.2s; }
+.btn-black { background:var(--black); color:white; }
+.btn-black:hover { background:#222; transform:translateY(-1px); }
+.btn-outline { background:white; color:var(--black); border:2px solid var(--black); }
+.btn-outline:hover { background:var(--gray-100); }
+.btn-green { background:var(--green); color:white; }
+.btn-green:hover { background:#15803d; transform:translateY(-1px); }
+.btn-orange { background:var(--orange); color:white; }
+.btn-orange:hover { background:#c2410c; }
+.btn-lg { padding:15px 30px; font-size:17px; border-radius:var(--r); }
+.btn-white { background:white; color:var(--black); }
+.btn-ghost-out { background:transparent; color:white; border:2px solid rgba(255,255,255,.4); }
+.btn-ghost-out:hover { border-color:white; }
+
+/* ─── PAGES ─── */
+.page { display:none; min-height:100vh; padding-top:66px; }
+.page.active { display:block; }
+
+/* ─── HERO ─── */
+.hero { min-height:calc(100vh - 66px); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 24px; background:var(--white); position:relative; overflow:hidden; }
+.hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% 0%, #f5f5f5 0%, transparent 70%); }
+.hero-tag { display:inline-flex; align-items:center; gap:8px; background:var(--gray-100); border:1.5px solid var(--gray-200); border-radius:100px; padding:7px 18px; font-size:13px; font-weight:700; color:var(--gray-600); margin-bottom:28px; }
+.hero h1 { font-family:'Fredoka',sans-serif; font-size:clamp(52px,7vw,96px); font-weight:700; line-height:1.05; max-width:900px; margin-bottom:20px; }
+.hero h1 em { font-style:normal; position:relative; }
+.hero h1 em::after { content:''; position:absolute; left:0; right:0; bottom:3px; height:5px; background:var(--black); border-radius:3px; opacity:.12; }
+.hero-sub { font-size:19px; color:var(--gray-600); max-width:540px; line-height:1.65; margin-bottom:40px; font-weight:500; }
+.hero-actions { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-bottom:64px; }
+.hero-stats { display:flex; gap:0; background:var(--gray-50); border:1.5px solid var(--gray-200); border-radius:var(--r-lg); overflow:hidden; }
+.h-stat { padding:24px 36px; text-align:center; border-right:1.5px solid var(--gray-200); }
+.h-stat:last-child { border-right:none; }
+.h-stat-num { font-family:'Fredoka',sans-serif; font-size:32px; font-weight:700; }
+.h-stat-label { font-size:13px; font-weight:600; color:var(--gray-400); margin-top:2px; }
+
+/* ─── SECTIONS ─── */
+.section { padding:90px 40px; max-width:1100px; margin:0 auto; }
+.section-tag { display:inline-block; background:var(--black); color:white; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:5px 14px; border-radius:100px; margin-bottom:16px; }
+.section-title { font-family:'Fredoka',sans-serif; font-size:clamp(32px,4vw,52px); font-weight:700; line-height:1.1; margin-bottom:14px; }
+.section-sub { font-size:17px; color:var(--gray-600); line-height:1.6; max-width:520px; }
+
+/* ─── HOW STEPS ─── */
+.how-steps { display:flex; flex-direction:column; gap:0; margin-top:52px; }
+.how-step { display:grid; grid-template-columns:80px 1fr; gap:24px; align-items:start; padding:32px 0; border-bottom:1.5px solid var(--gray-100); }
+.how-step:last-child { border-bottom:none; }
+.step-circle { width:64px; height:64px; border-radius:50%; background:var(--black); color:white; font-family:'Fredoka',sans-serif; font-size:28px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.step-content h3 { font-family:'Fredoka',sans-serif; font-size:24px; font-weight:700; margin-bottom:8px; }
+.step-content p { font-size:15px; color:var(--gray-600); line-height:1.6; }
+.step-tag { display:inline-block; font-size:12px; font-weight:700; padding:3px 10px; border-radius:100px; margin-bottom:10px; }
+.step-tag-orange { background:var(--orange-light); color:var(--orange); }
+.step-tag-green { background:var(--green-light); color:var(--green); }
+.step-tag-blue { background:var(--blue-light); color:var(--blue); }
+
+/* ─── PRICING ─── */
+.pricing-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:22px; margin-top:52px; }
+.pricing-card { background:white; border:2px solid var(--gray-200); border-radius:var(--r-lg); padding:34px 30px; position:relative; transition:.25s; }
+.pricing-card:hover { transform:translateY(-4px); box-shadow:0 20px 40px rgba(0,0,0,.07); }
+.pricing-card.featured { border-color:var(--black); }
+.pricing-badge { position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:var(--black); color:white; font-size:11px; font-weight:800; padding:4px 18px; border-radius:100px; white-space:nowrap; text-transform:uppercase; letter-spacing:.05em; }
+.pricing-name { font-family:'Fredoka',sans-serif; font-size:26px; font-weight:700; margin-bottom:6px; }
+.pricing-price { display:flex; align-items:baseline; gap:4px; margin:14px 0; }
+.pricing-amount { font-family:'Fredoka',sans-serif; font-size:48px; font-weight:700; }
+.pricing-period { font-size:15px; color:var(--gray-400); font-weight:600; }
+.pricing-desc { font-size:14px; color:var(--gray-600); margin-bottom:22px; line-height:1.5; }
+.pricing-features { list-style:none; display:flex; flex-direction:column; gap:9px; margin-bottom:28px; }
+.pricing-features li { display:flex; align-items:center; gap:9px; font-size:14px; font-weight:600; }
+.pricing-features li::before { content:'✓'; width:20px; height:20px; background:var(--green-light); color:var(--green-dark); border-radius:50%; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.pricing-features li.no::before { content:'✕'; background:var(--gray-100); color:var(--gray-400); }
+.pricing-features li.no { color:var(--gray-400); }
+.paypal-zone { min-height:46px; }
+
+/* ─── ALGO ─── */
+.algo-panel { background:var(--gray-50); border:2px solid var(--gray-200); border-radius:var(--r-lg); padding:32px; margin-top:48px; }
+.algo-inputs { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:22px; }
+.algo-btn { background:var(--black); color:white; border:none; border-radius:var(--r-sm); padding:14px 28px; font-family:'Nunito',sans-serif; font-size:16px; font-weight:700; cursor:pointer; transition:.2s; }
+.algo-btn:hover { background:#333; }
+.transporter-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-top:24px; }
+.t-card { background:white; border:2px solid var(--gray-200); border-radius:var(--r); padding:20px 16px; text-align:center; transition:.2s; position:relative; }
+.t-card.best { border-color:var(--green); }
+.t-best-label { position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:var(--green); color:white; font-size:10px; font-weight:800; padding:3px 12px; border-radius:100px; white-space:nowrap; text-transform:uppercase; }
+.t-icon { font-size:30px; margin-bottom:8px; }
+.t-name { font-family:'Fredoka',sans-serif; font-size:18px; font-weight:700; }
+.t-price { font-size:22px; font-weight:800; margin:6px 0; }
+.t-delay { font-size:12px; color:var(--gray-400); font-weight:600; }
+.t-margin { font-size:11px; color:var(--gray-400); margin-top:6px; }
+.t-stars { color:#f59e0b; font-size:13px; margin-top:4px; }
+
+/* ─── PARTNER SECTION ─── */
+.partner-dark { background:var(--black); color:white; padding:90px 40px; position:relative; overflow:hidden; }
+.partner-dark::before { content:'👻'; position:absolute; right:-30px; top:-30px; font-size:280px; opacity:.04; }
+.partner-inner { max-width:1100px; margin:0 auto; }
+.partner-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:18px; margin-top:44px; }
+.partner-card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:var(--r); padding:26px 22px; transition:.25s; }
+.partner-card:hover { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.25); }
+.pc-icon { font-size:30px; margin-bottom:14px; }
+.pc-earn { font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; color:white; margin-bottom:6px; }
+.pc-desc { font-size:14px; color:rgba(255,255,255,.55); line-height:1.6; }
+.partner-pills { display:flex; flex-wrap:wrap; gap:12px; margin-top:40px; }
+.partner-pill { display:flex; align-items:center; gap:7px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:100px; padding:9px 18px; font-size:13px; font-weight:600; color:white; }
+.partner-pill::before { content:'✓'; font-weight:800; }
+
+/* ─── FAQ ─── */
+.faq-item { border-bottom:1.5px solid var(--gray-100); }
+.faq-question { display:flex; justify-content:space-between; align-items:center; padding:20px 0; cursor:pointer; font-size:16px; font-weight:700; gap:16px; }
+.faq-question:hover { color:var(--gray-600); }
+.faq-icon { font-size:20px; transition:.3s; flex-shrink:0; }
+.faq-answer { font-size:14px; color:var(--gray-600); line-height:1.7; max-height:0; overflow:hidden; transition:.3s; }
+.faq-answer.open { max-height:300px; padding-bottom:20px; }
+.faq-icon.open { transform:rotate(45deg); }
+
+/* ─── MODALS ─── */
+.overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.55); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:20px; }
+.overlay.open { display:flex; }
+.modal { background:white; border-radius:var(--r-lg); padding:44px 38px; max-width:440px; width:100%; position:relative; animation:mIn .3s ease; max-height:90vh; overflow-y:auto; }
+.modal-lg { max-width:560px; }
+@keyframes mIn { from{opacity:0;transform:scale(.95) translateY(10px);}to{opacity:1;transform:none;} }
+.modal-x { position:absolute; top:14px; right:14px; background:var(--gray-100); border:none; cursor:pointer; width:34px; height:34px; border-radius:50%; font-size:17px; display:flex; align-items:center; justify-content:center; transition:.2s; }
+.modal-x:hover { background:var(--gray-200); }
+.modal-title { font-family:'Fredoka',sans-serif; font-size:24px; font-weight:700; text-align:center; margin-bottom:6px; }
+.modal-sub { text-align:center; color:var(--gray-400); font-size:14px; margin-bottom:28px; }
+
+/* TABS */
+.tabs { display:flex; background:var(--gray-100); border-radius:10px; padding:4px; gap:4px; margin-bottom:24px; }
+.tab { flex:1; padding:9px; border:none; background:none; cursor:pointer; font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; border-radius:8px; transition:.2s; color:var(--gray-400); }
+.tab.active { background:white; color:var(--black); box-shadow:0 1px 4px rgba(0,0,0,.08); }
+
+/* FORMS */
+.fg { margin-bottom:14px; }
+.fl { display:block; font-size:13px; font-weight:700; color:var(--black); margin-bottom:5px; }
+.fi { width:100%; padding:11px 14px; border:2px solid var(--gray-200); border-radius:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--black); outline:none; background:white; transition:.2s; }
+.fi:focus { border-color:var(--black); }
+.divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--gray-200); }
+.divider span { font-size:12px; color:var(--gray-400); font-weight:600; }
+
+/* DASHBOARD */
+.dash { padding:36px; max-width:1200px; margin:0 auto; }
+.dash-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
+.dash-welcome { font-family:'Fredoka',sans-serif; font-size:34px; font-weight:700; }
+.dash-sub { color:var(--gray-400); font-size:14px; margin-top:4px; }
+.dash-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
+.kpi { background:var(--gray-50); border:1.5px solid var(--gray-200); border-radius:var(--r); padding:20px 18px; }
+.kpi-label { font-size:11px; font-weight:700; color:var(--gray-400); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+.kpi-value { font-family:'Fredoka',sans-serif; font-size:32px; font-weight:700; }
+.kpi-sub { font-size:12px; color:var(--gray-400); margin-top:3px; }
+.dash-grid { display:grid; grid-template-columns:1fr 360px; gap:22px; align-items:start; }
+.panel { background:var(--gray-50); border:1.5px solid var(--gray-200); border-radius:var(--r); padding:26px; }
+.panel-title { font-family:'Fredoka',sans-serif; font-size:20px; font-weight:700; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+
+/* LIVE BADGE */
+.live-badge { display:inline-flex; align-items:center; gap:5px; background:var(--green-light); color:var(--green-dark); font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
+.live-dot { width:5px; height:5px; background:var(--green); border-radius:50%; animation:blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+
+/* PLAN BADGES */
+.plan-badge { display:inline-flex; align-items:center; font-size:12px; font-weight:700; padding:4px 12px; border-radius:100px; }
+.plan-free { background:var(--gray-100); color:var(--gray-600); }
+.plan-pro { background:#fef3c7; color:#92400e; }
+.plan-business { background:#ede9fe; color:#5b21b6; }
+
+/* INTEGRATIONS */
+.int-list { display:flex; flex-direction:column; gap:10px; }
+.int-item { display:flex; align-items:center; gap:12px; background:white; border:1.5px solid var(--gray-200); border-radius:10px; padding:13px 14px; transition:.2s; }
+.int-item:hover { border-color:var(--black); }
+.int-logo { width:42px; height:42px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.int-info { flex:1; min-width:0; }
+.int-name { font-weight:700; font-size:14px; }
+.int-status { font-size:12px; color:var(--gray-400); margin-top:1px; }
+.dot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:4px; }
+.dot-g { background:var(--green); }
+.dot-off { background:var(--gray-200); }
+.conn-btn { padding:6px 13px; border-radius:8px; font-size:12px; font-weight:700; border:2px solid; cursor:pointer; transition:.2s; font-family:'Nunito',sans-serif; }
+.conn-btn.on { border-color:var(--green); color:var(--green-dark); background:none; }
+.conn-btn.off { border-color:var(--black); color:var(--black); background:none; }
+.conn-btn.off:hover { background:var(--black); color:white; }
+
+/* SHIPMENTS TABLE */
+.ship-table { width:100%; border-collapse:collapse; }
+.ship-table th { text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-400); padding:0 0 10px; border-bottom:1.5px solid var(--gray-200); }
+.ship-table td { padding:13px 0; border-bottom:1px solid var(--gray-100); font-size:13px; }
+.ship-table tr:last-child td { border-bottom:none; }
+.badge { display:inline-block; padding:3px 9px; border-radius:100px; font-size:11px; font-weight:700; }
+.b-transit { background:#fef3c7; color:#92400e; }
+.b-delivered { background:var(--green-light); color:var(--green-dark); }
+.b-pending { background:var(--gray-100); color:var(--gray-600); }
+.b-accepted { background:var(--blue-light); color:var(--blue); }
+
+/* PICKUP CARDS */
+.pickup-list { display:flex; flex-direction:column; gap:12px; }
+.pickup-card { background:white; border:2px solid var(--gray-200); border-radius:var(--r); padding:18px; transition:.2s; }
+.pickup-card:hover { border-color:var(--gray-400); }
+.pickup-card.new { border-color:var(--orange); background:var(--orange-light); }
+.pickup-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+.pickup-addr { font-weight:700; font-size:15px; }
+.pickup-meta { font-size:12px; color:var(--gray-600); margin-top:2px; }
+.pickup-earn { font-family:'Fredoka',sans-serif; font-size:20px; font-weight:700; color:var(--green-dark); }
+.pickup-actions { display:flex; gap:8px; margin-top:12px; }
+.pickup-dist { font-size:12px; color:var(--gray-400); font-weight:600; margin-top:4px; }
+
+/* SCHEDULE MODAL */
+.time-slots { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+.time-slot { background:var(--gray-100); border:2px solid var(--gray-200); border-radius:10px; padding:10px; text-align:center; cursor:pointer; transition:.2s; font-size:13px; font-weight:700; }
+.time-slot:hover { border-color:var(--black); background:white; }
+.time-slot.selected { background:var(--black); color:white; border-color:var(--black); }
+
+/* API KEY */
+.api-wrap { position:relative; }
+.api-wrap .fi { font-family:monospace; font-size:12px; padding-right:44px; }
+.api-eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:15px; color:var(--gray-400); }
+
+/* TOAST */
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--black); color:white; padding:13px 22px; border-radius:12px; font-size:14px; font-weight:600; z-index:999; transition:.3s; white-space:nowrap; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+.radius-input { width:100%; accent-color:var(--black); }
+.empty-state { text-align:center; padding:44px 20px; }
+.empty-emoji { font-size:44px; margin-bottom:14px; }
+.empty-title { font-family:'Fredoka',sans-serif; font-size:20px; font-weight:700; margin-bottom:6px; }
+.empty-sub { color:var(--gray-400); font-size:14px; }
+.spinner { width:36px; height:36px; border:3px solid var(--gray-200); border-top-color:var(--black); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ─── FOOTER ─── */
+.footer-main { background:var(--black); color:white; padding:80px 40px 40px; }
+.footer-grid { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:60px; }
+.footer-brand { font-family:'Fredoka',sans-serif; font-size:28px; font-weight:700; margin-bottom:14px; }
+.footer-desc { font-size:14px; color:rgba(255,255,255,.5); line-height:1.7; max-width:280px; }
+.footer-col h4 { font-family:'Fredoka',sans-serif; font-size:16px; font-weight:700; margin-bottom:16px; color:white; }
+.footer-col a { display:block; font-size:14px; color:rgba(255,255,255,.5); text-decoration:none; margin-bottom:10px; transition:.2s; }
+.footer-col a:hover { color:white; }
+.footer-bottom { max-width:1100px; margin:0 auto; padding-top:32px; border-top:1px solid rgba(255,255,255,.1); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; }
+.footer-bottom p { font-size:13px; color:rgba(255,255,255,.35); }
+
+/* Burger animation */
+.nav-burger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.nav-burger.open span:nth-child(2) { opacity:0; }
+.nav-burger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+.nav-burger span { transition:transform .2s, opacity .2s; }
+
+/* ═══════════════════════════════════════
+   DESKTOP
+   ═══════════════════════════════════════ */
+@media (min-width: 769px) {
+  .nav-burger { display: none !important; }
+  #mobileMenu { display: none !important; }
+  .mobile-bottom-nav { display: none !important; }
+  
+  /* Quand PAS connecté */
+  #navPublic { display: flex; }
+  #navAuth { display: none; }
+  
+  /* Quand connecté — auth-visible override le display:none du mobile */
+  #navAuth.auth-visible { display: flex !important; }
+  
+  /* Sur desktop connecté, cacher le burger */
+  #navPublic[style*="display: none"] ~ .nav-burger { display: none !important; }
+}
+/* ═══════════════════════════════════════
+   MOBILE
+   ═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  :root { --r: 14px; --r-lg: 20px; }
+
+  /* NAV */
+  nav { height: 56px; padding: 0 16px; }
+  .nav-brand { font-size: 22px; }
+  #navPublic { display: none !important; }
+  #navAuth { display: none !important; }
+  #navAuth.auth-visible { display: flex !important; gap: 6px; align-items: center; }
+  #navAuth.auth-visible .live-badge,
+  #navAuth.auth-visible .plan-badge,
+  #navAuth.auth-visible a[onclick*="dashboard"],
+  #navAuth.auth-visible a[onclick*="partenaire"] { display: none !important; }
+  #navAuth.auth-visible a[onclick*="doLogout"] { padding: 7px 14px; font-size: 13px; }
+  .nav-burger { display: flex !important; flex-direction: column; gap: 5px; cursor: pointer; padding: 6px; background: none; border: none; }
+  .nav-burger span { display: block; width: 22px; height: 2px; background: var(--black); border-radius: 2px; }
+
+  /* HERO */
+  .hero { padding: 36px 16px 44px; min-height: auto; }
+  .hero h1 { font-size: clamp(34px, 10vw, 52px); }
+  .hero-sub { font-size: 15px; }
+  .hero-actions { flex-direction: column; width: 100%; gap: 10px; margin-bottom: 36px; }
+  .hero-actions .btn { width: 100%; justify-content: center; }
+  .hero-stats { flex-wrap: wrap; border-radius: var(--r); }
+  .h-stat { width: 50%; padding: 14px 10px; border-right: 1.5px solid var(--gray-200); border-bottom: 1.5px solid var(--gray-200); }
+  .h-stat:nth-child(2n) { border-right: none; }
+  .h-stat:nth-child(3), .h-stat:nth-child(4) { border-bottom: none; }
+  .h-stat-num { font-size: 22px; }
+
+  /* SECTIONS */
+  .section { padding: 44px 16px; }
+  .section-title { font-size: clamp(24px, 7vw, 34px); }
+  .partner-dark { padding: 44px 16px; }
+  .partner-cards { grid-template-columns: 1fr; }
+  .partner-pills { gap: 8px; }
+  .partner-pill { font-size: 12px; padding: 7px 14px; }
+
+  /* PLATEFORMES */
+  .hero + section { padding: 40px 16px !important; }
+  .hero + section div[style*="gap:48px"] { gap: 24px !important; }
+  .hero + section span { font-size: 20px !important; }
+
+  /* AVANTAGES */
+  #page-home > section:nth-child(3) { padding: 44px 16px !important; }
+
+  /* TÉMOIGNAGES */
+  #page-home > section[style*="gray-50"] { padding: 44px 16px !important; }
+
+  /* CRÉATEUR section */
+  #page-home > section:last-of-type { padding: 44px 16px !important; }
+  #page-home div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; gap: 24px !important; }
+
+  /* FOOTER */
+  .footer-main { padding: 44px 16px 28px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 28px; margin-bottom: 36px; }
+  .footer-desc { max-width: 100%; }
+  .footer-bottom { flex-direction: column; text-align: center; gap: 8px; }
+  .footer-bottom p { font-size: 12px; }
+
+  /* PRICING */
+  .pricing-grid { grid-template-columns: 1fr; gap: 16px; }
+  .pricing-card { padding: 26px 18px; }
+  .pricing-amount { font-size: 40px; }
+
+  /* ALGO */
+  .algo-panel { padding: 20px 16px; }
+  .algo-inputs { grid-template-columns: 1fr; gap: 10px; }
+  .transporter-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .algo-btn { width: 100%; padding: 13px; }
+  .t-card { padding: 14px 10px; }
+
+  /* HOW STEPS */
+  .how-step { grid-template-columns: 50px 1fr; gap: 12px; padding: 20px 0; }
+  .step-circle { width: 44px; height: 44px; font-size: 20px; }
+  .step-content h3 { font-size: 17px; }
+  .step-content p { font-size: 14px; }
+
+  /* FAQ */
+  .faq-question { font-size: 15px; padding: 16px 0; }
+
+  /* FORMS */
+  #page-partenaire-form > div { padding: 36px 16px 60px !important; }
+  #page-partenaire-form div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+  #page-contact > div { padding: 36px 16px 60px !important; }
+  #page-contact div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+  #page-createur > div { padding: 36px 16px 60px !important; }
+  #page-createur div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+
+  /* DASHBOARD */
+  .dash { padding: 16px 16px 80px; }
+  .dash-header { flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .dash-welcome { font-size: 22px; }
+  .dash-sub { font-size: 13px; }
+  .dash-actions { width: 100%; flex-wrap: wrap; }
+  .dash-actions .btn { flex: 1; min-width: 120px; justify-content: center; font-size: 12px; padding: 9px 10px; }
+  .kpis { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi { padding: 12px 10px; }
+  .kpi-value { font-size: 22px; }
+  .kpi-label { font-size: 10px; }
+  .kpi-sub { font-size: 11px; }
+  .dash-grid { grid-template-columns: 1fr; gap: 14px; }
+  .panel { padding: 16px 12px; }
+  .panel-title { font-size: 17px; margin-bottom: 14px; }
+
+  /* SHIPMENTS TABLE → CARDS */
+  .ship-table thead { display: none; }
+  .ship-table, .ship-table tbody, .ship-table tr, .ship-table td { display: block; width: 100%; }
+  .ship-table tr { background: white; border: 1.5px solid var(--gray-200); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+  .ship-table td { padding: 2px 0; border: none; font-size: 13px; }
+  .ship-table td:first-child { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+
+  /* PICKUP CARDS */
+  .pickup-card { padding: 12px; }
+  .pickup-actions { flex-direction: column; gap: 6px; }
+  .pickup-actions .btn { width: 100%; justify-content: center; font-size: 13px; padding: 9px 12px; }
+  .pickup-earn { font-size: 18px; }
+
+  /* INTÉGRATIONS */
+  .int-item { flex-wrap: wrap; gap: 8px; }
+  .int-logo { width: 36px; height: 36px; }
+
+  /* MODALS → BOTTOM SHEET */
+  .overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    border-radius: 22px 22px 0 0;
+    max-width: 100%;
+    width: 100%;
+    max-height: 90vh;
+    padding: 10px 18px 32px;
+    animation: slideUp .3s ease;
+  }
+  .modal::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    margin: 8px auto 18px;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  .modal-lg { max-width: 100%; }
+  .modal-title { font-size: 20px; }
+  #shipmentModal div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+
+  /* TIME SLOTS */
+  .time-slots { grid-template-columns: repeat(2, 1fr); }
+
+  /* PARTNER DASH */
+  .radius-input { width: 80px; }
+
+  /* BOTTOM NAV */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    background: rgba(255,255,255,.97);
+    backdrop-filter: blur(14px);
+    border-top: 1.5px solid var(--gray-200);
+    height: 58px;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px;
+  }
+  .mobile-bottom-nav a {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px; font-size: 9px; font-weight: 700;
+    color: var(--gray-400); text-decoration: none;
+    padding: 5px 8px; border-radius: 10px; transition: .15s;
+    flex: 1; justify-content: center;
+  }
+  .mobile-bottom-nav a .nav-icon { font-size: 19px; }
+  .mobile-bottom-nav a.active { color: var(--black); background: var(--gray-100); }
+
+  /* TOAST */
+  .toast { bottom: 68px; width: calc(100% - 32px); text-align: center; white-space: normal; }
+}
+
+/* Touch devices */
+@media (hover: none) {
+  .btn:hover, .pricing-card:hover, .partner-card:hover,
+  .pickup-card:hover, .int-item:hover, .t-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Logo dans la bottom nav */
+.mobile-bottom-nav a:first-child img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+.mobile-bottom-nav a:first-child {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--black);
+}
+
+
+
+
+
+  
+</style>
+</head>
+<body>
+
+<!-- ══════════ NAV ══════════ -->
+<nav>
+  <a class="nav-brand" href="#" onclick="showPage('home');return false;">
+    <img src="logo.jpg" alt="GhostSend" style="width:38px;height:38px;object-fit:contain;border-radius:8px;" onerror="this.style.display='none'">
+    GhostSend
+  </a>
+  <div class="nav-links" id="navPublic">
+    <a href="#" onclick="showPage('home');closeMobileMenu();return false;">Accueil</a>
+    <a href="#" onclick="showPage('comment');closeMobileMenu();return false;">Comment ça marche</a>
+    <a href="#" onclick="showPage('tarifs');closeMobileMenu();return false;">Tarifs</a>
+    <a href="#" onclick="showPage('algo');closeMobileMenu();return false;">Transporteurs</a>
+    <a href="#" onclick="showPage('faq');closeMobileMenu();return false;">FAQ</a>
+    <a href="#" onclick="showPage('partenaire-form');closeMobileMenu();return false;">Devenir partenaire</a>
+    <a href="#" onclick="openAuth('login');closeMobileMenu();" class="btn btn-outline" style="padding:8px 16px;font-size:14px;">Se connecter</a>
+    <a href="#" onclick="openAuth('signup');closeMobileMenu();" class="btn btn-black" style="padding:8px 16px;font-size:14px;">Commencer →</a>
+  </div>
+  <div class="nav-links" id="navAuth" style="display:none;">
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+    <span id="navPlan" class="plan-badge plan-free">Gratuit</span>
+    <a href="#" onclick="showPage('dashboard');return false;" class="btn btn-outline" style="padding:8px 16px;font-size:13px;">Dashboard</a>
+    <a href="#" onclick="showPage('partenaire-dash');return false;" class="btn btn-outline" style="padding:8px 16px;font-size:13px;">Espace partenaire</a>
+    <a href="#" onclick="doLogout()" class="btn btn-black" style="padding:8px 16px;font-size:13px;">Déconnexion</a>
+  </div>
+  <button class="nav-burger" id="burgerBtn" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MENU MOBILE -->
+<div id="mobileMenu" style="display:none;position:fixed;top:56px;left:0;right:0;z-index:199;background:white;border-bottom:1.5px solid var(--gray-200);padding:16px;flex-direction:column;gap:8px;">
+  <a href="#" onclick="showPage('home');closeMobileMenu();return false;" style="padding:12px 16px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;color:var(--black);background:var(--gray-50);">🏠 Accueil</a>
+  <a href="#" onclick="showPage('comment');closeMobileMenu();return false;" style="padding:12px 16px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;color:var(--black);">❓ Comment ça marche</a>
+  <a href="#" onclick="showPage('tarifs');closeMobileMenu();return false;" style="padding:12px 16px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;color:var(--black);">💳 Tarifs</a>
+  <a href="#" onclick="showPage('algo');closeMobileMenu();return false;" style="padding:12px 16px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;color:var(--black);">🚚 Transporteurs</a>
+  <a href="#" onclick="showPage('faq');closeMobileMenu();return false;" style="padding:12px 16px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;color:var(--black);">💬 FAQ</a>
+  <a href="#" onclick="showPage('partenaire-form');closeMobileMenu();return false;" style="padding:12px 16px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;color:var(--black);">🤝 Devenir partenaire</a>
+  <div style="display:flex;gap:10px;margin-top:8px;">
+    <a href="#" onclick="openAuth('login');closeMobileMenu();" class="btn btn-outline" style="flex:1;justify-content:center;">Se connecter</a>
+    <a href="#" onclick="openAuth('signup');closeMobileMenu();" class="btn btn-black" style="flex:1;justify-content:center;">Commencer →</a>
+  </div>
+</div>
+
+<!-- ══════════ HOME ══════════ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;">
+      <div class="hero-tag">👻 Le Stripe des colis — version collaborative</div>
+      <h1>Plus besoin d'aller<br>au <em>point relais</em></h1>
+      <p style="font-size:17px;font-style:italic;color:var(--gray-400);margin-bottom:20px;">"Plus besoin d'aller au point relais. GhostSend s'en charge"</p>
+      <p class="hero-sub">Tu vends un objet ? GhostSend envoie une notification à quelqu'un déjà en déplacement près de chez toi. Il récupère ton colis et le dépose au relais. Simple, rapide, collaboratif.</p>
+      <div class="hero-actions">
+        <a href="#" class="btn btn-black btn-lg" onclick="openAuth('signup')">Envoyer mon colis →</a>
+        <a href="#" class="btn btn-outline btn-lg" onclick="showPage('comment');return false;">Voir comment ça marche</a>
+      </div>
+      <div class="hero-stats">
+        <div class="h-stat"><div class="h-stat-num">3 étapes</div><div class="h-stat-label">pour envoyer</div></div>
+        <div class="h-stat"><div class="h-stat-num">0 déplacement</div><div class="h-stat-label">pour le vendeur</div></div>
+        <div class="h-stat"><div class="h-stat-num">+0,80€</div><div class="h-stat-label">par colis collecté</div></div>
+        <div class="h-stat"><div class="h-stat-num">100%</div><div class="h-stat-label">collaboratif</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plateformes -->
+  <section style="padding:60px 40px;border-top:1.5px solid var(--gray-200);background:var(--gray-50);">
+    <div style="max-width:900px;margin:0 auto;text-align:center;">
+      <p style="font-size:12px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.08em;margin-bottom:28px;">Plateformes compatibles</p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap;">
+        <span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;opacity:.3;">Vinted</span>
+        <span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;opacity:.3;">eBay</span>
+        <span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;opacity:.3;">Leboncoin</span>
+        <span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;opacity:.3;">Shopify</span>
+        <span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;opacity:.2;font-style:italic;">+ bientôt</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Avantages -->
+  <section style="padding:90px 40px;">
+    <div style="max-width:1100px;margin:0 auto;">
+      <div class="section-tag">Pourquoi GhostSend ?</div>
+      <h2 class="section-title">La solution collaborative<br>que tout le monde attendait</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:48px;">
+        <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:28px;">
+          <div style="font-size:32px;margin-bottom:14px;">🚫</div>
+          <h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;">Zéro déplacement</h3>
+          <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Plus besoin d'aller au point relais. Quelqu'un déjà en déplacement s'en charge pour toi.</p>
+        </div>
+        <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:28px;">
+          <div style="font-size:32px;margin-bottom:14px;">⛽</div>
+          <h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;">Économies de carburant</h3>
+          <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">On optimise les trajets existants. Moins de voitures sur la route, moins de CO₂.</p>
+        </div>
+        <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:28px;">
+          <div style="font-size:32px;margin-bottom:14px;">⏱️</div>
+          <h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;">Gain de temps</h3>
+          <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Tu vends, on s'occupe du reste. Étiquette générée, collecteur notifié, colis déposé.</p>
+        </div>
+        <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:28px;">
+          <div style="font-size:32px;margin-bottom:14px;">🤝</div>
+          <h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;">Solution collaborative</h3>
+          <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Une communauté de collecteurs rémunérés qui rentabilisent leurs déplacements du quotidien.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Partner dark -->
+  <section class="partner-dark">
+    <div class="partner-inner">
+      <div class="section-tag" style="background:white;color:var(--black);">Réseau de partenaires</div>
+      <h2 class="section-title" style="color:white;margin-top:14px;">Collecte des colis et gagne de l'argent 👻</h2>
+      <p style="font-size:17px;color:rgba(255,255,255,.6);max-width:560px;line-height:1.6;margin-top:10px;">Tu es déjà en déplacement ? Accepte une mission GhostSend sur ta route et touche une commission à chaque colis déposé au relais.</p>
+      <div class="partner-cards">
+        <div class="partner-card"><div class="pc-icon">🚶</div><div class="pc-earn">+0,80€ / colis</div><p class="pc-desc">Collecte à pied — tu passes devant chez le vendeur et tu déposes au point relais le plus proche.</p></div>
+        <div class="partner-card"><div class="pc-icon">🚗</div><div class="pc-earn">+1,50€ / colis</div><p class="pc-desc">Collecte en voiture — tu as une tournée ou un trajet prévu, tu acceptes une mission sur ta route.</p></div>
+        <div class="partner-card"><div class="pc-icon">🏪</div><div class="pc-earn">Commission mensuelle</div><p class="pc-desc">Point relais officiel GhostSend — les vendeurs peuvent déposer leurs colis dans ton commerce.</p></div>
+        <div class="partner-card"><div class="pc-icon">🛵</div><div class="pc-earn">+2,00€ / colis</div><p class="pc-desc">Collecte express — livraison prioritaire dans les 2h avec ton deux-roues. Idéal en ville.</p></div>
+      </div>
+      <div class="partner-pills">
+        <div class="partner-pill">Paiement mensuel garanti</div>
+        <div class="partner-pill">Zéro investissement</div>
+        <div class="partner-pill">Tu choisis tes missions</div>
+        <div class="partner-pill">App dédiée partenaires</div>
+        <div class="partner-pill">Dashboard temps réel</div>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:48px;flex-wrap:wrap;">
+        <a href="#" class="btn btn-white btn-lg" onclick="showPage('partenaire-form');return false;">Rejoindre le réseau →</a>
+        <a href="#" class="btn btn-ghost-out btn-lg" onclick="showPage('tarifs');return false;">Voir les tarifs vendeurs</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Témoignages -->
+  <section style="padding:90px 40px;background:var(--gray-50);">
+    <div style="max-width:1100px;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:52px;">
+        <div class="section-tag">Ils nous font confiance</div>
+        <h2 class="section-title" style="margin-top:14px;">Ce que disent nos utilisateurs</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;">
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:var(--r-lg);padding:28px;">
+          <div style="color:#f59e0b;font-size:16px;margin-bottom:14px;">★★★★★</div>
+          <p style="font-size:15px;color:var(--gray-600);line-height:1.7;margin-bottom:18px;">"Je vends sur Vinted depuis 2 ans et GhostSend a changé ma vie. Plus besoin de courir au relais après le boulot !"</p>
+          <div style="display:flex;align-items:center;gap:10px;"><div style="width:38px;height:38px;background:var(--gray-200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;">👩</div><div><div style="font-weight:700;font-size:14px;">Sophie M.</div><div style="font-size:12px;color:var(--gray-400);">Vendeuse Vinted · Lyon</div></div></div>
+        </div>
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:var(--r-lg);padding:28px;">
+          <div style="color:#f59e0b;font-size:16px;margin-bottom:14px;">★★★★★</div>
+          <p style="font-size:15px;color:var(--gray-600);line-height:1.7;margin-bottom:18px;">"Je collecte 3-4 colis par semaine sur mon trajet boulot. Ça me rapporte environ 25€/mois sans effort !"</p>
+          <div style="display:flex;align-items:center;gap:10px;"><div style="width:38px;height:38px;background:var(--gray-200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;">👨</div><div><div style="font-weight:700;font-size:14px;">Thomas R.</div><div style="font-size:12px;color:var(--gray-400);">Collecteur · Paris</div></div></div>
+        </div>
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:var(--r-lg);padding:28px;">
+          <div style="color:#f59e0b;font-size:16px;margin-bottom:14px;">★★★★★</div>
+          <p style="font-size:15px;color:var(--gray-600);line-height:1.7;margin-bottom:18px;">"Concept génial et service impeccable. Le QR code de remise sécurise parfaitement les échanges."</p>
+          <div style="display:flex;align-items:center;gap:10px;"><div style="width:38px;height:38px;background:var(--gray-200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;">👩</div><div><div style="font-weight:700;font-size:14px;">Marie L.</div><div style="font-size:12px;color:var(--gray-400);">Vendeuse eBay · Bordeaux</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Créateur de contenu -->
+  <section style="padding:90px 40px;">
+    <div style="max-width:1100px;margin:0 auto;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;">
+        <div>
+          <div class="section-tag">Créateurs de contenu</div>
+          <h2 class="section-title" style="margin-top:14px;">Rejoins le programme créateurs GhostSend 🎬</h2>
+          <p style="font-size:16px;color:var(--gray-600);line-height:1.7;margin-bottom:28px;">Tu crées du contenu sur YouTube, TikTok ou Instagram ? Rejoins notre programme de partenariat créateur et génère des revenus en parlant de GhostSend à ta communauté.</p>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:32px;">
+            <div style="display:flex;align-items:center;gap:12px;"><div style="width:32px;height:32px;background:var(--black);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">1</div><div style="font-size:15px;font-weight:600;">Crée du contenu sur GhostSend</div></div>
+            <div style="display:flex;align-items:center;gap:12px;"><div style="width:32px;height:32px;background:var(--black);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">2</div><div style="font-size:15px;font-weight:600;">Partage ton lien de parrainage unique</div></div>
+            <div style="display:flex;align-items:center;gap:12px;"><div style="width:32px;height:32px;background:var(--black);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">3</div><div style="font-size:15px;font-weight:600;">Gagne une commission sur chaque inscription</div></div>
+          </div>
+          <a href="#" class="btn btn-black btn-lg" onclick="showPage('createur');return false;">Rejoindre le programme →</a>
+        </div>
+        <div style="background:var(--black);border-radius:var(--r-lg);padding:40px;color:white;text-align:center;">
+          <div style="font-size:60px;margin-bottom:20px;">🎥</div>
+          <div style="font-family:'Fredoka',sans-serif;font-size:36px;font-weight:700;margin-bottom:8px;">5€</div>
+          <div style="font-size:15px;color:rgba(255,255,255,.6);margin-bottom:24px;">par inscription générée</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:12px;font-size:14px;">✓ Lien de tracking unique</div>
+            <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:12px;font-size:14px;">✓ Dashboard statistiques</div>
+            <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:12px;font-size:14px;">✓ Paiement mensuel</div>
+            <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:12px;font-size:14px;">✓ Accès Pro offert</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer-main">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">👻 GhostSend</div>
+        <p class="footer-desc">La plateforme collaborative qui connecte vendeurs et collecteurs pour envoyer des colis sans se déplacer.</p>
+        <div style="display:flex;gap:12px;margin-top:24px;">
+          <a href="#" style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:16px;">📘</a>
+          <a href="#" style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:16px;">📸</a>
+          <a href="#" style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:16px;">🎵</a>
+          <a href="#" style="width:36px;height:36px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:16px;">▶️</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Produit</h4>
+        <a href="#" onclick="showPage('comment');return false;">Comment ça marche</a>
+        <a href="#" onclick="showPage('tarifs');return false;">Tarifs</a>
+        <a href="#" onclick="showPage('algo');return false;">Transporteurs</a>
+        <a href="#" onclick="showPage('faq');return false;">FAQ</a>
+      </div>
+      <div class="footer-col">
+        <h4>Partenaires</h4>
+        <a href="#" onclick="showPage('partenaire-form');return false;">Devenir collecteur</a>
+        <a href="#" onclick="showPage('createur');return false;">Programme créateurs</a>
+        <a href="#" onclick="showPage('partenaire-form');return false;">Point relais officiel</a>
+        <a href="#" onclick="showPage('contact');return false;">Nous contacter</a>
+      </div>
+      <div class="footer-col">
+        <h4>Légal</h4>
+        <a href="#" onclick="showPage('cgu');return false;">CGU</a>
+        <a href="#" onclick="showPage('confidentialite');return false;">Confidentialité</a>
+        <a href="#" onclick="showPage('mentions');return false;">Mentions légales</a>
+        <a href="#" onclick="showPage('contact');return false;">Support</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2024 GhostSend. Tous droits réservés.</p>
+      <p>📧 Ghost.send86@gmail.com &nbsp;·&nbsp; 🌐 www.ghostsend.fr</p>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════════ COMMENT ÇA MARCHE ══════════ -->
+<div class="page" id="page-comment">
+  <div class="section" style="max-width:800px;">
+    <div class="section-tag">Comment ça marche</div>
+    <h1 class="section-title">3 étapes pour envoyer ton colis sans bouger</h1>
+    <p class="section-sub">GhostSend connecte vendeurs et collecteurs déjà en déplacement. Simple comme envoyer un SMS.</p>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="step-circle">1</div>
+        <div class="step-content">
+          <div class="step-tag step-tag-orange">📦 Vendeur</div>
+          <h3>Prépare ton colis et génère ton étiquette</h3>
+          <p>Renseigne l'adresse de livraison sur GhostSend. Notre algorithme calcule le meilleur transporteur. <strong>Génère ton étiquette directement sur le site du transporteur</strong> (Mondial Relay, Colissimo…), imprime-la et colle-la sur ton colis. Une photo est prise lors de la collecte pour la traçabilité.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-circle">2</div>
+        <div class="step-content">
+          <div class="step-tag step-tag-blue">📅 Rendez-vous</div>
+          <h3>Choisis ton créneau de collecte</h3>
+          <p>GhostSend notifie les collecteurs dans ton périmètre. Tu choisis un créneau qui t'arrange. Le collecteur confirme sa venue. <strong>Un QR Code de remise est généré</strong> — le collecteur le scanne lors de la récupération pour valider la collecte.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-circle">3</div>
+        <div class="step-content">
+          <div class="step-tag step-tag-green">🚶 Collecteur</div>
+          <h3>Un collecteur dépose ton colis au relais</h3>
+          <p>Une personne déjà en déplacement récupère ton colis <strong>contre une petite rémunération</strong> et le dépose en point relais avec ton étiquette déjà collée. Tu reçois une notification quand ton colis est déposé. <strong>Zéro effort, zéro déplacement.</strong></p>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--black);color:white;border-radius:var(--r-lg);padding:32px;margin-top:48px;">
+      <h2 style="font-family:'Fredoka',sans-serif;font-size:28px;font-weight:700;margin-bottom:16px;">⚠️ Important pour les vendeurs</h2>
+      <p style="font-size:15px;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:14px;">Pour déposer ton colis au point relais, ton collecteur n'a besoin d'aucun code spécial — il suffit que <strong>l'étiquette soit déjà collée sur le colis</strong>. Le collecteur le dépose simplement au comptoir.</p>
+      <p style="font-size:15px;color:rgba(255,255,255,.7);line-height:1.7;">Génère ton étiquette directement sur <strong>mondialrelay.fr</strong>, <strong>colissimo.fr</strong> ou depuis ta plateforme de vente (Vinted, eBay, etc.) avant le passage du collecteur.</p>
+    </div>
+    <div style="text-align:center;margin-top:48px;">
+      <a href="#" class="btn btn-black btn-lg" onclick="openAuth('signup')">Créer mon compte gratuit →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ TARIFS ══════════ -->
+<div class="page" id="page-tarifs">
+  <div class="section">
+    <div style="text-align:center;">
+      <div class="section-tag">Tarifs</div>
+      <h1 class="section-title" style="margin-top:14px;">Simple, transparent, sans surprise</h1>
+      <p class="section-sub" style="margin:0 auto;text-align:center;">Commence gratuitement. Upgrade quand tu veux.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-name">Gratuit</div>
+        <div class="pricing-price"><span class="pricing-amount">0€</span><span class="pricing-period">/mois</span></div>
+        <div class="pricing-desc">Pour tester GhostSend et vendre occasionnellement.</div>
+        <ul class="pricing-features">
+          <li>5 envois par mois</li>
+          <li>Algorithme transporteurs</li>
+          <li>QR code collecte</li>
+          <li>Suivi temps réel</li>
+          <li>Prise de RDV basique</li>
+          <li class="no">Intégrations Shopify / eBay</li>
+          <li class="no">Commission réduite colis</li>
+          <li class="no">Support prioritaire</li>
+        </ul>
+        <button class="btn btn-outline" style="width:100%;justify-content:center;" onclick="openAuth('signup')">Commencer gratuitement</button>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">⭐ Le plus populaire</div>
+        <div class="pricing-name">Pro</div>
+        <div class="pricing-price"><span class="pricing-amount">9,90€</span><span class="pricing-period">/mois</span></div>
+        <div class="pricing-desc">Pour les vendeurs réguliers sur Vinted, eBay, Leboncoin.</div>
+        <ul class="pricing-features">
+          <li>50 envois par mois</li>
+          <li>Algorithme transporteurs avancé</li>
+          <li>QR code + suivi avancé</li>
+          <li>Suivi temps réel</li>
+          <li>Prise de RDV avancée</li>
+          <li>Intégration eBay</li>
+          <li>Commission -15% sur colis</li>
+          <li class="no">Support prioritaire</li>
+        </ul>
+        <div id="pp-pro" class="paypal-zone"></div>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-name">Business</div>
+        <div class="pricing-price"><span class="pricing-amount">29,90€</span><span class="pricing-period">/mois</span></div>
+        <div class="pricing-desc">Pour les boutiques Shopify et vendeurs professionnels.</div>
+        <ul class="pricing-features">
+          <li>Envois illimités</li>
+          <li>Algorithme IA transporteurs</li>
+          <li>QR code + suivi premium</li>
+          <li>Suivi temps réel</li>
+          <li>RDV + collecte prioritaire</li>
+          <li>Shopify + eBay + Vinted</li>
+          <li>Commission -30% sur colis</li>
+          <li>Support prioritaire 7j/7</li>
+        </ul>
+        <div id="pp-biz" class="paypal-zone"></div>
+      </div>
+    </div>
+
+    <!-- Tarifs par colis -->
+    <div style="margin-top:60px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r-lg);padding:36px;">
+      <h2 style="font-family:'Fredoka',sans-serif;font-size:30px;font-weight:700;margin-bottom:8px;">💰 Tarifs par colis</h2>
+      <p style="color:var(--gray-600);font-size:15px;margin-bottom:28px;">GhostSend négocie les meilleurs tarifs transporteurs et partage les économies.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:var(--r);padding:18px;text-align:center;"><div style="font-size:24px;margin-bottom:8px;">🌍</div><div style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">Mondial Relay</div><div style="font-size:22px;font-weight:800;margin:6px 0;">4,20€</div><div style="font-size:11px;color:var(--gray-400);">vs 6,00€ en relais · GhostSend: +0,70€</div></div>
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:var(--r);padding:18px;text-align:center;"><div style="font-size:24px;margin-bottom:8px;">📮</div><div style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">Colissimo</div><div style="font-size:22px;font-weight:800;margin:6px 0;">6,90€</div><div style="font-size:11px;color:var(--gray-400);">vs 8,50€ La Poste · GhostSend: +1,90€</div></div>
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:var(--r);padding:18px;text-align:center;"><div style="font-size:24px;margin-bottom:8px;">⚡</div><div style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">Chronopost</div><div style="font-size:22px;font-weight:800;margin:6px 0;">11,50€</div><div style="font-size:11px;color:var(--gray-400);">vs 15,00€ agence · GhostSend: +2,50€</div></div>
+        <div style="background:white;border:1.5px solid var(--gray-200);border-radius:var(--r);padding:18px;text-align:center;"><div style="font-size:24px;margin-bottom:8px;">📦</div><div style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">DPD</div><div style="font-size:22px;font-weight:800;margin:6px 0;">5,50€</div><div style="font-size:11px;color:var(--gray-400);">vs 7,50€ relais · GhostSend: +1,30€</div></div>
+      </div>
+      <div style="margin-top:20px;padding:16px;background:white;border:1.5px solid var(--gray-200);border-radius:12px;font-size:13px;color:var(--gray-600);">
+        💡 <strong>Comment ça se partage :</strong> Sur chaque envoi, GhostSend perçoit sa marge sur le transporteur. Le collecteur perçoit sa commission (0,80€ à 2,00€ selon le type). Le reste va au transporteur.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ ALGO ══════════ -->
+<div class="page" id="page-algo">
+  <div class="section">
+    <div class="section-tag">Algorithme meilleur transporteur</div>
+    <h1 class="section-title">Le meilleur transporteur calculé en temps réel</h1>
+    <p class="section-sub">Entre le poids, la destination et ta priorité. On t'affiche le classement complet.</p>
+    <div class="algo-panel">
+      <div class="algo-inputs">
+        <div class="fg" style="margin:0;"><label class="fl">Poids (kg)</label><input type="number" class="fi" id="a-weight" value="1" step="0.1" min="0.1" max="30" onchange="runAlgo()"></div>
+        <div class="fg" style="margin:0;"><label class="fl">Destination</label><select class="fi" id="a-dest" onchange="runAlgo()"><option value="local">France métropolitaine</option><option value="dom">DOM-TOM</option><option value="eu">Europe</option><option value="world">International</option></select></div>
+        <div class="fg" style="margin:0;"><label class="fl">Priorité</label><select class="fi" id="a-priority" onchange="runAlgo()"><option value="price">Prix le plus bas</option><option value="speed">Livraison rapide</option><option value="balanced">Équilibré</option></select></div>
+        <div class="fg" style="margin:0;"><label class="fl">Mon plan</label><select class="fi" id="a-plan"><option value="free">Gratuit</option><option value="pro">Pro (-15%)</option><option value="business">Business (-30%)</option></select></div>
+      </div>
+      <button class="algo-btn" onclick="runAlgo()">🔍 Calculer le meilleur transporteur</button>
+    </div>
+    <div id="algoResults"></div>
+  </div>
+</div>
+
+<!-- ══════════ FAQ ══════════ -->
+<div class="page" id="page-faq">
+  <div class="section" style="max-width:800px;">
+    <div class="section-tag">FAQ</div>
+    <h1 class="section-title">Questions fréquentes</h1>
+    <p class="section-sub">Tout ce que tu dois savoir sur GhostSend.</p>
+
+    <div style="margin-top:48px;">
+      <h3 style="font-family:'Fredoka',sans-serif;font-size:22px;font-weight:700;margin-bottom:20px;">📦 Pour les vendeurs</h3>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Comment fonctionne GhostSend ?</span><span class="faq-icon">+</span></div><div class="faq-answer">GhostSend connecte les vendeurs avec des collecteurs déjà en déplacement. Tu prépares ton colis avec l'étiquette du transporteur déjà collée, un collecteur passe chez toi et le dépose au point relais. Tu ne bouges pas de chez toi.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Est-ce que je dois imprimer l'étiquette moi-même ?</span><span class="faq-icon">+</span></div><div class="faq-answer">Oui, pour l'instant tu génères l'étiquette directement sur le site du transporteur (mondialrelay.fr, colissimo.fr) ou depuis ta plateforme de vente (Vinted, eBay…). Tu l'imprimes et la colles sur ton colis avant le passage du collecteur. Le collecteur n'a besoin d'aucun code pour déposer le colis.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Combien coûte le service ?</span><span class="faq-icon">+</span></div><div class="faq-answer">GhostSend est gratuit jusqu'à 5 envois par mois. Au-delà, tu peux passer en Pro (9,90€/mois pour 50 envois) ou Business (29,90€/mois pour des envois illimités). Les prix des transporteurs sont affichés en toute transparence.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Mon colis est-il assuré ?</span><span class="faq-icon">+</span></div><div class="faq-answer">L'assurance dépend du transporteur choisi. Colissimo et Chronopost incluent une assurance de base. Un QR code de remise est généré pour chaque collecte afin de sécuriser l'échange entre le vendeur et le collecteur.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Que se passe-t-il si aucun collecteur n'est disponible ?</span><span class="faq-icon">+</span></div><div class="faq-answer">Si aucun collecteur n'est disponible dans ton périmètre, GhostSend t'envoie une notification et tu peux élargir la zone de recherche ou choisir un autre créneau. On t'avertit dans les 2 heures si aucune mission n'est acceptée.</div></div>
+
+      <h3 style="font-family:'Fredoka',sans-serif;font-size:22px;font-weight:700;margin:36px 0 20px;">🚶 Pour les collecteurs</h3>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Comment devenir collecteur ?</span><span class="faq-icon">+</span></div><div class="faq-answer">Remplis le formulaire "Devenir partenaire" sur le site. On te recontacte sous 48h. Dès validation, tu accèdes à ton espace partenaire et tu peux accepter des missions.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Comment suis-je payé ?</span><span class="faq-icon">+</span></div><div class="faq-answer">Tes commissions sont accumulées dans ton tableau de bord. Tu peux demander un virement à tout moment (minimum 1€). Le virement est effectué sous 2-3 jours ouvrés.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Combien puis-je gagner par mois ?</span><span class="faq-icon">+</span></div><div class="faq-answer">Ça dépend du nombre de missions acceptées. En acceptant 3-4 missions par semaine sur ton trajet quotidien, tu peux gagner entre 25€ et 50€ par mois sans effort supplémentaire.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Dois-je déclarer ces revenus ?</span><span class="faq-icon">+</span></div><div class="faq-answer">En France, les revenus issus de la plateforme sont à déclarer selon ta situation fiscale. Pour de petits montants (moins de 3 000€/an), un régime simplifié s'applique souvent. Consulte un conseiller fiscal pour ta situation personnelle.</div></div>
+
+      <h3 style="font-family:'Fredoka',sans-serif;font-size:22px;font-weight:700;margin:36px 0 20px;">🔧 Technique</h3>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>GhostSend est-il disponible partout en France ?</span><span class="faq-icon">+</span></div><div class="faq-answer">GhostSend est disponible dans toutes les villes de France. La disponibilité des collecteurs dépend de la densité de notre réseau dans ta zone. Les grandes villes sont mieux couvertes. Notre réseau grandit chaque jour.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Y a-t-il une application mobile ?</span><span class="faq-icon">+</span></div><div class="faq-answer">Le site est optimisé mobile et fonctionne comme une application. Une app native iOS et Android est en cours de développement et sera disponible prochainement.</div></div>
+      <div class="faq-item"><div class="faq-question" onclick="toggleFaq(this)"><span>Comment contacter le support ?</span><span class="faq-icon">+</span></div><div class="faq-answer">Tu peux nous contacter par email à Ghost.send86@gmail.com ou via le formulaire de contact sur le site. Le support répond sous 24-48h en semaine.</div></div>
+    </div>
+
+    <div style="background:var(--black);color:white;border-radius:var(--r-lg);padding:32px;margin-top:48px;text-align:center;">
+      <h3 style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;margin-bottom:12px;">Tu as d'autres questions ?</h3>
+      <p style="font-size:15px;color:rgba(255,255,255,.6);margin-bottom:24px;">Notre équipe répond sous 24h du lundi au vendredi.</p>
+      <a href="#" class="btn btn-white btn-lg" onclick="showPage('contact');return false;">Nous contacter →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ CONTACT ══════════ -->
+<div class="page" id="page-contact">
+  <div style="padding:80px 40px;max-width:680px;margin:0 auto;">
+    <div class="section-tag">Contact</div>
+    <h1 style="font-family:'Fredoka',sans-serif;font-size:44px;font-weight:700;margin:14px 0;">On est là pour toi 👋</h1>
+    <p style="font-size:17px;color:var(--gray-600);margin-bottom:36px;line-height:1.6;">Une question, un problème ou une idée ? Écris-nous, on répond sous 24h.</p>
+    <div class="panel" style="background:white;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="fg"><label class="fl">Prénom *</label><input type="text" class="fi" id="c-first" placeholder="Théo"></div>
+        <div class="fg"><label class="fl">Nom *</label><input type="text" class="fi" id="c-last" placeholder="Martin"></div>
+      </div>
+      <div class="fg"><label class="fl">Email *</label><input type="email" class="fi" id="c-email" placeholder="theo@gmail.com"></div>
+      <div class="fg"><label class="fl">Sujet *</label>
+        <select class="fi" id="c-subject">
+          <option value="">Sélectionne un sujet</option>
+          <option value="question">Question générale</option>
+          <option value="probleme">Problème technique</option>
+          <option value="colis">Problème avec un colis</option>
+          <option value="paiement">Question de paiement</option>
+          <option value="partenariat">Partenariat</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Message *</label><textarea class="fi" id="c-message" rows="5" placeholder="Décris ta demande..." style="resize:vertical;"></textarea></div>
+      <div id="c-err" style="color:#dc2626;font-size:13px;font-weight:600;display:none;margin-bottom:12px;"></div>
+      <button class="btn btn-black btn-lg" style="width:100%;justify-content:center;" onclick="submitContact()">Envoyer le message →</button>
+      <p style="text-align:center;font-size:12px;color:var(--gray-400);margin-top:14px;">📧 Ghost.send86@gmail.com · Réponse sous 24h</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:32px;">
+      <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:20px;text-align:center;"><div style="font-size:28px;margin-bottom:8px;">📧</div><div style="font-weight:700;font-size:14px;">Email</div><div style="font-size:13px;color:var(--gray-400);margin-top:4px;">Ghost.send86@gmail.com</div></div>
+      <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:20px;text-align:center;"><div style="font-size:28px;margin-bottom:8px;">⏱️</div><div style="font-weight:700;font-size:14px;">Délai de réponse</div><div style="font-size:13px;color:var(--gray-400);margin-top:4px;">Sous 24h en semaine</div></div>
+      <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:20px;text-align:center;"><div style="font-size:28px;margin-bottom:8px;">🌐</div><div style="font-weight:700;font-size:14px;">Site web</div><div style="font-size:13px;color:var(--gray-400);margin-top:4px;">www.ghostsend.fr</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ CRÉATEUR ══════════ -->
+<div class="page" id="page-createur">
+  <div style="padding:80px 40px;max-width:800px;margin:0 auto;">
+    <div class="section-tag">Programme créateurs</div>
+    <h1 style="font-family:'Fredoka',sans-serif;font-size:44px;font-weight:700;margin:14px 0;">Deviens créateur GhostSend 🎬</h1>
+    <p style="font-size:17px;color:var(--gray-600);margin-bottom:36px;line-height:1.6;">Tu as une audience sur YouTube, TikTok, Instagram ou un blog ? Parle de GhostSend et génère des revenus passifs.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:48px;">
+      <div style="background:var(--black);color:white;border-radius:var(--r-lg);padding:28px;text-align:center;"><div style="font-family:'Fredoka',sans-serif;font-size:40px;font-weight:700;">5€</div><div style="font-size:14px;color:rgba(255,255,255,.6);margin-top:6px;">par inscription générée</div></div>
+      <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r-lg);padding:28px;text-align:center;"><div style="font-family:'Fredoka',sans-serif;font-size:40px;font-weight:700;">∞</div><div style="font-size:14px;color:var(--gray-600);margin-top:6px;">commissions sans limite</div></div>
+      <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r-lg);padding:28px;text-align:center;"><div style="font-family:'Fredoka',sans-serif;font-size:40px;font-weight:700;">Pro</div><div style="font-size:14px;color:var(--gray-600);margin-top:6px;">offert à l'inscription</div></div>
+    </div>
+
+    <div class="panel" style="background:white;">
+      <h3 style="font-family:'Fredoka',sans-serif;font-size:22px;font-weight:700;margin-bottom:20px;">Candidature créateur</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="fg"><label class="fl">Prénom *</label><input type="text" class="fi" id="cr-first" placeholder="Théo"></div>
+        <div class="fg"><label class="fl">Nom *</label><input type="text" class="fi" id="cr-last" placeholder="Martin"></div>
+      </div>
+      <div class="fg"><label class="fl">Email *</label><input type="email" class="fi" id="cr-email" placeholder="theo@gmail.com"></div>
+      <div class="fg"><label class="fl">Plateforme principale *</label>
+        <select class="fi" id="cr-platform">
+          <option value="">Sélectionne</option>
+          <option value="youtube">YouTube</option>
+          <option value="tiktok">TikTok</option>
+          <option value="instagram">Instagram</option>
+          <option value="blog">Blog / Site web</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Lien de ta chaîne / page *</label><input type="url" class="fi" id="cr-link" placeholder="https://youtube.com/@tachaine"></div>
+      <div class="fg"><label class="fl">Nombre d'abonnés / visiteurs *</label>
+        <select class="fi" id="cr-followers">
+          <option value="">Sélectionne</option>
+          <option value="moins1k">Moins de 1 000</option>
+          <option value="1k5k">1 000 - 5 000</option>
+          <option value="5k20k">5 000 - 20 000</option>
+          <option value="20k100k">20 000 - 100 000</option>
+          <option value="plus100k">Plus de 100 000</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Pourquoi tu veux rejoindre le programme ?</label><textarea class="fi" id="cr-msg" rows="3" placeholder="Dis-nous en plus..." style="resize:vertical;"></textarea></div>
+      <div id="cr-err" style="color:#dc2626;font-size:13px;font-weight:600;display:none;margin-bottom:12px;"></div>
+      <button class="btn btn-black btn-lg" style="width:100%;justify-content:center;" onclick="submitCreateur()">Envoyer ma candidature →</button>
+      <p style="text-align:center;font-size:12px;color:var(--gray-400);margin-top:14px;">Réponse sous 48h · Accès Pro offert dès validation</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ CGU ══════════ -->
+<div class="page" id="page-cgu">
+  <div class="section" style="max-width:800px;">
+    <div class="section-tag">Légal</div>
+    <h1 class="section-title">Conditions Générales d'Utilisation</h1>
+    <p style="font-size:13px;color:var(--gray-400);margin-bottom:36px;">Dernière mise à jour : Janvier 2024</p>
+    <div style="display:flex;flex-direction:column;gap:28px;">
+      <div><h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">1. Présentation du service</h3><p style="font-size:14px;color:var(--gray-600);line-height:1.7;">GhostSend est une plateforme collaborative qui met en relation des vendeurs souhaitant expédier des colis avec des collecteurs déjà en déplacement. GhostSend n'est pas un transporteur mais un intermédiaire de mise en relation.</p></div>
+      <div><h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">2. Inscription et compte utilisateur</h3><p style="font-size:14px;color:var(--gray-600);line-height:1.7;">L'utilisation de GhostSend nécessite la création d'un compte. L'utilisateur s'engage à fournir des informations exactes et à maintenir la confidentialité de ses identifiants. Toute activité effectuée depuis un compte est de la responsabilité de son titulaire.</p></div>
+      <div><h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">3. Responsabilités</h3><p style="font-size:14px;color:var(--gray-600);line-height:1.7;">GhostSend agit en tant qu'intermédiaire et ne peut être tenu responsable des dommages causés aux colis durant le transport. La responsabilité du contenu des colis incombe entièrement au vendeur. Les collecteurs s'engagent à traiter les colis avec soin.</p></div>
+      <div><h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">4. Tarification et paiements</h3><p style="font-size:14px;color:var(--gray-600);line-height:1.7;">Les tarifs sont affichés sur la plateforme et peuvent être modifiés à tout moment. Les abonnements sont facturés mensuellement et résiliables à tout moment. Les commissions des collecteurs sont versées selon les conditions précisées dans l'espace partenaire.</p></div>
+      <div><h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">5. Contact</h3><p style="font-size:14px;color:var(--gray-600);line-height:1.7;">Pour toute question relative aux CGU : Ghost.send86@gmail.com</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ CONFIDENTIALITÉ ══════════ -->
+<div class="page" id="page-confidentialite">
+  <div class="section" style="max-width:800px;">
+    <div class="section-tag">Légal</div>
+    <h1 class="section-title">Politique de confidentialité</h1>
+    <p style="font-size:13px;color:var(--gray-400);margin-bottom:36px;">Dernière mise à jour : Janvier 2024</p>
+    <div style="display:flex;flex-direction:column;gap:28px;">
+      <div><h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">Données collectées</h3><p style="font-size:14px;color:var(--gray-600);line-height:1.7;">GhostSend collecte : nom, email, adresse, informations de paiement et données de navigation. Ces données sont nécessaires au fonctionnement du service.</p></div>
+      <div><h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">Utilisation des données</h3><p style="font-size:14px;color:var(--gray-600);line-height:1.7;">Vos données sont utilisées uniquement pour le fonctionnement du service. Elles ne sont jamais vendues à des tiers. Elles peuvent être partagées avec les prestataires techniques nécessaires (Firebase, PayPal).</p></div>
+      <div><h3 style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">Vos droits</h3><p style="font-size:14px;color:var(--gray-600);line-height:1.7;">Vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour exercer ces droits : Ghost.send86@gmail.com</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MENTIONS LÉGALES ══════════ -->
+<div class="page" id="page-mentions">
+  <div class="section" style="max-width:800px;">
+    <div class="section-tag">Légal</div>
+    <h1 class="section-title">Mentions légales</h1>
+    <div style="display:flex;flex-direction:column;gap:20px;margin-top:32px;">
+      <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:24px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;">Éditeur du site</div>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.7;">GhostSend<br>Email : Ghost.send86@gmail.com<br>Site : www.ghostsend.fr</p>
+      </div>
+      <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:24px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;">Hébergement</div>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.7;">Firebase (Google LLC)<br>1600 Amphitheatre Parkway, Mountain View, CA 94043, USA</p>
+      </div>
+      <div style="background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r);padding:24px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px;">Propriété intellectuelle</div>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.7;">Tous les éléments du site (textes, images, logo) sont la propriété exclusive de GhostSend. Toute reproduction est interdite sans autorisation préalable.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DASHBOARD VENDEUR ══════════ -->
+<div class="page" id="page-dashboard">
+  <div class="dash">
+    <div class="dash-header">
+      <div>
+        <div class="dash-welcome">Bonjour, <span id="dName">—</span> 👋</div>
+        <div class="dash-sub">Tableau de bord vendeur — données en temps réel</div>
+      </div>
+      <div class="dash-actions">
+        <div class="live-badge"><div class="live-dot"></div>Temps réel</div>
+        <span id="dashPlan" class="plan-badge plan-free">Plan Gratuit</span>
+        <button class="btn btn-outline" onclick="showPage('tarifs')" style="font-size:13px;padding:8px 14px;">⬆️ Upgrader</button>
+        <button class="btn btn-black" onclick="openNewShipment()" style="font-size:13px;padding:8px 14px;">+ Nouvel envoi</button>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-label">Envois ce mois</div><div class="kpi-value" id="k-total">—</div><div class="kpi-sub" id="k-quota">/ 5 (gratuit)</div></div>
+      <div class="kpi"><div class="kpi-label">En transit</div><div class="kpi-value" id="k-transit">—</div><div class="kpi-sub">colis en route</div></div>
+      <div class="kpi"><div class="kpi-label">Livrés</div><div class="kpi-value" id="k-delivered">—</div><div class="kpi-sub">ce mois</div></div>
+      <div class="kpi"><div class="kpi-label">Économisé</div><div class="kpi-value" id="k-saved">—</div><div class="kpi-sub">vs tarifs normaux</div></div>
+      <div class="kpi"><div class="kpi-label">Intégrations</div><div class="kpi-value" id="k-int">—</div><div class="kpi-sub">connectées</div></div>
+    </div>
+
+    <div class="dash-grid">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div class="panel">
+          <div class="panel-title">📦 Mes envois <div class="live-badge" style="margin-left:auto;font-size:10px;"><div class="live-dot"></div>live</div></div>
+          <div id="shipmentsEl"><div class="empty-state"><div class="spinner"></div><p style="margin-top:14px;color:var(--gray-400);">Chargement...</p></div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="panel">
+          <div class="panel-title">🔗 Intégrations</div>
+          <div class="int-list" id="intList">
+            <div class="int-item"><div class="int-logo" style="background:#96bf48;">🛍️</div><div class="int-info"><div class="int-name">Shopify</div><div class="int-status" id="st-shopify"><span class="dot dot-off"></span>Non connecté</div></div><button class="conn-btn off" id="btn-shopify" onclick="openApiModal('shopify')">Connecter</button></div>
+            <div class="int-item"><div class="int-logo" style="background:#f5af02;">🏷️</div><div class="int-info"><div class="int-name">eBay</div><div class="int-status" id="st-ebay"><span class="dot dot-off"></span>Non connecté</div></div><button class="conn-btn off" id="btn-ebay" onclick="openApiModal('ebay')">Connecter</button></div>
+            <div class="int-item"><div class="int-logo" style="background:#09b4a6;">👗</div><div class="int-info"><div class="int-name">Vinted</div><div class="int-status" id="st-vinted"><span class="dot dot-off"></span>Non connecté</div></div><button class="conn-btn off" id="btn-vinted" style="opacity:.5;cursor:default;">Bientôt</button></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🔑 Clés API</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div><label class="fl">Shopify API Key</label><div class="api-wrap"><input type="password" class="fi" id="k-shopify" placeholder="shpat_xxxxxxxxxxxx"><button class="api-eye" onclick="toggleKey('k-shopify',this)">👁️</button></div></div>
+            <div><label class="fl">eBay Client ID</label><div class="api-wrap"><input type="password" class="fi" id="k-ebay" placeholder="YourEbay-ClientId-xxx"><button class="api-eye" onclick="toggleKey('k-ebay',this)">👁️</button></div></div>
+            <button class="btn btn-black" style="width:100%;justify-content:center;" onclick="saveApiKeys()">Sauvegarder</button>
+          </div>
+        </div>
+        <div class="panel" style="background:#fffbeb;border-color:#fcd34d;">
+          <div class="panel-title">💰 Mon abonnement</div>
+          <div style="font-size:14px;color:var(--gray-600);margin-bottom:14px;">Plan actuel : <strong id="subPlanName">Gratuit</strong> · Envois restants : <strong id="subRemaining">5</strong></div>
+          <button class="btn btn-black" style="width:100%;justify-content:center;font-size:13px;" onclick="showPage('tarifs')">⬆️ Passer Pro — 9,90€/mois</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DASHBOARD PARTENAIRE ══════════ -->
+<div class="page" id="page-partenaire-dash">
+  <div class="dash">
+    <div class="dash-header">
+      <div>
+        <div class="dash-welcome">Espace Partenaire 🏪</div>
+        <div class="dash-sub">Missions disponibles dans ton périmètre — en temps réel</div>
+      </div>
+      <div class="dash-actions">
+        <div class="live-badge"><div class="live-dot"></div>Live</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label style="font-size:13px;font-weight:700;">Rayon :</label>
+          <input type="range" class="radius-input" id="radiusSlider" min="1" max="20" value="5" oninput="updateRadius(this.value)" style="width:100px;">
+          <span id="radiusLabel" style="font-size:13px;font-weight:700;min-width:40px;">5 km</span>
+        </div>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-label">Revenus ce mois</div><div class="kpi-value" id="p-revenue">—</div><div class="kpi-sub">euros gagnés</div></div>
+      <div class="kpi"><div class="kpi-label">Colis collectés</div><div class="kpi-value" id="p-total">—</div><div class="kpi-sub">ce mois</div></div>
+      <div class="kpi"><div class="kpi-label">Missions dispo</div><div class="kpi-value" id="p-available">—</div><div class="kpi-sub">dans ton périmètre</div></div>
+      <div class="kpi"><div class="kpi-label">En attente</div><div class="kpi-value" id="p-pending">—</div><div class="kpi-sub">acceptées, à collecter</div></div>
+      <div class="kpi"><div class="kpi-label">Prochain paiement</div><div class="kpi-value" id="p-next">—</div><div class="kpi-sub">disponible au retrait</div></div>
+    </div>
+    <div class="dash-grid">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div class="panel">
+          <div class="panel-title">📍 Missions disponibles <div class="live-badge" style="margin-left:auto;font-size:10px;"><div class="live-dot"></div>live</div></div>
+          <div id="missionsEl"><div class="empty-state"><div class="spinner"></div><p style="margin-top:14px;color:var(--gray-400);">Chargement des missions...</p></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">✅ Mes collectes acceptées</div>
+          <div id="acceptedEl"><div class="empty-state"><div class="empty-emoji">📋</div><div class="empty-title">Aucune collecte en cours</div><div class="empty-sub">Accepte une mission ci-dessus</div></div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        <div class="panel">
+          <div class="panel-title">💸 Mes gains</div>
+          <div style="background:var(--green-light);border-radius:var(--r);padding:18px;text-align:center;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:700;color:var(--green-dark);">DISPONIBLE AU RETRAIT</div>
+            <div style="font-family:'Fredoka',sans-serif;font-size:36px;font-weight:700;color:var(--green-dark);" id="availableBalance">0,00€</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100);"><span style="font-size:14px;color:var(--gray-600);">Cette semaine</span><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;" id="r-week">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100);"><span style="font-size:14px;color:var(--gray-600);">Semaine dernière</span><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;" id="r-lastweek">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;"><span style="font-size:14px;color:var(--gray-600);">Ce mois total</span><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;color:var(--green-dark);" id="r-month">—</span></div>
+          </div>
+          <button class="btn btn-green" style="width:100%;justify-content:center;" id="withdrawBtn" onclick="showToast('💸 Retrait disponible dès que le système de paiement est activé !')">💸 Retirer mes gains</button>
+          <p style="text-align:center;font-size:11px;color:var(--gray-400);margin-top:8px;">Minimum 1€ · Virement sous 2-3 jours</p>
+        </div>
+        <div class="panel">
+          <div class="panel-title">💡 Commissions</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:white;border:1.5px solid var(--gray-200);border-radius:10px;"><span style="font-size:13px;font-weight:600;">🚶 Collecte à pied</span><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">+0,80€</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:white;border:1.5px solid var(--gray-200);border-radius:10px;"><span style="font-size:13px;font-weight:600;">🚗 Collecte en voiture</span><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">+1,50€</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:white;border:1.5px solid var(--gray-200);border-radius:10px;"><span style="font-size:13px;font-weight:600;">🛵 Collecte express</span><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">+2,00€</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:white;border:1.5px solid var(--gray-200);border-radius:10px;"><span style="font-size:13px;font-weight:600;">🏪 Point relais</span><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">Mensuel</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PARTENAIRE FORM ══════════ -->
+<div class="page" id="page-partenaire-form">
+  <div style="padding:80px 40px;max-width:680px;margin:0 auto;">
+    <div class="section-tag">Devenir partenaire GhostSend</div>
+    <h1 style="font-family:'Fredoka',sans-serif;font-size:44px;font-weight:700;line-height:1.1;margin:14px 0;">Rejoins notre réseau 👻</h1>
+    <p style="font-size:17px;color:var(--gray-600);margin-bottom:36px;line-height:1.6;">Remplis ce formulaire. On te recontacte sous 48h et tu commences à gagner des commissions dès le premier colis collecté.</p>
+    <div class="panel" style="background:white;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="fg"><label class="fl">Prénom *</label><input type="text" class="fi" id="pf-first" placeholder="Théo"></div>
+        <div class="fg"><label class="fl">Nom *</label><input type="text" class="fi" id="pf-last" placeholder="Martin"></div>
+      </div>
+      <div class="fg"><label class="fl">Email *</label><input type="email" class="fi" id="pf-email" placeholder="theo@gmail.com"></div>
+      <div class="fg"><label class="fl">Téléphone</label><input type="tel" class="fi" id="pf-phone" placeholder="06 XX XX XX XX"></div>
+      <div class="fg"><label class="fl">Ville / Code postal *</label><input type="text" class="fi" id="pf-city" placeholder="Paris 75001"></div>
+      <div class="fg"><label class="fl">Type de partenariat *</label>
+        <select class="fi" id="pf-type">
+          <option value="">Sélectionne</option>
+          <option value="pied">🚶 Collecte à pied (+0,80€/colis)</option>
+          <option value="voiture">🚗 Collecte en voiture (+1,50€/colis)</option>
+          <option value="scooter">🛵 Collecte express scooter (+2,00€/colis)</option>
+          <option value="commerce">🏪 Commerce / Point relais (commission mensuelle)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Nom du commerce (si applicable)</label><input type="text" class="fi" id="pf-business" placeholder="Tabac du Centre, Épicerie..."></div>
+      <div class="fg"><label class="fl">Disponibilités</label>
+        <select class="fi" id="pf-dispo">
+          <option value="flexible">Flexible (missions selon mes déplacements)</option>
+          <option value="matin">Principalement le matin</option>
+          <option value="aprem">Principalement l'après-midi</option>
+          <option value="soir">Principalement le soir</option>
+          <option value="we">Week-end surtout</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Message (optionnel)</label><textarea class="fi" id="pf-msg" rows="3" placeholder="Dis-nous en plus sur ta situation..." style="resize:vertical;"></textarea></div>
+      <div id="pf-err" style="color:#dc2626;font-size:13px;font-weight:600;display:none;margin-bottom:12px;"></div>
+      <button class="btn btn-black btn-lg" style="width:100%;justify-content:center;" onclick="submitPartnerForm()">Envoyer ma candidature →</button>
+      <p style="text-align:center;font-size:12px;color:var(--gray-400);margin-top:14px;">📧 Ghost.send86@gmail.com · Réponse sous 48h · Aucun engagement</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- AUTH -->
+<div class="overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('authModal')">✕</button>
+    <div class="modal-title">👻 GhostSend</div>
+    <div class="modal-sub" id="authSub">Crée ton compte pour commencer</div>
+    <div class="tabs">
+      <button class="tab" id="tLogin" onclick="switchTab('login')">Se connecter</button>
+      <button class="tab active" id="tSignup" onclick="switchTab('signup')">Créer un compte</button>
+    </div>
+    <div id="fLogin" style="display:none;">
+      <div class="fg"><label class="fl">Email</label><input type="email" class="fi" id="l-email" placeholder="toi@example.com"></div>
+      <div class="fg"><label class="fl">Mot de passe</label><input type="password" class="fi" id="l-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div style="color:#dc2626;font-size:12px;font-weight:600;display:none;margin-bottom:10px;" id="l-err"></div>
+      <button class="btn btn-black" style="width:100%;justify-content:center;" onclick="doLogin()" id="l-btn">Se connecter</button>
+    </div>
+    <div id="fSignup">
+      <div class="fg"><label class="fl">Prénom</label><input type="text" class="fi" id="s-name" placeholder="Théo"></div>
+      <div class="fg"><label class="fl">Email</label><input type="email" class="fi" id="s-email" placeholder="toi@example.com"></div>
+      <div class="fg"><label class="fl">Mot de passe</label><input type="password" class="fi" id="s-pwd" placeholder="Minimum 6 caractères" onkeydown="if(event.key==='Enter')doSignup()"></div>
+      <div style="color:#dc2626;font-size:12px;font-weight:600;display:none;margin-bottom:10px;" id="s-err"></div>
+      <button class="btn btn-black" style="width:100%;justify-content:center;" onclick="doSignup()" id="s-btn">Créer mon compte →</button>
+    </div>
+    <div class="divider"><span>ou</span></div>
+    <button class="btn btn-outline" style="width:100%;justify-content:center;" onclick="doGoogle()">
+      <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Continuer avec Google
+    </button>
+  </div>
+</div>
+
+<!-- API MODAL -->
+<div class="overlay" id="apiModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('apiModal')">✕</button>
+    <div class="modal-title" id="apiTitle">Connecter Shopify</div>
+    <div class="modal-sub" id="apiSub"></div>
+    <div class="fg" style="margin-top:20px;"><label class="fl" id="apiLabel">API Key</label>
+      <div class="api-wrap"><input type="password" class="fi" id="apiKey" placeholder=""><button class="api-eye" onclick="toggleKey('apiKey',this)">👁️</button></div>
+      <p style="font-size:12px;color:var(--gray-400);margin-top:6px;" id="apiHint"></p>
+    </div>
+    <div style="color:#dc2626;font-size:12px;font-weight:600;display:none;margin-bottom:10px;" id="api-err"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="closeModal('apiModal')">Annuler</button>
+      <button class="btn btn-black" style="flex:1;justify-content:center;" id="apiSaveBtn" onclick="saveApiKey()">Connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SHIPMENT MODAL -->
+<div class="overlay" id="shipmentModal">
+  <div class="modal modal-lg">
+    <button class="modal-x" onclick="closeModal('shipmentModal')">✕</button>
+    <div class="modal-title" style="text-align:left;margin-bottom:4px;">📦 Nouvel envoi</div>
+    <div class="modal-sub" style="text-align:left;margin-bottom:22px;">Notre algo choisit le meilleur transporteur automatiquement</div>
+    <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:14px;margin-bottom:18px;font-size:13px;color:#92400e;">
+      💡 <strong>Rappel :</strong> Génère ton étiquette sur mondialrelay.fr ou colissimo.fr AVANT le passage du collecteur, puis imprime-la et colle-la sur ton colis.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="fg" style="grid-column:span 2;margin:0;"><label class="fl">Destinataire *</label><input type="text" class="fi" id="n-recipient" placeholder="Nom du destinataire"></div>
+      <div class="fg" style="grid-column:span 2;margin:0;"><label class="fl">Adresse de livraison *</label><input type="text" class="fi" id="n-address" placeholder="Adresse complète, ville, code postal"></div>
+      <div class="fg" style="margin:0;"><label class="fl">Plateforme de vente</label><select class="fi" id="n-platform"><option value="manual">Manuel</option><option value="vinted">Vinted</option><option value="ebay">eBay</option><option value="leboncoin">Leboncoin</option><option value="shopify">Shopify</option></select></div>
+      <div class="fg" style="margin:0;"><label class="fl">Poids (kg)</label><input type="number" class="fi" id="n-weight" placeholder="0.5" step="0.1" min="0.1" oninput="updateShipmentSuggestion()"></div>
+      <div class="fg" style="margin:0;"><label class="fl">Destination</label><select class="fi" id="n-dest" onchange="updateShipmentSuggestion()"><option value="local">France métropolitaine</option><option value="dom">DOM-TOM</option><option value="eu">Europe</option><option value="world">International</option></select></div>
+      <div class="fg" style="margin:0;"><label class="fl">Type de collecte souhaité</label><select class="fi" id="n-collecte"><option value="auto">Automatique</option><option value="pied">🚶 À pied</option><option value="voiture">🚗 En voiture</option><option value="express">🛵 Express</option></select></div>
+    </div>
+    <div id="shipSuggestion" style="margin-top:16px;padding:16px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;display:none;">
+      <div style="font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">MEILLEUR TRANSPORTEUR SUGGÉRÉ</div>
+      <div id="shipSuggestionContent" style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;"></div>
+    </div>
+    <div id="shipPrice" style="margin-top:14px;background:var(--black);color:white;border-radius:14px;padding:20px;display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;"><span>Transporteur</span><span id="sp-carrier">—</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;"><span>Tarif transporteur</span><span id="sp-real">—</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;"><span>Frais GhostSend</span><span id="sp-gs">—</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;"><span>Commission collecteur</span><span id="sp-collector">—</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;"><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">Total à payer</span><span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;" id="sp-total">—</span></div>
+    </div>
+    <div style="color:#dc2626;font-size:12px;font-weight:600;display:none;margin-top:10px;" id="ship-err"></div>
+    <button class="btn btn-black btn-lg" style="width:100%;justify-content:center;margin-top:16px;" onclick="createShipment()">Créer l'envoi et trouver un collecteur →</button>
+  </div>
+</div>
+
+<!-- SCHEDULE MODAL -->
+<div class="overlay" id="schedModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('schedModal')">✕</button>
+    <div class="modal-title">📅 Choisir un créneau</div>
+    <div class="modal-sub" id="schedSub">Choisis le créneau de collecte</div>
+    <div style="margin-top:16px;font-size:13px;font-weight:700;color:var(--gray-400);margin-bottom:8px;">AUJOURD'HUI</div>
+    <div class="time-slots" id="slotsToday"></div>
+    <div style="margin-top:16px;font-size:13px;font-weight:700;color:var(--gray-400);margin-bottom:8px;">DEMAIN</div>
+    <div class="time-slots" id="slotsTomorrow"></div>
+    <div style="color:#dc2626;font-size:12px;font-weight:600;display:none;margin-top:10px;" id="sched-err"></div>
+    <button class="btn btn-black" style="width:100%;justify-content:center;margin-top:18px;" onclick="confirmSchedule()">Confirmer le créneau →</button>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="overlay" id="qrModal">
+  <div class="modal" style="max-width:360px;text-align:center;">
+    <button class="modal-x" onclick="closeModal('qrModal')">✕</button>
+    <div class="modal-title" style="margin-bottom:4px;">QR Code de remise</div>
+    <div class="modal-sub" id="qrInfo" style="margin-bottom:20px;"></div>
+    <div id="qrDiv" style="display:flex;justify-content:center;margin-bottom:16px;"></div>
+    <div id="qrCode" style="font-family:monospace;font-size:16px;font-weight:700;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:10px;margin-bottom:18px;letter-spacing:.1em;"></div>
+    <p style="font-size:12px;color:var(--gray-400);margin-bottom:18px;">Le collecteur scanne ce QR Code lors de la récupération de ton colis pour valider la collecte.</p>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="printQR()">🖨️ Imprimer</button>
+      <button class="btn btn-black" style="flex:1;justify-content:center;" onclick="downloadQR()">⬇️ Télécharger</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none;">
+  <a href="#" onclick="showPage('home');return false;" class="active"><span class="nav-icon">🏠</span>Accueil</a>
+  <a href="#" onclick="showPage('tarifs');return false;"><span class="nav-icon">💳</span>Tarifs</a>
+  <a href="#" onclick="showPage('faq');return false;"><span class="nav-icon">💬</span>FAQ</a>
+  <a href="#" onclick="showPage('dashboard');return false;" id="bnDash" style="display:none;"><span class="nav-icon">📦</span>Envois</a>
+  <a href="#" onclick="showPage('partenaire-dash');return false;" id="bnPartner" style="display:none;"><span class="nav-icon">🏪</span>Partenaire</a>
+  <a href="#" onclick="openAuth('signup')"><span class="nav-icon">👤</span>Compte</a>
+</nav>
+
+<!-- ══════════ FIREBASE ══════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, set, get, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain: "ghostly-fbe01.firebaseapp.com",
+  databaseURL: "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ghostly-fbe01",
+  storageBucket: "ghostly-fbe01.firebasestorage.app",
+  messagingSenderId: "290927219079",
+  appId: "1:290927219079:web:d7cd006945d9fe84a74322"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const gProvider = new GoogleAuthProvider();
+
+let CU = null;
+let unsubShipments = null;
+let unsubMissions = null;
+let currentApiPlatform = null;
+let currentSchedMissionId = null;
+let selectedSlot = null;
+
+const PLANS = {
+  free:     { name:'Gratuit',  quota:5,    badge:'plan-free',     discount:0 },
+  pro:      { name:'Pro',      quota:50,   badge:'plan-pro',      discount:0.15 },
+  business: { name:'Business', quota:9999, badge:'plan-business', discount:0.30 }
+};
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth, async (user) => {
+  CU = user;
+  if (user) {
+    document.getElementById('navPublic').style.display = 'none';
+    document.getElementById('navAuth').style.display = 'flex';
+    document.getElementById('dName').textContent = user.displayName || user.email.split('@')[0];
+    closeModal('authModal');
+    showPage('dashboard');
+
+    // Mobile bottom nav
+    const mbn = document.getElementById('mobileBottomNav');
+    if (mbn) mbn.style.display = 'flex';
+    const bnDash = document.getElementById('bnDash');
+    const bnPartner = document.getElementById('bnPartner');
+    if (bnDash) bnDash.style.display = 'flex';
+    if (bnPartner) bnPartner.style.display = 'flex';
+
+    // Quota check
+    const profileSnap = await get(ref(db, `users/${user.uid}/profile`));
+    const profile = profileSnap.val() || {};
+    const plan = profile.plan || 'free';
+    const quota = PLANS[plan]?.quota || 5;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const shipmentsSnap = await get(ref(db, `users/${user.uid}/shipments`));
+    const allShips = shipmentsSnap.val() || {};
+    const thisMonthCount = Object.values(allShips).filter(s => s.createdAt >= startOfMonth).length;
+    const remaining = quota - thisMonthCount;
+
+    const kt = document.getElementById('k-total');
+    const kq = document.getElementById('k-quota');
+    if (kt) kt.textContent = thisMonthCount;
+    if (kq) {
+      if (remaining <= 0) { kq.textContent = `/ ${quota} — 🚫 Limite atteinte !`; kq.style.color = '#dc2626'; }
+      else if (remaining <= 2) { kq.textContent = `/ ${quota} ce mois — ⚠️ Plus que ${remaining} !`; kq.style.color = 'var(--orange)'; }
+      else { kq.textContent = `/ ${quota === 9999 ? '∞' : quota} ce mois`; kq.style.color = ''; }
+    }
+
+    // Bannière quota
+    const existingBanner = document.getElementById('quotaAlert');
+    if (existingBanner) existingBanner.remove();
+    if (remaining <= 2 && plan !== 'business') {
+      const dashHeader = document.querySelector('#page-dashboard .dash-header');
+      if (dashHeader) {
+        const banner = document.createElement('div');
+        banner.id = 'quotaAlert';
+        banner.style.cssText = `background:${remaining <= 0 ? '#fef2f2' : '#fff7ed'};border:1.5px solid ${remaining <= 0 ? '#fca5a5' : '#fed7aa'};border-radius:var(--r);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;`;
+        banner.innerHTML = `<div><div style="font-weight:700;font-size:15px;">${remaining <= 0 ? '🚫 Limite atteinte — plus aucun envoi disponible ce mois.' : `⚠️ Plus que ${remaining} envoi(s) gratuit(s) ce mois !`}</div><div style="font-size:13px;color:var(--gray-600);margin-top:3px;">Passe en Pro pour continuer à envoyer sans interruption.</div></div><button class="btn btn-black" onclick="showPage('tarifs')" style="font-size:13px;padding:8px 16px;white-space:nowrap;">⬆️ Passer Pro — 9,90€/mois</button>`;
+        dashHeader.insertAdjacentElement('afterend', banner);
+      }
+    }
+
+    loadDashboard(user.uid);
+    loadPartnerDash(user.uid);
+    initPayPal(user.uid);
+  } else {
+    document.getElementById('navPublic').style.display = 'flex';
+    document.getElementById('navAuth').style.display = 'none';
+    if (unsubShipments) { unsubShipments(); unsubShipments = null; }
+    if (unsubMissions) { unsubMissions(); unsubMissions = null; }
+  }
+});
+
+// ── LOGIN / SIGNUP ──
+window.doLogin = async () => {
+  const email = document.getElementById('l-email').value.trim();
+  const pwd = document.getElementById('l-pwd').value;
+  const err = document.getElementById('l-err');
+  const btn = document.getElementById('l-btn');
+  err.style.display = 'none';
+  if (!email||!pwd) { err.textContent='Remplis tous les champs.'; err.style.display='block'; return; }
+  btn.textContent='Connexion...'; btn.disabled=true;
+  try { await signInWithEmailAndPassword(auth, email, pwd); }
+  catch { err.textContent='Email ou mot de passe incorrect.'; err.style.display='block'; }
+  btn.textContent='Se connecter'; btn.disabled=false;
+};
+
+window.doSignup = async () => {
+  const name = document.getElementById('s-name').value.trim();
+  const email = document.getElementById('s-email').value.trim();
+  const pwd = document.getElementById('s-pwd').value;
+  const err = document.getElementById('s-err');
+  const btn = document.getElementById('s-btn');
+  err.style.display='none';
+  if (!name||!email||!pwd) { err.textContent='Remplis tous les champs.'; err.style.display='block'; return; }
+  if (pwd.length<6) { err.textContent='Minimum 6 caractères.'; err.style.display='block'; return; }
+  btn.textContent='Création...'; btn.disabled=true;
+  try {
+    const c = await createUserWithEmailAndPassword(auth, email, pwd);
+    await updateProfile(c.user, { displayName: name });
+    await set(ref(db, `users/${c.user.uid}/profile`), { name, email, plan:'free', createdAt: Date.now() });
+  } catch(e) {
+    err.textContent = e.code==='auth/email-already-in-use' ? 'Email déjà utilisé.' : 'Erreur. Réessaie.';
+    err.style.display='block';
+  }
+  btn.textContent='Créer mon compte →'; btn.disabled=false;
+};
+
+window.doGoogle = async () => {
+  try {
+    const r = await signInWithPopup(auth, gProvider);
+    const u = r.user;
+    const s = await get(ref(db, `users/${u.uid}/profile`));
+    if (!s.exists()) await set(ref(db, `users/${u.uid}/profile`), { name:u.displayName, email:u.email, plan:'free', createdAt:Date.now() });
+  } catch { showToast('❌ Erreur Google Sign-In'); }
+};
+
+window.doLogout = async () => { await signOut(auth); showPage('home'); showToast('👋 Déconnecté'); };
+
+// ── PAYPAL ──
+function initPayPal(uid) {
+  const PLAN_ID_PRO      = "PLAN_ID_PRO_ICI";
+  const PLAN_ID_BUSINESS = "PLAN_ID_BUSINESS_ICI";
+
+  const render = (containerId, planId, planKey, planName) => {
+    if (typeof paypal === 'undefined') {
+      const price = planKey==='pro' ? '9,90€' : '29,90€';
+      document.getElementById(containerId).innerHTML = `<button class="btn btn-black" style="width:100%;justify-content:center;" onclick="openAuth('signup')">${planName} — ${price}/mois</button>`;
+      return;
+    }
+    const el = document.getElementById(containerId);
+    if (!el || el.querySelector('iframe')) return;
+    el.innerHTML = '';
+    paypal.Buttons({
+      style: { shape:'pill', color:'black', layout:'vertical', label:'subscribe' },
+      createSubscription: (d, a) => a.subscription.create({ plan_id: planId }),
+      onApprove: async (d) => {
+        await update(ref(db, `users/${uid}/profile`), { plan: planKey, subscriptionId: d.subscriptionID, upgradedAt: Date.now() });
+        updatePlanUI(planKey);
+        showToast(`🎉 Plan ${planName} activé !`);
+      },
+      onError: () => showToast('❌ Erreur PayPal. Réessaie.')
+    }).render('#'+containerId);
+  };
+  render('pp-pro', PLAN_ID_PRO, 'pro', 'Pro');
+  render('pp-biz', PLAN_ID_BUSINESS, 'business', 'Business');
+}
+
+function updatePlanUI(planKey) {
+  const p = PLANS[planKey] || PLANS.free;
+  document.querySelectorAll('#navPlan, #dashPlan').forEach(el => { el.textContent = 'Plan '+p.name; el.className = 'plan-badge '+p.badge; });
+  const sn = document.getElementById('subPlanName'); if(sn) sn.textContent = p.name;
+  const sr = document.getElementById('subRemaining'); if(sr) sr.textContent = p.quota===9999?'∞':p.quota;
+}
+
+// ── DASHBOARD ──
+function loadDashboard(uid) {
+  onValue(ref(db, `users/${uid}/profile`), snap => {
+    const d = snap.val()||{};
+    updatePlanUI(d.plan||'free');
+  });
+  onValue(ref(db, `users/${uid}/integrations`), snap => {
+    const d = snap.val()||{};
+    ['shopify','ebay','vinted'].forEach(p => updateIntUI(p, d[p]));
+    document.getElementById('k-int').textContent = Object.values(d).filter(v=>v?.connected).length;
+  });
+  if (unsubShipments) unsubShipments();
+  unsubShipments = onValue(ref(db, `users/${uid}/shipments`), snap => {
+    const d = snap.val()||{};
+    const arr = Object.entries(d).map(([id,s])=>({id,...s})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderShipments(arr);
+    document.getElementById('k-transit').textContent = arr.filter(s=>s.status==='transit').length;
+    document.getElementById('k-delivered').textContent = arr.filter(s=>s.status==='delivered').length;
+    document.getElementById('k-saved').textContent = (arr.length * 1.60).toFixed(2)+'€';
+  });
+}
+
+function updateIntUI(platform, data) {
+  const st = document.getElementById(`st-${platform}`);
+  const btn = document.getElementById(`btn-${platform}`);
+  if (!st||!btn) return;
+  if (data?.connected) {
+    st.innerHTML = `<span class="dot dot-g"></span>Connecté`;
+    btn.textContent='✓ Actif'; btn.className='conn-btn on'; btn.onclick=null;
+  } else {
+    st.innerHTML = `<span class="dot dot-off"></span>Non connecté`;
+    btn.textContent = platform==='vinted' ? 'Bientôt' : 'Connecter';
+    btn.className='conn-btn off';
+    if (platform!=='vinted') btn.onclick = ()=>openApiModal(platform);
+  }
+}
+
+function renderShipments(arr) {
+  const el = document.getElementById('shipmentsEl');
+  if (!arr.length) { el.innerHTML='<div class="empty-state"><div class="empty-emoji">📦</div><div class="empty-title">Aucun envoi</div><div class="empty-sub">Crée ton premier envoi !</div></div>'; return; }
+  const sL = {transit:'En transit',delivered:'Livré',pending:'En attente',accepted:'Collecteur trouvé'};
+  const sC = {transit:'b-transit',delivered:'b-delivered',pending:'b-pending',accepted:'b-accepted'};
+  el.innerHTML = `<table class="ship-table"><thead><tr><th>Destinataire</th><th>Transporteur</th><th>Total payé</th><th>Statut</th><th>QR</th></tr></thead><tbody>
+    ${arr.map(s=>`<tr>
+      <td style="font-weight:700;">${s.recipient||'—'}</td>
+      <td style="font-size:12px;color:var(--gray-600);">${s.carrier||'—'}</td>
+      <td style="font-weight:700;">${s.totalPrice?s.totalPrice+'€':'—'}</td>
+      <td><span class="badge ${sC[s.status]||'b-pending'}">${sL[s.status]||'En attente'}</span></td>
+      <td><button onclick="showQR('${s.id}','${(s.recipient||'').replace(/'/g,'')}')" style="background:var(--black);color:white;border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">QR 📱</button></td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ── PARTNER DASHBOARD ──
+function loadPartnerDash(uid) {
+  if (unsubMissions) unsubMissions();
+  unsubMissions = onValue(ref(db, 'all_missions'), snap => {
+    const d = snap.val()||{};
+    const all = Object.entries(d).map(([id,m])=>({id,...m})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const available = all.filter(m=>!m.collectorUid && m.status==='pending');
+    const accepted = all.filter(m=>m.collectorUid===uid);
+    renderMissions(available, uid);
+    renderAccepted(accepted);
+    document.getElementById('p-available').textContent = available.length;
+    document.getElementById('p-pending').textContent = accepted.filter(m=>m.status!=='collected').length;
+    const done = accepted.filter(m=>m.status==='collected');
+    const rev = done.reduce((acc,m)=>acc+(m.commission||0.80),0);
+    document.getElementById('p-total').textContent = done.length;
+    document.getElementById('p-revenue').textContent = rev.toFixed(2)+'€';
+    document.getElementById('p-next').textContent = rev.toFixed(2)+'€';
+    document.getElementById('r-month').textContent = rev.toFixed(2)+'€';
+    const week = done.filter(m=>Date.now()-m.doneAt<7*86400000).reduce((a,m)=>a+(m.commission||0.80),0);
+    const lastweek = done.filter(m=>{const d=Date.now()-m.doneAt;return d>7*86400000&&d<14*86400000;}).reduce((a,m)=>a+(m.commission||0.80),0);
+    document.getElementById('r-week').textContent = week.toFixed(2)+'€';
+    document.getElementById('r-lastweek').textContent = lastweek.toFixed(2)+'€';
+    const avail = document.getElementById('availableBalance');
+    if (avail) avail.textContent = rev.toFixed(2).replace('.',',')+' €';
+  });
+}
+
+function renderMissions(missions, uid) {
+  const el = document.getElementById('missionsEl');
+  if (!missions.length) { el.innerHTML='<div class="empty-state"><div class="empty-emoji">📍</div><div class="empty-title">Aucune mission disponible</div><div class="empty-sub">Augmente ton rayon ou reviens plus tard.</div></div>'; return; }
+  const typeIcons = {pied:'🚶',voiture:'🚗',express:'🛵',auto:'📦'};
+  el.innerHTML = '<div class="pickup-list">'+missions.map(m=>`
+    <div class="pickup-card new" id="m-${m.id}">
+      <div class="pickup-head">
+        <div>
+          <div class="pickup-addr">📍 ${m.address||'Adresse non renseignée'}</div>
+          <div class="pickup-meta">Pour: ${m.recipient||'—'} · ${m.weight||0.5}kg · ${m.platform||'Manuel'}</div>
+          <div class="pickup-dist">${typeIcons[m.collectType]||'📦'} ${m.collectType==='pied'?'À pied':m.collectType==='voiture'?'En voiture':m.collectType==='express'?'Express':'Standard'} · ~${(Math.random()*2+0.5).toFixed(1)} km de toi</div>
+        </div>
+        <div class="pickup-earn">+${m.commission||'0,80'}€</div>
+      </div>
+      <div class="pickup-actions">
+        <button class="btn btn-green" style="font-size:13px;padding:8px 16px;" onclick="acceptMission('${m.id}')">✓ Accepter</button>
+        <button class="btn btn-outline" style="font-size:13px;padding:8px 14px;" onclick="openScheduleModal('${m.id}','${(m.recipient||'').replace(/'/g,'')}')">📅 Créneau</button>
+      </div>
+    </div>
+  `).join('')+'</div>';
+}
+
+function renderAccepted(missions) {
+  const el = document.getElementById('acceptedEl');
+  if (!missions.length) { el.innerHTML='<div class="empty-state"><div class="empty-emoji">📋</div><div class="empty-title">Aucune collecte en cours</div></div>'; return; }
+  el.innerHTML = '<div class="pickup-list">'+missions.map(m=>`
+    <div class="pickup-card">
+      <div class="pickup-head">
+        <div>
+          <div class="pickup-addr">📍 ${m.address||'—'}</div>
+          <div class="pickup-meta">Créneau: ${m.slot||'À définir'} · ${m.weight||0.5}kg</div>
+        </div>
+        <span class="badge ${m.status==='collected'?'b-delivered':'b-accepted'}">${m.status==='collected'?'✓ Collecté':'En attente'}</span>
+      </div>
+      ${m.status!=='collected' ? `<div class="pickup-actions"><button class="btn btn-black" style="font-size:13px;padding:8px 14px;" onclick="markCollected('${m.id}')">✓ Marquer collecté</button><button class="btn btn-outline" style="font-size:13px;padding:8px 14px;" onclick="showQR('${m.id}','${(m.recipient||'').replace(/'/g,'')}')">📱 QR Code</button></div>` : ''}
+    </div>
+  `).join('')+'</div>';
+}
+
+window.acceptMission = async (missionId) => {
+  if (!CU) { openAuth('login'); return; }
+  await update(ref(db, `all_missions/${missionId}`), { collectorUid: CU.uid, collectorName: CU.displayName, status:'accepted', acceptedAt: Date.now() });
+  showToast('✅ Mission acceptée !');
+};
+
+window.markCollected = async (missionId) => {
+  if (!CU) return;
+  await update(ref(db, `all_missions/${missionId}`), { status:'collected', doneAt: Date.now() });
+  showToast('✅ Collecte validée ! Commission ajoutée.');
+};
+
+window.updateRadius = (val) => { document.getElementById('radiusLabel').textContent = val+' km'; };
+
+// ── SCHEDULE ──
+window.openScheduleModal = (missionId, recipient) => {
+  currentSchedMissionId = missionId;
+  selectedSlot = null;
+  document.getElementById('schedSub').textContent = `Collecte pour : ${recipient}`;
+  const slots = ['8h-10h','10h-12h','12h-14h','14h-16h','16h-18h','18h-20h'];
+  document.getElementById('slotsToday').innerHTML = slots.map(s=>`<div class="time-slot" onclick="selectSlot(this,'Aujourd\\'hui ${s}')">${s}</div>`).join('');
+  document.getElementById('slotsTomorrow').innerHTML = slots.map(s=>`<div class="time-slot" onclick="selectSlot(this,'Demain ${s}')">${s}</div>`).join('');
+  document.getElementById('schedModal').classList.add('open');
+};
+
+window.selectSlot = (el, slot) => {
+  document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSlot = slot;
+};
+
+window.confirmSchedule = async () => {
+  const err = document.getElementById('sched-err');
+  if (!selectedSlot) { err.textContent='Sélectionne un créneau.'; err.style.display='block'; return; }
+  if (!CU || !currentSchedMissionId) return;
+  await update(ref(db, `all_missions/${currentSchedMissionId}`), { slot: selectedSlot, slotConfirmedAt: Date.now() });
+  closeModal('schedModal');
+  showToast(`📅 Créneau confirmé : ${selectedSlot}`);
+};
+
+// ── CREATE SHIPMENT ──
+window.updateShipmentSuggestion = () => {
+  const weight = parseFloat(document.getElementById('n-weight').value)||0;
+  const dest = document.getElementById('n-dest').value;
+  if (weight <= 0) { document.getElementById('shipSuggestion').style.display='none'; document.getElementById('shipPrice').style.display='none'; return; }
+  const best = getBestCarrier(weight, dest, 'price');
+  const collectType = document.getElementById('n-collecte').value;
+  const commMap = {auto:0.80, pied:0.80, voiture:1.50, express:2.00};
+  const commission = commMap[collectType]||0.80;
+  const total = (parseFloat(best.ghostPrice)+commission).toFixed(2);
+  document.getElementById('shipSuggestion').style.display='block';
+  document.getElementById('shipSuggestionContent').textContent = `${best.icon} ${best.name} — Délai: ${best.delay}`;
+  document.getElementById('shipPrice').style.display='block';
+  document.getElementById('sp-carrier').textContent = best.name;
+  document.getElementById('sp-real').textContent = best.real+'€';
+  document.getElementById('sp-gs').textContent = (parseFloat(best.ghostPrice)-parseFloat(best.real)).toFixed(2)+'€';
+  document.getElementById('sp-collector').textContent = commission.toFixed(2)+'€';
+  document.getElementById('sp-total').textContent = total+'€';
+};
+
+window.createShipment = async () => {
+  const recipient = document.getElementById('n-recipient').value.trim();
+  const address = document.getElementById('n-address').value.trim();
+  const platform = document.getElementById('n-platform').value;
+  const weight = parseFloat(document.getElementById('n-weight').value)||0.5;
+  const dest = document.getElementById('n-dest').value;
+  const collectType = document.getElementById('n-collecte').value;
+  const err = document.getElementById('ship-err');
+  err.style.display='none';
+
+  if (!recipient||!address) { err.textContent='Destinataire et adresse requis.'; err.style.display='block'; return; }
+  if (!CU) { err.textContent='Connecte-toi d\'abord.'; err.style.display='block'; return; }
+
+  // ── Vérification quota ──
+  const profileSnap = await get(ref(db, `users/${CU.uid}/profile`));
+  const plan = profileSnap.val()?.plan || 'free';
+  const quota = PLANS[plan]?.quota || 5;
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const shipmentsSnap = await get(ref(db, `users/${CU.uid}/shipments`));
+  const allShips = shipmentsSnap.val() || {};
+  const thisMonthCount = Object.values(allShips).filter(s => s.createdAt >= startOfMonth).length;
+
+  if (thisMonthCount >= quota) {
+    err.innerHTML = `🚫 Limite de <strong>${quota} envois</strong> atteinte ce mois-ci.<br><a href="#" onclick="closeModal('shipmentModal');showPage('tarifs');return false;" style="color:var(--black);font-weight:800;text-decoration:underline;display:inline-block;margin-top:6px;">⬆️ Passer en Pro — 50 envois/mois → 9,90€/mois</a>`;
+    err.style.display='block'; return;
+  }
+
+  const best = getBestCarrier(weight, dest, 'price');
+  const commMap = {auto:0.80, pied:0.80, voiture:1.50, express:2.00};
+  const commission = commMap[collectType]||0.80;
+  const totalPrice = (parseFloat(best.ghostPrice)+commission).toFixed(2);
+
+  try {
+    const shipRef = await push(ref(db, `users/${CU.uid}/shipments`), { recipient, address, platform, weight, status:'pending', carrier:best.name, carrierPrice:best.real, ghostPrice:best.ghostPrice, totalPrice, collectType, createdAt:Date.now() });
+    await push(ref(db, 'all_missions'), { recipient, address, platform, weight, status:'pending', carrier:best.name, totalPrice, collectType, commission, sellerUid:CU.uid, sellerName:CU.displayName, createdAt:Date.now() });
+    closeModal('shipmentModal');
+    document.getElementById('n-recipient').value=''; document.getElementById('n-address').value=''; document.getElementById('n-weight').value='';
+    showToast(`✅ Envoi créé ! On cherche un collecteur près de toi... Total: ${totalPrice}€`);
+  } catch { err.textContent='Erreur. Réessaie.'; err.style.display='block'; }
+};
+
+// ── INTEGRATIONS ──
+window.openApiModal = (platform) => {
+  currentApiPlatform = platform;
+  const cfg = {
+    shopify:{ title:'Connecter Shopify', sub:'Entre ta clé API Shopify', label:'Shopify API Key', ph:'shpat_xxxxxxxxxxxx', hint:'Admin Shopify → Apps → Develop apps → API credentials' },
+    ebay:{ title:'Connecter eBay', sub:'Entre ton Client ID eBay Developer', label:'eBay Client ID', ph:'YourEbay-ClientId-xxx', hint:'developer.ebay.com → Mon compte → Application keys' }
+  };
+  const c = cfg[platform];
+  document.getElementById('apiTitle').textContent=c.title; document.getElementById('apiSub').textContent=c.sub;
+  document.getElementById('apiLabel').textContent=c.label; document.getElementById('apiKey').placeholder=c.ph;
+  document.getElementById('apiHint').textContent=c.hint; document.getElementById('apiKey').value='';
+  document.getElementById('api-err').style.display='none';
+  document.getElementById('apiModal').classList.add('open');
+};
+
+window.saveApiKey = async () => {
+  const key = document.getElementById('apiKey').value.trim();
+  const err = document.getElementById('api-err');
+  const btn = document.getElementById('apiSaveBtn');
+  err.style.display='none';
+  if (!key) { err.textContent='Entre une clé API.'; err.style.display='block'; return; }
+  if (!CU) return;
+  btn.textContent='Connexion...'; btn.disabled=true;
+  try {
+    await set(ref(db, `users/${CU.uid}/integrations/${currentApiPlatform}`), { connected:true, keyPreview:'••••'+key.slice(-4), connectedAt:Date.now() });
+    closeModal('apiModal');
+    showToast(`✅ ${currentApiPlatform} connecté !`);
+  } catch { err.textContent='Erreur.'; err.style.display='block'; }
+  btn.textContent='Connecter'; btn.disabled=false;
+};
+
+window.saveApiKeys = async () => {
+  if (!CU) { showToast('❌ Connecte-toi d\'abord'); return; }
+  const s = document.getElementById('k-shopify').value.trim();
+  const e = document.getElementById('k-ebay').value.trim();
+  if (!s&&!e) { showToast('❌ Entre au moins une clé'); return; }
+  if (s) await set(ref(db, `users/${CU.uid}/integrations/shopify`), { connected:true, keyPreview:'••••'+s.slice(-4), connectedAt:Date.now() });
+  if (e) await set(ref(db, `users/${CU.uid}/integrations/ebay`), { connected:true, keyPreview:'••••'+e.slice(-4), connectedAt:Date.now() });
+  showToast('✅ Clés sauvegardées !');
+};
+
+// ── FORMS ──
+window.submitPartnerForm = async () => {
+  const first=document.getElementById('pf-first').value.trim(), last=document.getElementById('pf-last').value.trim();
+  const email=document.getElementById('pf-email').value.trim(), city=document.getElementById('pf-city').value.trim();
+  const type=document.getElementById('pf-type').value;
+  const err=document.getElementById('pf-err');
+  err.style.display='none';
+  if (!first||!last||!email||!city||!type) { err.textContent='Remplis tous les champs obligatoires.'; err.style.display='block'; return; }
+  try {
+    await push(ref(db, 'partner_applications'), { first,last,email,city,type, phone:document.getElementById('pf-phone').value.trim(), business:document.getElementById('pf-business').value.trim(), dispo:document.getElementById('pf-dispo').value, message:document.getElementById('pf-msg').value.trim(), submittedAt:Date.now() });
+    showPage('home'); showToast('🎉 Candidature envoyée ! Réponse sous 48h.');
+  } catch { err.textContent='Erreur. Réessaie.'; err.style.display='block'; }
+};
+
+window.submitContact = async () => {
+  const first=document.getElementById('c-first').value.trim(), last=document.getElementById('c-last').value.trim();
+  const email=document.getElementById('c-email').value.trim(), subject=document.getElementById('c-subject').value;
+  const message=document.getElementById('c-message').value.trim();
+  const err=document.getElementById('c-err');
+  err.style.display='none';
+  if (!first||!last||!email||!subject||!message) { err.textContent='Remplis tous les champs obligatoires.'; err.style.display='block'; return; }
+  try {
+    await push(ref(db, 'contact_messages'), { first,last,email,subject,message,submittedAt:Date.now() });
+    showPage('home'); showToast('✅ Message envoyé ! Réponse sous 24h.');
+  } catch { err.textContent='Erreur. Réessaie.'; err.style.display='block'; }
+};
+
+window.submitCreateur = async () => {
+  const first=document.getElementById('cr-first').value.trim(), last=document.getElementById('cr-last').value.trim();
+  const email=document.getElementById('cr-email').value.trim(), platform=document.getElementById('cr-platform').value;
+  const link=document.getElementById('cr-link').value.trim(), followers=document.getElementById('cr-followers').value;
+  const err=document.getElementById('cr-err');
+  err.style.display='none';
+  if (!first||!last||!email||!platform||!link||!followers) { err.textContent='Remplis tous les champs obligatoires.'; err.style.display='block'; return; }
+  try {
+    await push(ref(db, 'creator_applications'), { first,last,email,platform,link,followers, message:document.getElementById('cr-msg').value.trim(), submittedAt:Date.now() });
+    showPage('home'); showToast('🎉 Candidature créateur envoyée ! Réponse sous 48h.');
+  } catch { err.textContent='Erreur. Réessaie.'; err.style.display='block'; }
+};
+
+window.openNewShipment = () => {
+  document.getElementById('shipSuggestion').style.display='none';
+  document.getElementById('shipPrice').style.display='none';
+  document.getElementById('shipmentModal').classList.add('open');
+};
+</script>
+
+<!-- QR + ALGO + UTILS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ── PAGE NAV ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el = document.getElementById('page-'+name);
+  if (el) el.classList.add('active');
+  window.scrollTo(0,0);
+  // Update mobile bottom nav active state
+  document.querySelectorAll('.mobile-bottom-nav a').forEach(a=>a.classList.remove('active'));
+}
+function openAuth(tab) { switchTab(tab); document.getElementById('authModal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function switchTab(tab) {
+  document.getElementById('fLogin').style.display = tab==='login'?'block':'none';
+  document.getElementById('fSignup').style.display = tab==='signup'?'block':'none';
+  document.getElementById('tLogin').className = 'tab'+(tab==='login'?' active':'');
+  document.getElementById('tSignup').className = 'tab'+(tab==='signup'?' active':'');
+  document.getElementById('authSub').textContent = tab==='login'?'Content de te revoir 👋':'Crée ton compte pour commencer';
+}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(m=>m.classList.remove('open'));});
+
+function toggleKey(id,btn){const el=document.getElementById(id);el.type=el.type==='password'?'text':'password';btn.textContent=el.type==='password'?'👁️':'🙈';}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+window.showPage=showPage; window.openAuth=openAuth; window.closeModal=closeModal; window.switchTab=switchTab; window.showToast=showToast; window.toggleKey=toggleKey;
+
+// ── FAQ ──
+function toggleFaq(el) {
+  const answer = el.nextElementSibling;
+  const icon = el.querySelector('.faq-icon');
+  answer.classList.toggle('open');
+  icon.classList.toggle('open');
+}
+window.toggleFaq = toggleFaq;
+
+// ── MOBILE NAV ──
+function toggleMobileNav() {
+  const menu = document.getElementById('mobileMenu');
+  const isOpen = menu.style.display === 'flex';
+  menu.style.display = isOpen ? 'none' : 'flex';
+  document.getElementById('burgerBtn').classList.toggle('open', !isOpen);
+}
+function closeMobileMenu() {
+  document.getElementById('mobileMenu').style.display = 'none';
+  document.getElementById('burgerBtn').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('mobileMenu');
+  const burger = document.getElementById('burgerBtn');
+  if (menu.style.display === 'flex' && !menu.contains(e.target) && !burger.contains(e.target)) closeMobileMenu();
+});
+window.toggleMobileNav = toggleMobileNav;
+window.closeMobileMenu = closeMobileMenu;
+
+// Mobile bottom nav
+if (window.innerWidth <= 768) {
+  document.getElementById('mobileBottomNav').style.display = 'flex';
+}
+
+// ── ALGO TRANSPORTEURS ──
+const CARRIERS = [
+  { name:'Mondial Relay', icon:'🌍', base:3.50, perKg:0.40, markup:0.70, delay:'3-5j', speed:3, rel:4, zones:['local','eu'] },
+  { name:'Colissimo',     icon:'📮', base:5.00, perKg:0.80, markup:1.90, delay:'2-3j', speed:4, rel:5, zones:['local','dom','eu'] },
+  { name:'Chronopost',    icon:'⚡', base:9.00, perKg:1.20, markup:2.50, delay:'J+1',  speed:5, rel:5, zones:['local','dom','eu','world'] },
+  { name:'DPD',           icon:'📦', base:4.20, perKg:0.60, markup:1.30, delay:'2-4j', speed:4, rel:4, zones:['local','eu'] },
+  { name:'UPS',           icon:'🟤', base:7.50, perKg:1.00, markup:2.00, delay:'2-3j', speed:4, rel:5, zones:['local','eu','world'] },
+  { name:'FedEx',         icon:'🟣', base:11.0, perKg:1.50, markup:3.00, delay:'J+1',  speed:5, rel:5, zones:['world'] },
+];
+
+function calcCarrier(c, weight, discount=0) {
+  const real = c.base + c.perKg * weight;
+  const ghostPrice = real + c.markup * (1-discount);
+  return { real:real.toFixed(2), ghostPrice:ghostPrice.toFixed(2), margin:(c.markup*(1-discount)).toFixed(2) };
+}
+
+function getBestCarrier(weight, dest, priority, discount=0) {
+  const avail = CARRIERS.filter(c=>c.zones.includes(dest)||dest==='local');
+  const scored = avail.map(c=>{
+    const {real,ghostPrice,margin} = calcCarrier(c,weight,discount);
+    let score = priority==='price' ? 100-parseFloat(ghostPrice)*5 : priority==='speed' ? c.speed*20 : (100-parseFloat(ghostPrice)*3)+c.speed*8+c.rel*5;
+    return {...c,real,ghostPrice,margin,score};
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored[0];
+}
+
+window.runAlgo = function() {
+  const weight = parseFloat(document.getElementById('a-weight').value)||1;
+  const dest = document.getElementById('a-dest').value;
+  const priority = document.getElementById('a-priority').value;
+  const planDisc = {free:0,pro:0.15,business:0.30};
+  const discount = planDisc[document.getElementById('a-plan').value]||0;
+  const avail = CARRIERS.filter(c=>c.zones.includes(dest)||dest==='local');
+  const scored = avail.map(c=>{
+    const {real,ghostPrice,margin} = calcCarrier(c,weight,discount);
+    let score = priority==='price' ? 100-parseFloat(ghostPrice)*5 : priority==='speed' ? c.speed*20 : (100-parseFloat(ghostPrice)*3)+c.speed*8+c.rel*5;
+    return {...c,real,ghostPrice,margin,score};
+  }).sort((a,b)=>b.score-a.score);
+
+  const collectCommission = 0.80;
+  const best = scored[0];
+  const destLabels = {local:'France métro',dom:'DOM-TOM',eu:'Europe',world:'International'};
+  const prioLabels = {price:'Prix bas',speed:'Rapidité',balanced:'Équilibré'};
+
+  document.getElementById('algoResults').innerHTML = `
+    <div style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin:24px 0 18px;">
+      Résultats · ${weight}kg · ${destLabels[dest]} · ${prioLabels[priority]}
+    </div>
+    <div class="transporter-grid">
+      ${scored.map((c,i)=>`
+        <div class="t-card ${i===0?'best':''}">
+          ${i===0?'<div class="t-best-label">⭐ Meilleur choix</div>':''}
+          <div class="t-icon">${c.icon}</div>
+          <div class="t-name">${c.name}</div>
+          <div class="t-price">${c.ghostPrice}€</div>
+          <div class="t-delay">⏱ ${c.delay}</div>
+          <div class="t-stars">${'★'.repeat(c.rel)}${'☆'.repeat(5-c.rel)}</div>
+          <div class="t-margin">Marge GhostSend: ${c.margin}€</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="background:var(--black);color:white;border-radius:var(--r-lg);padding:24px;margin-top:20px;">
+      <div style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;">💰 Prix total si tu envoies maintenant</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;"><span>Transporteur (${best.name})</span><span>${best.real}€</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;"><span>Frais GhostSend</span><span>${best.margin}€</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px;"><span>Commission collecteur</span><span>${collectCommission.toFixed(2)}€</span></div>
+        <div style="display:flex;justify-content:space-between;padding:14px 0 0;"><span style="font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;">Total à payer</span><span style="font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;">${(parseFloat(best.ghostPrice)+collectCommission).toFixed(2)}€</span></div>
+      </div>
+    </div>
+  `;
+};
+
+// ── QR CODE ──
+window.showQR = function(id, recipient) {
+  const code = 'GS-'+id.slice(-8).toUpperCase();
+  document.getElementById('qrInfo').textContent = recipient+' — '+code;
+  document.getElementById('qrCode').textContent = code;
+  document.getElementById('qrDiv').innerHTML = '<div id="qr-inner"></div>';
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(document.getElementById('qr-inner'), { text: `https://ghostsend.fr/scan.html?id=${code}&r=${encodeURIComponent(recipient)}`, width:200, height:200, colorDark:'#0d0d0d', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
+  }
+  document.getElementById('qrModal').classList.add('open');
+};
+window.downloadQR = function() {
+  const img = document.querySelector('#qr-inner img');
+  if (!img) return;
+  const a = document.createElement('a');
+  a.download = document.getElementById('qrCode').textContent+'.png';
+  a.href = img.src; a.click();
+};
+window.printQR = function() {
+  const img = document.querySelector('#qr-inner img');
+  const code = document.getElementById('qrCode').textContent;
+  const info = document.getElementById('qrInfo').textContent;
+  if (!img) return;
+  const w = window.open('','_blank');
+  w.document.write(`<html><head><title>GhostSend — ${code}</title><style>body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;}h1{font-size:26px;}p{color:#888;margin-bottom:22px;}img{border:2px solid #eee;border-radius:10px;padding:10px;}.code{font-family:monospace;font-size:20px;font-weight:900;margin-top:18px;background:#f5f5f5;padding:10px 24px;border-radius:8px;}</style></head><body><h1>👻 GhostSend</h1><p>${info}</p><img src="${img.src}" width="220"><div class="code">${code}</div><p style="margin-top:16px;font-size:12px;color:#aaa;">Scannez ce QR lors de la récupération du colis</p></body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),500);
+};
+
+setTimeout(()=>{ if(document.getElementById('page-algo').classList.contains('active')) runAlgo(); }, 100);
+</script>
+</body>
+</html>
+
