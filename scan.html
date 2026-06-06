@@ -573,12 +573,17 @@ async function loadMission() {
     const suffix = trackingId.replace('GS-', '').toLowerCase();
 
     for (const [key, val] of Object.entries(all)) {
-      if (key.slice(-8).toUpperCase() === trackingId.replace('GS-', '')) {
-        missionKey = key;
-        missionData = val;
-        break;
-      }
-    }
+  if (
+    val.recipient &&
+    recipientParam &&
+    val.recipient.toLowerCase().trim() === decodeURIComponent(recipientParam).toLowerCase().trim()
+    && val.status !== 'collected'
+  ) {
+    missionKey = key;
+    missionData = val;
+    break;
+  }
+}
 
     if (!missionData) {
       // Try fallback: search by recipient name from URL param
