@@ -277,6 +277,7 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
 }
 
 /* ─ NAV MOBILE ─ */
+/* ─ NAV MOBILE ─ */
 @media (max-width: 768px) {
   nav {
     height: 56px;
@@ -285,6 +286,29 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .nav-brand {
     font-size: 22px;
   }
+
+  /* Cacher TOUT le contenu nav sur mobile — seulement logo + burger visibles */
+  #navPublic,
+  #navAuth {
+    display: none !important;
+  }
+
+  /* Quand connecté, afficher juste 2 boutons compacts */
+  #navAuth.mobile-visible {
+    display: flex !important;
+    gap: 6px;
+    align-items: center;
+  }
+  #navAuth.mobile-visible .live-badge,
+  #navAuth.mobile-visible .plan-badge,
+  #navAuth.mobile-visible a:not(.btn-black) {
+    display: none;
+  }
+  #navAuth.mobile-visible a.btn-black {
+    padding: 7px 14px;
+    font-size: 13px;
+  }
+}
 
   /* Masquer les liens nav en mobile */
   #navPublic .nav-links-center,
