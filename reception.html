@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostSend — Réception colis</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0d0d0d; --white: #fff;
+  --gray-50: #f8f8f8; --gray-100: #f0f0f0; --gray-200: #e4e4e4;
+  --gray-400: #9e9e9e; --gray-600: #555;
+  --green: #16a34a; --green-light: #dcfce7; --green-dark: #14532d;
+  --orange: #ea580c; --orange-light: #fff7ed;
+  --blue: #2563eb; --blue-light: #eff6ff;
+  --r: 18px; --r-sm: 12px; --r-lg: 26px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--gray-50); color: var(--black); overflow-x: hidden; min-height: 100vh; }
+h1,h2,h3 { font-family: 'Fredoka', sans-serif; }
+
+/* ── NAV ── */
+nav {
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(14px);
+  border-bottom: 1.5px solid var(--gray-200);
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand { font-family:'Fredoka',sans-serif; font-size:24px; font-weight:700; display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--black); }
+.nav-back { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:700; color:var(--gray-600); text-decoration:none; padding:8px 14px; border-radius:10px; transition:.2s; }
+.nav-back:hover { background:var(--gray-100); color:var(--black); }
+
+/* ── LAYOUT ── */
+.container { max-width: 1080px; margin: 0 auto; padding: 32px 24px 60px; }
+.page-header { margin-bottom: 32px; }
+.page-header h1 { font-size: clamp(26px,4vw,38px); font-weight: 700; margin-bottom: 6px; }
+.page-header p { color: var(--gray-600); font-size: 15px; }
+
+/* ── TABS ── */
+.tabs-bar { display: flex; background: white; border: 1.5px solid var(--gray-200); border-radius: var(--r); padding: 5px; gap: 5px; margin-bottom: 28px; }
+.tab-btn { flex: 1; padding: 11px 10px; border: none; background: none; cursor: pointer; font-family: 'Nunito',sans-serif; font-size: 14px; font-weight: 700; border-radius: calc(var(--r) - 4px); transition: .2s; color: var(--gray-400); display: flex; align-items: center; justify-content: center; gap: 7px; }
+.tab-btn.active { background: var(--black); color: white; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── CARDS ── */
+.card { background: white; border: 1.5px solid var(--gray-200); border-radius: var(--r-lg); padding: 26px; }
+.card-title { font-family:'Fredoka',sans-serif; font-size:20px; font-weight:700; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+
+/* ── COLIS CARDS ── */
+.colis-list { display: flex; flex-direction: column; gap: 14px; }
+.colis-card { background: white; border: 2px solid var(--gray-200); border-radius: var(--r); padding: 20px; transition: .2s; position: relative; }
+.colis-card:hover { border-color: var(--gray-400); }
+.colis-card.urgent { border-color: var(--orange); background: var(--orange-light); }
+.colis-card.confirmed { border-color: var(--green); background: var(--green-light); }
+.colis-card.done { opacity: .6; }
+.colis-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.colis-id { font-family:'Fredoka',sans-serif; font-size:18px; font-weight:700; }
+.colis-meta { font-size:13px; color:var(--gray-600); margin-top:2px; }
+.badge { display:inline-block; padding:4px 11px; border-radius:100px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+.b-waiting  { background:var(--gray-100); color:var(--gray-600); }
+.b-rdv      { background:#dbeafe; color:#1d4ed8; }
+.b-arriving { background:#fef3c7; color:#92400e; }
+.b-done     { background:var(--green-light); color:var(--green-dark); }
+.colis-rdv-block { background: var(--gray-50); border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 13px; }
+.colis-rdv-block strong { display:block; font-size:15px; margin-bottom:2px; }
+.colis-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── BOUTONS ── */
+.btn { display:inline-flex; align-items:center; gap:7px; padding:10px 18px; border-radius:var(--r-sm); font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; cursor:pointer; border:none; transition:.2s; text-decoration:none; }
+.btn-black { background:var(--black); color:white; }
+.btn-black:hover { background:#222; }
+.btn-outline { background:white; color:var(--black); border:2px solid var(--black); }
+.btn-outline:hover { background:var(--gray-100); }
+.btn-green { background:var(--green); color:white; }
+.btn-green:hover { background:#15803d; }
+.btn-orange { background:var(--orange); color:white; }
+.btn-sm { padding:7px 13px; font-size:13px; }
+
+/* ── SCANNER ── */
+.scanner-wrapper { display: flex; flex-direction: column; gap: 20px; }
+.scanner-box { position: relative; border-radius: var(--r); overflow: hidden; background: #0d0d0d; aspect-ratio: 1; max-width: 420px; margin: 0 auto; width: 100%; }
+#video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scan-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.scan-frame { width: 200px; height: 200px; position: relative; }
+.scan-frame::before, .scan-frame::after { content: ''; position: absolute; width: 32px; height: 32px; }
+.scan-frame::before { top:0; left:0; border-top:3px solid white; border-left:3px solid white; border-radius:4px 0 0 0; }
+.sf-tr, .sf-bl, .sf-br { position: absolute; width: 32px; height: 32px; }
+.sf-tr { top:0; right:0; border-top:3px solid white; border-right:3px solid white; border-radius:0 4px 0 0; }
+.sf-bl { bottom:0; left:0; border-bottom:3px solid white; border-left:3px solid white; border-radius:0 0 0 4px; }
+.sf-br { bottom:0; right:0; border-bottom:3px solid white; border-right:3px solid white; border-radius:0 0 4px 0; }
+.scan-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #fff 30%, #fff 70%, transparent); animation: scanLine 2s ease-in-out infinite; transform-origin: center; }
+@keyframes scanLine { 0%,100%{top:15%;opacity:.8} 50%{top:85%;opacity:1} }
+.scanner-status { text-align: center; padding: 14px; font-size: 14px; font-weight: 700; border-radius: var(--r-sm); }
+.scanner-status.idle { background: var(--gray-100); color: var(--gray-600); }
+.scanner-status.scanning { background: #dbeafe; color: #1d4ed8; }
+.scanner-status.success { background: var(--green-light); color: var(--green-dark); animation: pulse .4s ease; }
+.scanner-status.error { background: #fee2e2; color: #991b1b; }
+@keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.02)} 100%{transform:scale(1)} }
+.manual-input { display: flex; gap: 10px; }
+.fi { width:100%; padding:11px 14px; border:2px solid var(--gray-200); border-radius:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--black); outline:none; transition:.2s; }
+.fi:focus { border-color:var(--black); }
+
+/* ── RDV MODAL ── */
+.overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.5); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:20px; }
+.overlay.open { display:flex; }
+.modal { background:white; border-radius:var(--r-lg); padding:36px 30px; max-width:440px; width:100%; position:relative; animation:mIn .3s ease; max-height:90vh; overflow-y:auto; }
+@keyframes mIn { from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none} }
+.modal-x { position:absolute; top:12px; right:12px; background:var(--gray-100); border:none; cursor:pointer; width:32px; height:32px; border-radius:50%; font-size:16px; display:flex; align-items:center; justify-content:center; }
+.modal-title { font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; margin-bottom:4px; }
+.modal-sub { font-size:13px; color:var(--gray-400); margin-bottom:22px; }
+.time-slots { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
+.time-slot { background:var(--gray-100); border:2px solid var(--gray-200); border-radius:10px; padding:10px; text-align:center; cursor:pointer; font-size:13px; font-weight:700; transition:.2s; }
+.time-slot:hover { border-color:var(--black); background:white; }
+.time-slot.selected { background:var(--black); color:white; border-color:var(--black); }
+.fl { display:block; font-size:13px; font-weight:700; margin-bottom:5px; }
+.fg { margin-bottom:14px; }
+
+/* ── CONFIRM MODAL ── */
+.confirm-colis { background:var(--gray-50); border:1.5px solid var(--gray-200); border-radius:var(--r); padding:18px; margin-bottom:20px; }
+.confirm-colis-id { font-family:'Fredoka',sans-serif; font-size:24px; font-weight:700; margin-bottom:6px; }
+
+/* ── STATS ── */
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:28px; }
+.stat { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r); padding:18px; text-align:center; }
+.stat-val { font-family:'Fredoka',sans-serif; font-size:30px; font-weight:700; }
+.stat-label { font-size:12px; color:var(--gray-400); font-weight:700; margin-top:3px; }
+
+/* ── LIVE DOT ── */
+.live-badge { display:inline-flex; align-items:center; gap:5px; background:var(--green-light); color:var(--green-dark); font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
+.live-dot { width:5px; height:5px; background:var(--green); border-radius:50%; animation:blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--black); color:white; padding:13px 22px; border-radius:12px; font-size:14px; font-weight:600; z-index:999; transition:.3s; white-space:nowrap; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── EMPTY ── */
+.empty { text-align:center; padding:48px 20px; }
+.empty-emoji { font-size:44px; margin-bottom:14px; }
+.empty-title { font-family:'Fredoka',sans-serif; font-size:20px; font-weight:700; margin-bottom:6px; }
+.empty-sub { color:var(--gray-400); font-size:14px; }
+
+/* ── MOBILE ── */
+@media(max-width:600px){
+  .container { padding:16px 14px 80px; }
+  .tabs-bar { gap:3px; }
+  .tab-btn { font-size:12px; padding:9px 6px; }
+  .time-slots { grid-template-columns:repeat(2,1fr); }
+  .colis-actions { flex-direction:column; }
+  .colis-actions .btn { width:100%; justify-content:center; }
+  nav { padding:0 16px; }
+  .modal { padding:28px 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="index.html">
+    👻 GhostSend
+  </a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="live-badge"><div class="live-dot"></div>En direct</div>
+    <a class="nav-back" href="index.html">← Retour</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>📦 Réception de colis</h1>
+    <p>Gère les dépôts de tes partenaires, fixe les RDV et confirme la réception par QR code.</p>
+  </div>
+
+  <!-- Stats rapides -->
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val" id="stat-att">—</div><div class="stat-label">En attente</div></div>
+    <div class="stat"><div class="stat-val" id="stat-rdv">—</div><div class="stat-label">RDV confirmés</div></div>
+    <div class="stat"><div class="stat-val" id="stat-auj">—</div><div class="stat-label">Attendus aujourd'hui</div></div>
+    <div class="stat"><div class="stat-val" id="stat-done">—</div><div class="stat-label">Reçus ce mois</div></div>
+  </div>
+
+  <!-- Onglets -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="switchTab('attente')">📋 En attente <span id="badge-att" style="background:#ef4444;color:white;border-radius:100px;padding:1px 7px;font-size:11px;display:none;"></span></button>
+    <button class="tab-btn" onclick="switchTab('scanner')">📱 Scanner QR</button>
+    <button class="tab-btn" onclick="switchTab('historique')">✅ Historique</button>
+  </div>
+
+  <!-- ─── ONGLET ATTENTE ─── -->
+  <div class="tab-content active" id="tab-attente">
+    <div class="card">
+      <div class="card-title">
+        📬 Colis à recevoir
+        <button class="btn btn-black btn-sm" style="margin-left:auto;" onclick="openAddModal()">+ Ajouter manuellement</button>
+      </div>
+      <div class="colis-list" id="colis-list">
+        <div class="empty"><div class="empty-emoji">📭</div><div class="empty-title">Aucun colis en attente</div><div class="empty-sub">Les colis assignés apparaîtront ici.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ONGLET SCANNER ─── -->
+  <div class="tab-content" id="tab-scanner">
+    <div class="scanner-wrapper">
+      <div class="card">
+        <div class="card-title">📱 Scanner le QR code du partenaire</div>
+        <div class="scanner-box">
+          <video id="video" autoplay muted playsinline></video>
+          <div class="scan-overlay">
+            <div class="scan-frame">
+              <div class="sf-tr"></div><div class="sf-bl"></div><div class="sf-br"></div>
+              <div class="scan-line"></div>
+            </div>
+          </div>
+        </div>
+        <div class="scanner-status idle" id="scan-status" style="margin-top:14px;">
+          📷 Appuie sur "Démarrer" pour activer la caméra
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+          <button class="btn btn-black" id="btnStartScan" onclick="startScanner()" style="flex:1;justify-content:center;">▶ Démarrer la caméra</button>
+          <button class="btn btn-outline" id="btnStopScan" onclick="stopScanner()" style="flex:1;justify-content:center;display:none;">⏹ Arrêter</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">⌨️ Saisie manuelle du code</div>
+        <div class="fg">
+          <label class="fl">Code QR (ex: GS-A1B2C3D4)</label>
+          <div class="manual-input">
+            <input type="text" class="fi" id="manual-code" placeholder="GS-XXXXXXXX" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+            <button class="btn btn-black" onclick="processCode(document.getElementById('manual-code').value.trim())">Valider</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ONGLET HISTORIQUE ─── -->
+  <div class="tab-content" id="tab-historique">
+    <div class="card">
+      <div class="card-title">✅ Colis reçus</div>
+      <div id="historique-list">
+        <div class="empty"><div class="empty-emoji">📦</div><div class="empty-title">Aucun colis reçu</div><div class="empty-sub">L'historique apparaîtra ici.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL RDV ─── -->
+<div class="overlay" id="rdvModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('rdvModal')">✕</button>
+    <div class="modal-title">📅 Fixer un RDV</div>
+    <div class="modal-sub" id="rdv-sub">Choisis le créneau de réception</div>
+    <div class="fg" style="margin-top:4px;">
+      <label class="fl">Jour</label>
+      <select class="fi" id="rdv-day">
+        <option value="auj">Aujourd'hui</option>
+        <option value="dem">Demain</option>
+        <option value="apr">Dans 2 jours</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">Créneau horaire</label>
+      <div class="time-slots" id="rdv-slots"></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Note pour le partenaire (optionnel)</label>
+      <input type="text" class="fi" id="rdv-note" placeholder="Sonner à l'interphone, porte de gauche...">
+    </div>
+    <div id="rdv-err" style="color:#dc2626;font-size:13px;font-weight:600;display:none;margin-bottom:10px;"></div>
+    <button class="btn btn-black" style="width:100%;justify-content:center;margin-top:6px;" onclick="confirmRdv()">Confirmer le RDV →</button>
+  </div>
+</div>
+
+<!-- ─── MODAL CONFIRMATION RÉCEPTION ─── -->
+<div class="overlay" id="confirmModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('confirmModal')">✕</button>
+    <div class="modal-title">✅ Confirmer la réception</div>
+    <div class="confirm-colis" id="confirm-details"></div>
+    <div class="fg">
+      <label class="fl">État du colis à la réception</label>
+      <select class="fi" id="confirm-state">
+        <option value="bon">✅ Bon état</option>
+        <option value="abime">⚠️ Légèrement abîmé</option>
+        <option value="probleme">🚨 Problème à signaler</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">Remarque (optionnel)</label>
+      <input type="text" class="fi" id="confirm-note" placeholder="Tout s'est bien passé...">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="closeModal('confirmModal')">Annuler</button>
+      <button class="btn btn-green" style="flex:1;justify-content:center;" onclick="doConfirmReception()">✓ Confirmer la réception</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL AJOUT MANUEL ─── -->
+<div class="overlay" id="addModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('addModal')">✕</button>
+    <div class="modal-title">➕ Ajouter un colis</div>
+    <div class="modal-sub">Renseigne les infos du colis attendu</div>
+    <div class="fg"><label class="fl">Code / ID colis *</label><input type="text" class="fi" id="add-id" placeholder="GS-XXXXXXXX" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="fg"><label class="fl">Expéditeur / partenaire *</label><input type="text" class="fi" id="add-sender" placeholder="Thomas R. — Collecteur"></div>
+    <div class="fg"><label class="fl">Transporteur</label>
+      <select class="fi" id="add-carrier">
+        <option value="Mondial Relay">🌍 Mondial Relay</option>
+        <option value="Colissimo">📮 Colissimo</option>
+        <option value="Chronopost">⚡ Chronopost</option>
+        <option value="DPD">📦 DPD</option>
+        <option value="Autre">Autre</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Poids estimé (kg)</label><input type="number" class="fi" id="add-weight" placeholder="0.5" step="0.1" min="0.1"></div>
+    <div id="add-err" style="color:#dc2626;font-size:13px;font-weight:600;display:none;margin-bottom:10px;"></div>
+    <button class="btn btn-black" style="width:100%;justify-content:center;" onclick="addColisManually()">Ajouter le colis →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ─── FIREBASE ─── -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain: "ghostly-fbe01.firebaseapp.com",
+  databaseURL: "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ghostly-fbe01",
+  storageBucket: "ghostly-fbe01.firebasestorage.app",
+  messagingSenderId: "290927219079",
+  appId: "1:290927219079:web:d7cd006945d9fe84a74322"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let CU = null;
+let allColis = {};
+let currentRdvId = null;
+let currentConfirmId = null;
+let selectedSlot = null;
+
+onAuthStateChanged(auth, user => {
+  CU = user;
+  if (user) loadData(user.uid);
+});
+
+function loadData(uid) {
+  // Écoute les missions assignées à ce point (sellerUid ou targetUid)
+  onValue(ref(db, 'all_missions'), snap => {
+    const d = snap.val() || {};
+    allColis = {};
+    Object.entries(d).forEach(([id, m]) => {
+      // On affiche les missions où c'est le bon vendeur, ou toutes si admin
+      allColis[id] = { id, ...m };
+    });
+    renderAll();
+  });
+
+  // Écoute aussi les colis manuels ajoutés
+  onValue(ref(db, `reception_colis/${uid}`), snap => {
+    const d = snap.val() || {};
+    Object.entries(d).forEach(([id, c]) => {
+      if (!allColis[id]) allColis[id] = { id, source: 'manual', ...c };
+    });
+    renderAll();
+  });
+}
+
+function renderAll() {
+  const arr = Object.values(allColis);
+  const enAttente = arr.filter(c => c.status !== 'received' && c.status !== 'delivered_to_relay');
+  const received  = arr.filter(c => c.status === 'received');
+
+  // Stats
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.getElementById('stat-att').textContent  = enAttente.filter(c=>!c.rdvSlot).length;
+  document.getElementById('stat-rdv').textContent  = enAttente.filter(c=>c.rdvSlot).length;
+  document.getElementById('stat-auj').textContent  = enAttente.filter(c=>c.rdvSlot && c.rdvSlot.startsWith('Aujourd')).length;
+  document.getElementById('stat-done').textContent = received.length;
+
+  // Badge onglet
+  const badge = document.getElementById('badge-att');
+  if (enAttente.length > 0) { badge.textContent = enAttente.length; badge.style.display='inline'; }
+  else badge.style.display='none';
+
+  renderColislist(enAttente);
+  renderHistorique(received);
+}
+
+window.renderColislist = function(arr) {
+  const el = document.getElementById('colis-list');
+  if (!arr.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-emoji">📭</div><div class="empty-title">Aucun colis en attente</div><div class="empty-sub">Les colis assignés apparaîtront ici.</div></div>';
+    return;
+  }
+  arr.sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+  el.innerHTML = arr.map(c => {
+    const hasRdv = !!c.rdvSlot;
+    const cardClass = hasRdv ? 'colis-card confirmed' : 'colis-card urgent';
+    const code = 'GS-' + c.id.slice(-8).toUpperCase();
+    return `
+    <div class="${cardClass}" id="card-${c.id}">
+      <div class="colis-head">
+        <div>
+          <div class="colis-id">${code}</div>
+          <div class="colis-meta">
+            ${c.recipient ? '📦 Pour : '+c.recipient+' · ' : ''}
+            ${c.carrier || 'Transporteur inconnu'} · ${c.weight || '?'}kg
+            ${c.collectorName ? ' · 🚶 '+c.collectorName : ''}
+          </div>
+        </div>
+        <span class="badge ${hasRdv ? 'b-rdv' : 'b-arriving'}">${hasRdv ? '📅 RDV fixé' : '⏳ En attente RDV'}</span>
+      </div>
+      ${hasRdv ? `
+      <div class="colis-rdv-block">
+        <strong>📅 ${c.rdvSlot}</strong>
+        ${c.rdvNote ? '<span style="color:var(--gray-600)">📝 '+c.rdvNote+'</span>' : ''}
+      </div>` : ''}
+      <div class="colis-actions">
+        ${!hasRdv ? `<button class="btn btn-black btn-sm" onclick="openRdvModal('${c.id}','${code}')">📅 Fixer un RDV</button>` : `<button class="btn btn-outline btn-sm" onclick="openRdvModal('${c.id}','${code}')">✏️ Modifier le RDV</button>`}
+        <button class="btn btn-green btn-sm" onclick="openConfirmModal('${c.id}','${code}')">✅ Confirmer réception</button>
+        <button class="btn btn-outline btn-sm" onclick="switchTab('scanner')">📱 Scanner QR</button>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window.renderHistorique = function(arr) {
+  const el = document.getElementById('historique-list');
+  if (!arr.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-emoji">📦</div><div class="empty-title">Aucun colis reçu</div><div class="empty-sub">L\'historique apparaîtra ici.</div></div>';
+    return;
+  }
+  arr.sort((a,b)=>(b.receivedAt||0)-(a.receivedAt||0));
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;">` + arr.map(c => {
+    const code = 'GS-'+c.id.slice(-8).toUpperCase();
+    const d = c.receivedAt ? new Date(c.receivedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    const stateIcon = c.receptionState==='bon'?'✅':c.receptionState==='abime'?'⚠️':'🚨';
+    return `
+    <div class="colis-card done">
+      <div class="colis-head">
+        <div>
+          <div class="colis-id">${code}</div>
+          <div class="colis-meta">${c.carrier||'—'} · Reçu le ${d}</div>
+          ${c.receptionNote ? `<div style="font-size:12px;color:var(--gray-600);margin-top:4px;">📝 ${c.receptionNote}</div>` : ''}
+        </div>
+        <span class="badge b-done">${stateIcon} Reçu</span>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+};
+
+// ── RDV ──
+window.openRdvModal = function(id, code) {
+  currentRdvId = id;
+  selectedSlot = null;
+  document.getElementById('rdv-sub').textContent = 'Colis : ' + code;
+  document.getElementById('rdv-err').style.display = 'none';
+  const slots = ['8h–10h','10h–12h','12h–14h','14h–16h','16h–18h','18h–20h'];
+  document.getElementById('rdv-slots').innerHTML = slots.map(s =>
+    `<div class="time-slot" onclick="selectSlot(this,'${s}')">${s}</div>`
+  ).join('');
+  document.getElementById('rdvModal').classList.add('open');
+};
+
+window.selectSlot = function(el, slot) {
+  document.querySelectorAll('#rdv-slots .time-slot').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSlot = slot;
+};
+
+window.confirmRdv = async function() {
+  const err = document.getElementById('rdv-err');
+  if (!selectedSlot) { err.textContent='Sélectionne un créneau.'; err.style.display='block'; return; }
+  const day = document.getElementById('rdv-day').value;
+  const dayLabel = day==='auj'?'Aujourd\'hui':day==='dem'?'Demain':'Dans 2 jours';
+  const fullSlot = dayLabel + ' ' + selectedSlot;
+  const note = document.getElementById('rdv-note').value.trim();
+  await update(ref(db, `all_missions/${currentRdvId}`), { rdvSlot: fullSlot, rdvNote: note, rdvSetAt: Date.now() });
+  closeModal('rdvModal');
+  showToast('📅 RDV fixé : ' + fullSlot);
+};
+
+// ── CONFIRMATION RÉCEPTION ──
+window.openConfirmModal = function(id, code) {
+  currentConfirmId = id;
+  const c = allColis[id] || {};
+  document.getElementById('confirm-details').innerHTML = `
+    <div class="confirm-colis-id">${code}</div>
+    <div style="font-size:13px;color:var(--gray-600);">
+      ${c.carrier||'—'} · ${c.weight||'?'}kg<br>
+      ${c.rdvSlot ? '📅 RDV : '+c.rdvSlot : 'Aucun RDV fixé'}<br>
+      ${c.collectorName ? '🚶 Partenaire : '+c.collectorName : ''}
+    </div>`;
+  document.getElementById('confirm-note').value = '';
+  document.getElementById('confirmModal').classList.add('open');
+};
+
+window.doConfirmReception = async function() {
+  if (!currentConfirmId) return;
+  const state = document.getElementById('confirm-state').value;
+  const note  = document.getElementById('confirm-note').value.trim();
+  await update(ref(db, `all_missions/${currentConfirmId}`), {
+    status: 'received',
+    receptionState: state,
+    receptionNote: note,
+    receivedAt: Date.now()
+  });
+  closeModal('confirmModal');
+  showToast('✅ Colis réceptionné ! Merci.');
+  if (state !== 'bon') showToast('⚠️ Problème signalé — l\'équipe est notifiée.');
+};
+
+// ── AJOUT MANUEL ──
+window.openAddModal = () => { document.getElementById('addModal').classList.add('open'); };
+window.addColisManually = async function() {
+  const id     = document.getElementById('add-id').value.trim();
+  const sender = document.getElementById('add-sender').value.trim();
+  const carrier= document.getElementById('add-carrier').value;
+  const weight = document.getElementById('add-weight').value;
+  const err    = document.getElementById('add-err');
+  err.style.display='none';
+  if (!id||!sender) { err.textContent='ID et expéditeur requis.'; err.style.display='block'; return; }
+  if (!CU) { err.textContent='Connecte-toi d\'abord.'; err.style.display='block'; return; }
+  const cleanId = id.replace('GS-','').toLowerCase();
+  await push(ref(db, `reception_colis/${CU.uid}`), { code: id, sender, carrier, weight: parseFloat(weight)||0.5, status:'pending', createdAt: Date.now() });
+  closeModal('addModal');
+  showToast('📦 Colis ajouté !');
+};
+
+// ── QR SCAN PROCESSING ──
+window.processCode = function(code) {
+  if (!code) { setStatus('error','❌ Code vide'); return; }
+  // Cherche dans allColis
+  const match = Object.values(allColis).find(c => {
+    const codeGen = 'GS-' + c.id.slice(-8).toUpperCase();
+    return codeGen === code.toUpperCase() || c.id === code;
+  });
+  if (match) {
+    stopScanner();
+    setStatus('success','✅ Colis trouvé : ' + code);
+    switchTab('attente');
+    setTimeout(() => openConfirmModal(match.id, code), 400);
+  } else {
+    setStatus('error','❌ Code inconnu : ' + code + ' — ajoute-le manuellement.');
+  }
+};
+</script>
+
+<!-- QR SCANNER JS (non-module) -->
+<script>
+let scanActive = false;
+let stream = null;
+let animFrame = null;
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const names = ['attente','scanner','historique'];
+    b.classList.toggle('active', names[i]===name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name !== 'scanner') stopScanner();
+}
+
+async function startScanner() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    video.play();
+    scanActive = true;
+    document.getElementById('btnStartScan').style.display = 'none';
+    document.getElementById('btnStopScan').style.display  = 'flex';
+    setStatus('scanning','🔍 Scan en cours... Présente le QR code');
+    requestAnimationFrame(scanLoop);
+  } catch(e) {
+    setStatus('error','❌ Caméra inaccessible. Utilise la saisie manuelle.');
+  }
+}
+
+function stopScanner() {
+  scanActive = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  document.getElementById('video').srcObject = null;
+  document.getElementById('btnStartScan').style.display = 'flex';
+  document.getElementById('btnStopScan').style.display  = 'none';
+  setStatus('idle','📷 Appuie sur "Démarrer" pour activer la caméra');
+}
+
+function scanLoop() {
+  if (!scanActive) return;
+  const video = document.getElementById('video');
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const canvas = document.createElement('canvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    if (typeof jsQR !== 'undefined') {
+      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'dontInvert' });
+      if (code) { processCode(code.data); return; }
+    }
+  }
+  animFrame = requestAnimationFrame(scanLoop);
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('scan-status');
+  el.className = 'scanner-status ' + type;
+  el.textContent = msg;
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay').forEach(m=>m.classList.remove('open')); });
+
+window.switchTab    = switchTab;
+window.startScanner = startScanner;
+window.stopScanner  = stopScanner;
+window.closeModal   = closeModal;
+window.showToast    = showToast;
+</script>
+</body>
+</html>
