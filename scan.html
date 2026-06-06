@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GhostSend — Validation collecte</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0d0d0d;
+  --white: #fff;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --green-dark: #14532d;
+  --gray-50: #f8f8f8;
+  --gray-100: #f0f0f0;
+  --gray-200: #e4e4e4;
+  --gray-400: #9e9e9e;
+  --gray-600: #555;
+  --orange: #ea580c;
+  --orange-light: #fff7ed;
+  --red: #dc2626;
+  --r: 18px;
+  --r-sm: 12px;
+  --r-lg: 26px;
+}
+html, body {
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  background: var(--gray-50);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: 'Fredoka', sans-serif; }
+
+/* HEADER */
+.header {
+  background: var(--black);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.brand {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+}
+
+/* MAIN */
+.main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+/* STATES */
+.state { display: none; }
+.state.active { display: block; }
+
+/* LOADING */
+.loading-wrap {
+  text-align: center;
+  padding: 60px 20px;
+}
+.spinner {
+  width: 44px; height: 44px;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--black);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 15px; color: var(--gray-400); font-weight: 600; }
+
+/* CARD */
+.card {
+  background: white;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--r-lg);
+  padding: 24px 20px;
+  margin-bottom: 16px;
+}
+
+/* STATUS BADGE */
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 100px;
+}
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-accepted { background: #dbeafe; color: #1e40af; }
+.status-collected { background: var(--green-light); color: var(--green-dark); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* TRACKING CODE */
+.tracking-code {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--gray-400);
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+/* INFO ROWS */
+.info-section { margin-bottom: 20px; }
+.info-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--gray-400);
+  margin-bottom: 6px;
+}
+.info-value {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--black);
+  line-height: 1.2;
+}
+.info-sub {
+  font-size: 13px;
+  color: var(--gray-600);
+  margin-top: 3px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--gray-100);
+  margin: 16px 0;
+}
+
+/* DETAILS GRID */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.detail-item {
+  background: var(--gray-50);
+  border-radius: var(--r-sm);
+  padding: 12px;
+}
+.detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 4px;
+}
+.detail-value {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--black);
+}
+
+/* COMMISSION BOX */
+.commission-box {
+  background: var(--black);
+  color: white;
+  border-radius: var(--r);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.commission-label { font-size: 14px; font-weight: 600; opacity: .7; }
+.commission-amount {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* INSTRUCTIONS */
+.instructions {
+  background: var(--orange-light);
+  border: 1.5px solid #fed7aa;
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.instructions-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.instructions ol {
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.instructions li {
+  font-size: 13px;
+  color: #7c2d12;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* BUTTONS */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: var(--r);
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: .2s;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+.btn:last-child { margin-bottom: 0; }
+.btn-black { background: var(--black); color: white; }
+.btn-black:hover { background: #222; transform: translateY(-1px); }
+.btn-black:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; transform: none; }
+.btn-green { background: var(--green); color: white; }
+.btn-green:hover { background: #15803d; transform: translateY(-1px); }
+.btn-outline { background: white; color: var(--black); border: 2px solid var(--gray-200); }
+.btn-outline:hover { border-color: var(--black); }
+
+/* SUCCESS STATE */
+.success-wrap { text-align: center; padding: 20px 0; }
+.success-icon {
+  width: 80px; height: 80px;
+  background: var(--green-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 36px;
+  animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.success-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--green-dark);
+  margin-bottom: 8px;
+}
+.success-sub {
+  font-size: 15px;
+  color: var(--gray-600);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+.success-earning {
+  background: var(--green-light);
+  border: 1.5px solid #86efac;
+  border-radius: var(--r);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.earning-label { font-size: 13px; color: var(--green-dark); font-weight: 700; margin-bottom: 4px; }
+.earning-amount {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+.earning-sub { font-size: 12px; color: var(--green); margin-top: 2px; }
+
+/* ERROR STATE */
+.error-wrap { text-align: center; padding: 40px 20px; }
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.error-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--red);
+  margin-bottom: 8px;
+}
+.error-sub { font-size: 14px; color: var(--gray-600); line-height: 1.6; margin-bottom: 24px; }
+
+/* ALREADY COLLECTED */
+.already-wrap { text-align: center; padding: 20px 0; }
+.already-icon {
+  width: 70px; height: 70px;
+  background: #dbeafe;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 30px;
+}
+.already-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 8px;
+}
+.already-sub { font-size: 14px; color: var(--gray-600); line-height: 1.6; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--black);
+  color: white;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 999;
+  transition: .3s;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--gray-400);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">👻 GhostSend</div>
+</div>
+
+<div class="main">
+
+  <!-- LOADING -->
+  <div class="state active" id="state-loading">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <div class="loading-text">Chargement de la mission...</div>
+    </div>
+  </div>
+
+  <!-- MISSION INFO (état normal) -->
+  <div class="state" id="state-mission">
+    <div class="card">
+      <div class="status-row">
+        <div class="status-badge status-pending" id="missionStatusBadge">
+          <div class="status-dot"></div>
+          <span id="missionStatusText">En attente</span>
+        </div>
+        <div class="tracking-code" id="trackingCode">GS-XXXXXXXX</div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-label">Destinataire</div>
+        <div class="info-value" id="recipientName">—</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="info-section">
+        <div class="info-label">Adresse de collecte</div>
+        <div class="info-value" style="font-size:17px;" id="collectAddress">—</div>
+        <div class="info-sub" id="sellerName"></div>
+      </div>
+
+      <div class="details-grid">
+        <div class="detail-item">
+          <div class="detail-label">Poids</div>
+          <div class="detail-value" id="packageWeight">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Transporteur</div>
+          <div class="detail-value" id="packageCarrier">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Plateforme</div>
+          <div class="detail-value" id="packagePlatform">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Créneau</div>
+          <div class="detail-value" style="font-size:13px;" id="packageSlot">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="commission-box">
+      <div>
+        <div class="commission-label">Ta commission</div>
+        <div style="font-size:12px;opacity:.5;margin-top:2px;">Versée le 1er du mois</div>
+      </div>
+      <div class="commission-amount" id="commissionAmount">+0,80€</div>
+    </div>
+
+    <div class="instructions">
+      <div class="instructions-title">📋 Étapes à suivre</div>
+      <ol>
+        <li>Rends-toi à l'adresse de collecte indiquée</li>
+        <li>Récupère le colis auprès du vendeur</li>
+        <li>Dépose-le au point relais le plus proche</li>
+        <li>Appuie sur <strong>"Valider la collecte"</strong> ci-dessous</li>
+      </ol>
+    </div>
+
+    <button class="btn btn-green" id="validateBtn" onclick="validateCollect()">
+      ✓ Valider la collecte
+    </button>
+    <button class="btn btn-outline" onclick="window.location.href='/'">
+      Retour à l'accueil
+    </button>
+  </div>
+
+  <!-- SUCCÈS -->
+  <div class="state" id="state-success">
+    <div class="card">
+      <div class="success-wrap">
+        <div class="success-icon">✓</div>
+        <div class="success-title">Collecte validée !</div>
+        <div class="success-sub">Merci d'avoir déposé ce colis au point relais. Ta commission a été ajoutée à ton compte GhostSend.</div>
+        <div class="success-earning">
+          <div class="earning-label">COMMISSION GAGNÉE</div>
+          <div class="earning-amount" id="successAmount">+0,80€</div>
+          <div class="earning-sub">Versement le 1er du mois prochain</div>
+        </div>
+        <div style="background:var(--gray-50);border-radius:var(--r-sm);padding:14px;margin-bottom:20px;text-align:left;">
+          <div style="font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Récapitulatif</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:3px;" id="successRecipient">—</div>
+          <div style="font-size:12px;color:var(--gray-400);" id="successCode">—</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-black" onclick="window.location.href='/'">
+      Retour au dashboard →
+    </button>
+  </div>
+
+  <!-- DÉJÀ COLLECTÉ -->
+  <div class="state" id="state-already">
+    <div class="card">
+      <div class="already-wrap">
+        <div class="already-icon">📦</div>
+        <div class="already-title">Déjà collecté</div>
+        <div class="already-sub">Ce colis a déjà été validé comme collecté. Si tu penses que c'est une erreur, contacte le support GhostSend.</div>
+      </div>
+    </div>
+    <button class="btn btn-outline" onclick="window.location.href='/'">Retour à l'accueil</button>
+  </div>
+
+  <!-- ERREUR -->
+  <div class="state" id="state-error">
+    <div class="card">
+      <div class="error-wrap">
+        <div class="error-icon">❌</div>
+        <div class="error-title" id="errorTitle">Mission introuvable</div>
+        <div class="error-sub" id="errorSub">Ce QR code ne correspond à aucune mission active. Il est peut-être expiré ou invalide.</div>
+      </div>
+    </div>
+    <button class="btn btn-black" onclick="window.location.href='/'">Retour à l'accueil</button>
+  </div>
+
+</div>
+
+<footer class="footer">
+  👻 GhostSend · Ghost.send86@gmail.com
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain: "ghostly-fbe01.firebaseapp.com",
+  databaseURL: "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ghostly-fbe01",
+  storageBucket: "ghostly-fbe01.firebasestorage.app",
+  messagingSenderId: "290927219079",
+  appId: "1:290927219079:web:d7cd006945d9fe84a74322"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+
+// Parse URL params
+const params = new URLSearchParams(window.location.search);
+const trackingId = params.get('id');    // ex: GS-ABCD1234
+const recipientParam = params.get('r'); // ex: Jean Dupont
+
+let missionKey = null;
+let missionData = null;
+let currentUser = null;
+
+function showState(name) {
+  document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+  document.getElementById('state-'+name).classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function formatCommission(val) {
+  if (!val) return '+0,80€';
+  return '+' + parseFloat(val).toFixed(2).replace('.', ',') + '€';
+}
+
+// Wait for auth then load mission
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  await loadMission();
+});
+
+async function loadMission() {
+  if (!trackingId) {
+    showState('error');
+    document.getElementById('errorTitle').textContent = 'QR Code invalide';
+    document.getElementById('errorSub').textContent = 'Aucun code de suivi trouvé dans ce QR. Rescanne ou contacte le vendeur.';
+    return;
+  }
+
+  try {
+    // Search in all_missions for this tracking code
+    const missionsSnap = await get(ref(db, 'all_missions'));
+    if (!missionsSnap.exists()) {
+      showState('error');
+      return;
+    }
+
+    const all = missionsSnap.val();
+    // Find mission where tracking matches
+    // The tracking code is 'GS-' + missionId.slice(-8).toUpperCase()
+    // We need to find the mission whose key ends with the suffix
+    const suffix = trackingId.replace('GS-', '').toLowerCase();
+
+    for (const [key, val] of Object.entries(all)) {
+      if (key.slice(-8).toUpperCase() === trackingId.replace('GS-', '')) {
+        missionKey = key;
+        missionData = val;
+        break;
+      }
+    }
+
+    if (!missionData) {
+      // Try fallback: search by recipient name from URL param
+      showState('error');
+      document.getElementById('errorTitle').textContent = 'Mission introuvable';
+      document.getElementById('errorSub').textContent = `Aucune mission trouvée pour le code ${trackingId}. Le colis a peut-être déjà été traité.`;
+      return;
+    }
+
+    // Check if already collected
+    if (missionData.status === 'collected') {
+      showState('already');
+      return;
+    }
+
+    // Populate UI
+    document.getElementById('trackingCode').textContent = trackingId;
+    document.getElementById('recipientName').textContent = missionData.recipient || recipientParam || '—';
+    document.getElementById('collectAddress').textContent = missionData.address || '—';
+    document.getElementById('sellerName').textContent = missionData.sellerName ? 'Vendeur : ' + missionData.sellerName : '';
+    document.getElementById('packageWeight').textContent = (missionData.weight || '?') + ' kg';
+    document.getElementById('packageCarrier').textContent = missionData.carrier || '—';
+    document.getElementById('packagePlatform').textContent = missionData.platform || 'Manuel';
+    document.getElementById('packageSlot').textContent = missionData.slot || 'À définir';
+    document.getElementById('commissionAmount').textContent = formatCommission(missionData.commission);
+
+    // Update status badge
+    const badge = document.getElementById('missionStatusBadge');
+    const statusText = document.getElementById('missionStatusText');
+    if (missionData.status === 'accepted') {
+      badge.className = 'status-badge status-accepted';
+      statusText.textContent = 'Collecteur assigné';
+    } else {
+      badge.className = 'status-badge status-pending';
+      statusText.textContent = 'En attente';
+    }
+
+    showState('mission');
+
+  } catch (err) {
+    console.error(err);
+    showState('error');
+    document.getElementById('errorTitle').textContent = 'Erreur de chargement';
+    document.getElementById('errorSub').textContent = 'Impossible de charger les données. Vérifie ta connexion internet et réessaie.';
+  }
+}
+
+window.validateCollect = async () => {
+  if (!missionKey || !missionData) return;
+
+  const btn = document.getElementById('validateBtn');
+  btn.textContent = 'Validation...';
+  btn.disabled = true;
+
+  try {
+    const updates = {
+      status: 'collected',
+      doneAt: Date.now(),
+    };
+    if (currentUser) {
+      updates.collectorUid = currentUser.uid;
+      updates.collectorName = currentUser.displayName || currentUser.email;
+    }
+
+    await update(ref(db, `all_missions/${missionKey}`), updates);
+
+    // Also update seller's shipment status
+    if (missionData.sellerUid) {
+      // Find the matching shipment in seller's data
+      const shipSnap = await get(ref(db, `users/${missionData.sellerUid}/shipments`));
+      if (shipSnap.exists()) {
+        const ships = shipSnap.val();
+        for (const [sKey, sVal] of Object.entries(ships)) {
+          if (sVal.recipient === missionData.recipient && sVal.status !== 'delivered') {
+            await update(ref(db, `users/${missionData.sellerUid}/shipments/${sKey}`), {
+              status: 'transit',
+              collectedAt: Date.now()
+            });
+            break;
+          }
+        }
+      }
+    }
+
+    // Show success
+    document.getElementById('successAmount').textContent = formatCommission(missionData.commission);
+    document.getElementById('successRecipient').textContent = missionData.recipient || '—';
+    document.getElementById('successCode').textContent = trackingId;
+
+    showState('success');
+    showToast('✅ Collecte validée !');
+
+  } catch (err) {
+    console.error(err);
+    btn.textContent = '✓ Valider la collecte';
+    btn.disabled = false;
+    showToast('❌ Erreur. Réessaie.');
+  }
+};
+</script>
+
+</body>
+</html>
