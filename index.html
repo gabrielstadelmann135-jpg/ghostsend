@@ -287,15 +287,19 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   #navPublic[style*="display: none"] ~ .nav-burger { display: none !important; }
 }
 /* ═══════════════════════════════════════
-   MOBILE
+   MOBILE (≤ 768px)
    ═══════════════════════════════════════ */
 @media (max-width: 768px) {
+
   :root { --r: 14px; --r-lg: 20px; }
 
-  /* NAV */
+  /* ── 1. NAVIGATION DU HAUT ── */
   nav { height: 56px; padding: 0 16px; }
   .nav-brand { font-size: 22px; }
+  .nav-burger { display: none !important; }
+
   #navPublic { display: none !important; }
+
   #navAuth { display: flex !important; gap: 8px; align-items: center; }
   #navAuth .live-badge,
   #navAuth .plan-badge,
@@ -307,9 +311,8 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
     padding: 8px 16px;
     font-size: 13px;
   }
-  .nav-burger { display: none !important; }
 
-  /* HERO */
+  /* ── 2. HERO ── */
   .hero { padding: 36px 16px 44px; min-height: auto; }
   .hero h1 { font-size: clamp(34px, 10vw, 52px); }
   .hero-sub { font-size: 15px; }
@@ -321,49 +324,32 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .h-stat:nth-child(3), .h-stat:nth-child(4) { border-bottom: none; }
   .h-stat-num { font-size: 22px; }
 
-  /* SECTIONS */
+  /* ── 3. SECTIONS GÉNÉRIQUES (page d'accueil, etc.) ── */
   .section { padding: 44px 16px; }
   .section-title { font-size: clamp(24px, 7vw, 34px); }
+
+  /* Plateformes compatibles */
+  .hero + section { padding: 40px 16px !important; }
+  .hero + section div[style*="gap:48px"] { gap: 24px !important; }
+  .hero + section span { font-size: 20px !important; }
+
+  /* Avantages */
+  #page-home > section:nth-child(3) { padding: 44px 16px !important; }
+
+  /* Réseau de partenaires (bloc noir) */
   .partner-dark { padding: 44px 16px; }
   .partner-cards { grid-template-columns: 1fr; }
   .partner-pills { gap: 8px; }
   .partner-pill { font-size: 12px; padding: 7px 14px; }
 
-  /* PLATEFORMES */
-  .hero + section { padding: 40px 16px !important; }
-  .hero + section div[style*="gap:48px"] { gap: 24px !important; }
-  .hero + section span { font-size: 20px !important; }
-
-  /* AVANTAGES */
-  #page-home > section:nth-child(3) { padding: 44px 16px !important; }
-
-  /* TÉMOIGNAGES */
+  /* Témoignages */
   #page-home > section[style*="gray-50"] { padding: 44px 16px !important; }
 
-  /* CRÉATEUR section */
+  /* Créateurs de contenu */
   #page-home > section:last-of-type { padding: 44px 16px !important; }
   #page-home div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; gap: 24px !important; }
 
-  /* FOOTER */
-  .footer-main { padding: 44px 16px 28px; }
-  .footer-grid { grid-template-columns: 1fr; gap: 28px; margin-bottom: 36px; }
-  .footer-desc { max-width: 100%; }
-  .footer-bottom { flex-direction: column; text-align: center; gap: 8px; }
-  .footer-bottom p { font-size: 12px; }
-
-  /* PRICING */
-  .pricing-grid { grid-template-columns: 1fr; gap: 16px; }
-  .pricing-card { padding: 26px 18px; }
-  .pricing-amount { font-size: 40px; }
-
-  /* ALGO */
-  .algo-panel { padding: 20px 16px; }
-  .algo-inputs { grid-template-columns: 1fr; gap: 10px; }
-  .transporter-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .algo-btn { width: 100%; padding: 13px; }
-  .t-card { padding: 14px 10px; }
-
-  /* HOW STEPS */
+  /* How it works */
   .how-step { grid-template-columns: 50px 1fr; gap: 12px; padding: 20px 0; }
   .step-circle { width: 44px; height: 44px; font-size: 20px; }
   .step-content h3 { font-size: 17px; }
@@ -372,48 +358,63 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   /* FAQ */
   .faq-question { font-size: 15px; padding: 16px 0; }
 
-  /* FORMS */
-  #page-partenaire-form > div { padding: 36px 16px 60px !important; }
-  #page-partenaire-form div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
-  #page-contact > div { padding: 36px 16px 60px !important; }
-  #page-contact div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+  /* ── 4. TARIFS / PRICING ── */
+  .pricing-grid { grid-template-columns: 1fr; gap: 16px; }
+  .pricing-card { padding: 26px 18px; }
+  .pricing-amount { font-size: 40px; }
+
+  /* ── 5. ALGO TRANSPORTEURS ── */
+  .algo-panel { padding: 20px 16px; }
+  .algo-inputs { grid-template-columns: 1fr; gap: 10px; }
+  .algo-btn { width: 100%; padding: 13px; }
+  .transporter-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .t-card { padding: 14px 10px; }
+
+  /* ── 6. FORMULAIRES (partenaire / contact / créateur) ── */
+  #page-partenaire-form > div,
+  #page-contact > div,
   #page-createur > div { padding: 36px 16px 60px !important; }
+  #page-partenaire-form div[style*="grid-template-columns:1fr 1fr"],
+  #page-contact div[style*="grid-template-columns:1fr 1fr"],
   #page-createur div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
 
-  /* DASHBOARD */
+  /* ── 7. DASHBOARD (vendeur + partenaire) ── */
   .dash { padding: 16px 16px 80px; }
   .dash-header { flex-direction: column; gap: 10px; margin-bottom: 16px; }
   .dash-welcome { font-size: 22px; }
   .dash-sub { font-size: 13px; }
   .dash-actions { width: 100%; flex-wrap: wrap; }
   .dash-actions .btn { flex: 1; min-width: 120px; justify-content: center; font-size: 12px; padding: 9px 10px; }
+
   .kpis { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
   .kpi { padding: 12px 10px; }
   .kpi-value { font-size: 22px; }
   .kpi-label { font-size: 10px; }
   .kpi-sub { font-size: 11px; }
+
   .dash-grid { grid-template-columns: 1fr; gap: 14px; }
   .panel { padding: 16px 12px; }
   .panel-title { font-size: 17px; margin-bottom: 14px; }
 
-  /* SHIPMENTS TABLE → CARDS */
+  /* Tableau des envois → cartes */
   .ship-table thead { display: none; }
   .ship-table, .ship-table tbody, .ship-table tr, .ship-table td { display: block; width: 100%; }
   .ship-table tr { background: white; border: 1.5px solid var(--gray-200); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
   .ship-table td { padding: 2px 0; border: none; font-size: 13px; }
   .ship-table td:first-child { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
 
-  /* PICKUP CARDS */
+  /* Missions / collectes (espace partenaire) */
   .pickup-card { padding: 12px; }
   .pickup-actions { flex-direction: column; gap: 6px; }
   .pickup-actions .btn { width: 100%; justify-content: center; font-size: 13px; padding: 9px 12px; }
   .pickup-earn { font-size: 18px; }
+  .radius-input { width: 80px; }
 
-  /* INTÉGRATIONS */
+  /* Intégrations */
   .int-item { flex-wrap: wrap; gap: 8px; }
   .int-logo { width: 36px; height: 36px; }
 
-  /* MODALS → BOTTOM SHEET */
+  /* ── 8. MODALS → BOTTOM SHEET ── */
   .overlay { align-items: flex-end; padding: 0; }
   .modal {
     border-radius: 22px 22px 0 0;
@@ -439,13 +440,17 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .modal-title { font-size: 20px; }
   #shipmentModal div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
 
-  /* TIME SLOTS */
+  /* Créneaux de RDV */
   .time-slots { grid-template-columns: repeat(2, 1fr); }
 
-  /* PARTNER DASH */
-  .radius-input { width: 80px; }
+  /* ── 9. FOOTER ── */
+  .footer-main { padding: 44px 16px 28px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 28px; margin-bottom: 36px; }
+  .footer-desc { max-width: 100%; }
+  .footer-bottom { flex-direction: column; text-align: center; gap: 8px; }
+  .footer-bottom p { font-size: 12px; }
 
-  /* BOTTOM NAV */
+  /* ── 10. NAV DU BAS (bottom nav) ── */
   .mobile-bottom-nav {
     display: flex !important;
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -468,10 +473,9 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .mobile-bottom-nav a .nav-icon { font-size: 19px; }
   .mobile-bottom-nav a.active { color: var(--black); background: var(--gray-100); }
 
-  /* TOAST */
+  /* ── 11. TOAST ── */
   .toast { bottom: 68px; width: calc(100% - 32px); text-align: center; white-space: normal; }
 }
-
  
 
 
