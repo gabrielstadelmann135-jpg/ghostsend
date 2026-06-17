@@ -287,29 +287,71 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   #navPublic[style*="display: none"] ~ .nav-burger { display: none !important; }
 }
 /* ═══════════════════════════════════════
-   MOBILE (≤ 768px)
+   MOBILE (≤ 768px) — refonte complète
    ═══════════════════════════════════════ */
 @media (max-width: 768px) {
 
   :root { --r: 14px; --r-lg: 20px; }
 
-  /* ── 1. NAVIGATION DU HAUT ── */
-  nav { height: 56px; padding: 0 16px; }
-  .nav-brand { font-size: 22px; }
+  /* ── 1. NAV HAUT ── */
+  nav {
+    height: 56px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .nav-brand { font-size: 20px; flex-shrink: 0; }
   .nav-burger { display: none !important; }
-
   #navPublic { display: none !important; }
 
-  #navAuth { display: flex !important; gap: 8px; align-items: center; }
+  /* Conteneur auth : une seule rangée compacte */
+  #navAuth {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  /* On masque les éléments qui prennent trop de place */
   #navAuth .live-badge,
   #navAuth .plan-badge,
   #navAuth a[onclick*="partenaire"],
   #navAuth a[onclick*="doLogout"] { display: none !important; }
-  #navAuth a[href="reception.html"],
+
+  /* Dashboard : bouton discret */
   #navAuth a[onclick*="dashboard"] {
     display: inline-flex !important;
-    padding: 8px 16px;
-    font-size: 13px;
+    align-items: center;
+    padding: 7px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    border-radius: var(--r-sm);
+    border: 2px solid var(--black);
+    background: white;
+    color: var(--black);
+    font-weight: 700;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  /* Bouton Réception : compact mais lisible */
+  #navAuth a[href="reception.html"] {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    border-radius: var(--r-sm);
+    background: var(--black);
+    color: white;
+    text-decoration: none;
+    flex-shrink: 0;
   }
 
   /* ── 2. HERO ── */
@@ -324,29 +366,15 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .h-stat:nth-child(3), .h-stat:nth-child(4) { border-bottom: none; }
   .h-stat-num { font-size: 22px; }
 
-  /* ── 3. SECTIONS GÉNÉRIQUES (page d'accueil, etc.) ── */
+  /* ── 3. SECTIONS ── */
   .section { padding: 44px 16px; }
   .section-title { font-size: clamp(24px, 7vw, 34px); }
-
-  /* Plateformes compatibles */
-  .hero + section { padding: 40px 16px !important; }
-  .hero + section div[style*="gap:48px"] { gap: 24px !important; }
-  .hero + section span { font-size: 20px !important; }
-
-  /* Avantages */
-  #page-home > section:nth-child(3) { padding: 44px 16px !important; }
-
-  /* Réseau de partenaires (bloc noir) */
   .partner-dark { padding: 44px 16px; }
   .partner-cards { grid-template-columns: 1fr; }
   .partner-pills { gap: 8px; }
   .partner-pill { font-size: 12px; padding: 7px 14px; }
 
-  /* Témoignages */
-  #page-home > section[style*="gray-50"] { padding: 44px 16px !important; }
-
-  /* Créateurs de contenu */
-  #page-home > section:last-of-type { padding: 44px 16px !important; }
+  /* Grilles 2 colonnes → 1 colonne */
   #page-home div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; gap: 24px !important; }
 
   /* How it works */
@@ -358,27 +386,27 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   /* FAQ */
   .faq-question { font-size: 15px; padding: 16px 0; }
 
-  /* ── 4. TARIFS / PRICING ── */
+  /* ── 4. TARIFS ── */
   .pricing-grid { grid-template-columns: 1fr; gap: 16px; }
   .pricing-card { padding: 26px 18px; }
   .pricing-amount { font-size: 40px; }
 
-  /* ── 5. ALGO TRANSPORTEURS ── */
+  /* ── 5. ALGO ── */
   .algo-panel { padding: 20px 16px; }
   .algo-inputs { grid-template-columns: 1fr; gap: 10px; }
   .algo-btn { width: 100%; padding: 13px; }
   .transporter-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .t-card { padding: 14px 10px; }
 
-  /* ── 6. FORMULAIRES (partenaire / contact / créateur) ── */
+  /* ── 6. FORMULAIRES ── */
   #page-partenaire-form > div,
   #page-contact > div,
-  #page-createur > div { padding: 36px 16px 60px !important; }
+  #page-createur > div { padding: 36px 16px 80px !important; }
   #page-partenaire-form div[style*="grid-template-columns:1fr 1fr"],
   #page-contact div[style*="grid-template-columns:1fr 1fr"],
   #page-createur div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
 
-  /* ── 7. DASHBOARD (vendeur + partenaire) ── */
+  /* ── 7. DASHBOARD ── */
   .dash { padding: 16px 16px 80px; }
   .dash-header { flex-direction: column; gap: 10px; margin-bottom: 16px; }
   .dash-welcome { font-size: 22px; }
@@ -396,14 +424,14 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .panel { padding: 16px 12px; }
   .panel-title { font-size: 17px; margin-bottom: 14px; }
 
-  /* Tableau des envois → cartes */
+  /* Tableau → cartes */
   .ship-table thead { display: none; }
   .ship-table, .ship-table tbody, .ship-table tr, .ship-table td { display: block; width: 100%; }
   .ship-table tr { background: white; border: 1.5px solid var(--gray-200); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
   .ship-table td { padding: 2px 0; border: none; font-size: 13px; }
   .ship-table td:first-child { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
 
-  /* Missions / collectes (espace partenaire) */
+  /* Missions partenaire */
   .pickup-card { padding: 12px; }
   .pickup-actions { flex-direction: column; gap: 6px; }
   .pickup-actions .btn { width: 100%; justify-content: center; font-size: 13px; padding: 9px 12px; }
@@ -414,7 +442,7 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .int-item { flex-wrap: wrap; gap: 8px; }
   .int-logo { width: 36px; height: 36px; }
 
-  /* ── 8. MODALS → BOTTOM SHEET ── */
+  /* ── 8. MODALS → bottom sheet ── */
   .overlay { align-items: flex-end; padding: 0; }
   .modal {
     border-radius: 22px 22px 0 0;
@@ -439,8 +467,6 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .modal-lg { max-width: 100%; }
   .modal-title { font-size: 20px; }
   #shipmentModal div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
-
-  /* Créneaux de RDV */
   .time-slots { grid-template-columns: repeat(2, 1fr); }
 
   /* ── 9. FOOTER ── */
@@ -450,31 +476,44 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .footer-bottom { flex-direction: column; text-align: center; gap: 8px; }
   .footer-bottom p { font-size: 12px; }
 
-  /* ── 10. NAV DU BAS (bottom nav) ── */
+  /* ── 10. BARRE DU BAS ── */
   .mobile-bottom-nav {
     display: flex !important;
-    position: fixed; bottom: 0; left: 0; right: 0;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
     z-index: 200;
-    background: rgba(255,255,255,.97);
+    background: rgba(255, 255, 255, .97);
     backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-top: 1.5px solid var(--gray-200);
-    height: 58px;
+    height: 62px;
     align-items: center;
     justify-content: space-around;
-    padding: 0 4px;
+    padding: 0 2px;
+    padding-bottom: env(safe-area-inset-bottom);
   }
   .mobile-bottom-nav a {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 2px; font-size: 9px; font-weight: 700;
-    color: var(--gray-400); text-decoration: none;
-    padding: 5px 8px; border-radius: 10px; transition: .15s;
-    flex: 1; justify-content: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    height: 100%;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gray-400);
+    text-decoration: none;
+    padding: 4px 2px;
+    border-radius: 10px;
+    transition: .15s;
+    min-width: 0;
   }
-  .mobile-bottom-nav a .nav-icon { font-size: 19px; }
+  .mobile-bottom-nav a .nav-icon { font-size: 20px; line-height: 1; }
   .mobile-bottom-nav a.active { color: var(--black); background: var(--gray-100); }
 
   /* ── 11. TOAST ── */
-  .toast { bottom: 68px; width: calc(100% - 32px); text-align: center; white-space: normal; }
+  .toast { bottom: 72px; width: calc(100% - 32px); text-align: center; white-space: normal; }
 }
  
 
