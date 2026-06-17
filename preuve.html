@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preuve de mission — GhostSend Admin</title>
+<link rel="icon" type="image/png" sizes="48x48" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0d0d0d; --white: #fff;
+  --gray-50: #f8f8f8; --gray-100: #f0f0f0; --gray-200: #e4e4e4;
+  --gray-400: #9e9e9e; --gray-600: #555;
+  --green: #16a34a; --green-light: #dcfce7; --green-dark: #14532d;
+  --orange: #ea580c; --orange-light: #fff7ed;
+  --red: #dc2626; --red-light: #fef2f2;
+  --blue: #2563eb; --blue-light: #eff6ff;
+  --r: 18px; --r-sm: 12px; --r-lg: 26px;
+}
+body { font-family: 'Nunito', sans-serif; background: var(--gray-50); color: var(--black); min-height: 100vh; }
+h1,h2,h3 { font-family: 'Fredoka', sans-serif; }
+
+nav { position:fixed; top:0; left:0; right:0; z-index:200; background:rgba(255,255,255,.95); backdrop-filter:blur(14px); border-bottom:1.5px solid var(--gray-200); height:66px; display:flex; align-items:center; justify-content:space-between; padding:0 32px; }
+.nav-brand { font-family:'Fredoka',sans-serif; font-size:26px; font-weight:700; color:var(--black); text-decoration:none; display:flex; align-items:center; gap:10px; }
+.admin-badge { background:var(--black); color:white; font-size:11px; font-weight:700; padding:4px 12px; border-radius:100px; letter-spacing:.05em; }
+
+.wrap { max-width: 900px; margin: 0 auto; padding: 100px 24px 80px; }
+
+.state-block { text-align:center; padding:60px 24px; }
+.state-block .icon { font-size:48px; margin-bottom:16px; }
+.state-block h2 { font-family:'Fredoka',sans-serif; font-size:24px; font-weight:700; margin-bottom:8px; }
+.state-block p { font-size:14px; color:var(--gray-600); line-height:1.6; max-width:360px; margin:0 auto; }
+
+/* ── photos côte-à-côte ── */
+.photos-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+.photo-panel { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r-lg); overflow:hidden; }
+.photo-panel-head { padding:16px 18px 12px; border-bottom:1.5px solid var(--gray-100); }
+.photo-panel-title { font-family:'Fredoka',sans-serif; font-size:16px; font-weight:700; margin-bottom:2px; }
+.photo-panel-sub { font-size:12px; color:var(--gray-400); line-height:1.4; }
+.photo-panel-img { width:100%; background:var(--gray-50); display:flex; align-items:center; justify-content:center; min-height:200px; }
+.photo-panel-img img { width:100%; max-height:340px; object-fit:contain; display:block; }
+.photo-panel-placeholder { text-align:center; padding:32px; color:var(--gray-400); font-size:13px; font-weight:700; }
+.photo-panel-ts { padding:10px 18px; font-size:11px; color:var(--gray-400); border-top:1px solid var(--gray-100); }
+
+/* ── infos expéditeur complètes ── */
+.kyc-card { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r-lg); padding:26px 28px; margin-bottom:24px; }
+.kyc-title { font-family:'Fredoka',sans-serif; font-size:20px; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:10px; }
+.kyc-sub { font-size:13px; color:var(--gray-600); margin-bottom:20px; line-height:1.5; }
+.kyc-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+.info-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--gray-100); font-size:14px; }
+.info-row:last-child { border-bottom:none; }
+.info-row .ik { color:var(--gray-600); font-weight:700; }
+.info-row .iv { font-weight:700; color:var(--black); text-align:right; word-break:break-all; }
+.doc-link { color:var(--blue); font-weight:700; text-decoration:none; }
+.doc-link:hover { text-decoration:underline; }
+
+/* ── actions admin ── */
+.actions-card { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r-lg); padding:26px 28px; margin-bottom:24px; }
+.actions-title { font-family:'Fredoka',sans-serif; font-size:20px; font-weight:700; margin-bottom:6px; }
+.actions-sub { font-size:13px; color:var(--gray-600); margin-bottom:20px; line-height:1.5; }
+.fg { margin-bottom:14px; }
+.fl { display:block; font-size:13px; font-weight:700; color:var(--black); margin-bottom:5px; }
+.fi { width:100%; padding:11px 14px; border:2px solid var(--gray-200); border-radius:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--black); outline:none; background:white; transition:.2s; resize:vertical; min-height:80px; }
+.fi:focus { border-color:var(--black); }
+.btn-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 24px; border-radius:var(--r-sm); font-family:'Nunito',sans-serif; font-size:15px; font-weight:700; cursor:pointer; border:none; transition:.2s; width:100%; }
+.btn-green { background:var(--green); color:white; }
+.btn-green:hover:not(:disabled) { background:#15803d; transform:translateY(-1px); }
+.btn-red { background:var(--red); color:white; }
+.btn-red:hover:not(:disabled) { background:#b91c1c; transform:translateY(-1px); }
+.btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+/* ── status banner ── */
+.status-pill { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700; padding:6px 14px; border-radius:100px; margin-bottom:20px; }
+.sp-pending { background:var(--orange-light); color:var(--orange); }
+.sp-confirmed { background:var(--green-light); color:var(--green-dark); }
+.sp-approved { background:var(--green-light); color:var(--green-dark); border:1.5px solid var(--green); }
+.sp-rejected { background:var(--red-light); color:var(--red); }
+
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--black); color:white; padding:13px 22px; border-radius:12px; font-size:14px; font-weight:600; z-index:999; transition:.3s; max-width:90%; text-align:center; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.err { background:var(--red); }
+
+.spinner-sm { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+@media (max-width: 640px) {
+  nav { padding:0 16px; }
+  .wrap { padding:90px 16px 60px; }
+  .photos-grid { grid-template-columns:1fr; }
+  .kyc-grid { grid-template-columns:1fr; }
+  .btn-row { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">
+    <img src="logo.jpg" alt="GhostSend" style="width:38px;height:38px;object-fit:contain;border-radius:8px;" onerror="this.style.display='none'">
+    GhostSend
+  </a>
+  <span class="admin-badge">Admin</span>
+</nav>
+
+<div class="wrap">
+
+  <div id="screenLoading" class="state-block">
+    <div class="icon">⏳</div>
+    <h2>Chargement…</h2>
+    <p>Récupération des données de la mission.</p>
+  </div>
+
+  <div id="screenDenied" class="state-block" style="display:none">
+    <div class="icon">🚫</div>
+    <h2>Accès réservé</h2>
+    <p>Cette page est réservée aux administrateurs GhostSend.</p>
+  </div>
+
+  <div id="screenNotFound" class="state-block" style="display:none">
+    <div class="icon">🔍</div>
+    <h2>Mission introuvable</h2>
+    <p>Vérifie l'identifiant de mission dans l'URL.</p>
+  </div>
+
+  <div id="screenMain" style="display:none">
+
+    <div style="margin-bottom:22px;">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:var(--black);color:white;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 16px;border-radius:100px;margin-bottom:12px;">🔐 Revue admin</div>
+      <h1 style="font-size:clamp(22px,3.5vw,34px);font-weight:700;line-height:1.1;margin-bottom:6px;">Mission <span id="missionIdTitle">—</span></h1>
+      <div id="statusPill" class="status-pill sp-pending">⏳ En attente</div>
+    </div>
+
+    <!-- Comparaison des deux photos -->
+    <div class="photos-grid">
+      <div class="photo-panel">
+        <div class="photo-panel-head">
+          <div class="photo-panel-title">📤 Photo envoyée par le vendeur</div>
+          <div class="photo-panel-sub">Transmise au moment de l'expédition</div>
+        </div>
+        <div class="photo-panel-img" id="senderPhotoWrap">
+          <div class="photo-panel-placeholder">📭<br>Aucune photo</div>
+        </div>
+        <div class="photo-panel-ts" id="senderPhotoTs"></div>
+      </div>
+      <div class="photo-panel">
+        <div class="photo-panel-head">
+          <div class="photo-panel-title">📥 Photo de réception du collecteur</div>
+          <div class="photo-panel-sub">Prise lors de la prise en charge</div>
+        </div>
+        <div class="photo-panel-img" id="rcvPhotoWrap">
+          <div class="photo-panel-placeholder">📭<br>Pas encore reçue</div>
+        </div>
+        <div class="photo-panel-ts" id="rcvPhotoTs"></div>
+      </div>
+    </div>
+
+    <!-- KYC expéditeur -->
+    <div class="kyc-card">
+      <div class="kyc-title">🆔 KYC de l'expéditeur</div>
+      <div class="kyc-sub">Informations fournies lors de la vérification du compte vendeur. Visibles uniquement par les admins.</div>
+      <div id="kycRows"></div>
+    </div>
+
+    <!-- Actions admin -->
+    <div class="actions-card" id="actionsCard">
+      <div class="actions-title">Décision admin</div>
+      <div class="actions-sub">Après vérification des deux photos et des informations KYC, valide ou refuse cette mission. Un commentaire est requis en cas de refus.</div>
+      <div class="fg">
+        <label class="fl">Commentaire interne <span style="color:var(--gray-400);font-weight:600;">(facultatif si validé, requis si refusé)</span></label>
+        <textarea class="fi" id="admin-comment" placeholder="Ex: photos non correspondantes — colis différent. Ou : tout bon, paiement déclenché."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-green" id="btn-approve" onclick="adminDecision('approved')">✅ Valider et payer le vendeur</button>
+        <button class="btn btn-red" id="btn-reject" onclick="adminDecision('rejected')">❌ Refuser cette mission</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain: "ghostly-fbe01.firebaseapp.com",
+  databaseURL: "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ghostly-fbe01",
+  storageBucket: "ghostly-fbe01.firebasestorage.app",
+  messagingSenderId: "290927219079",
+  appId: "1:290927219079:web:d7cd006945d9fe84a74322"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const params = new URLSearchParams(location.search);
+const MISSION_ID = params.get('mission');
+let CU = null;
+let missionData = null;
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { showToast('Connecte-toi.', true); setTimeout(() => { window.location.href = 'index.html'; }, 1500); return; }
+  CU = user;
+
+  const adminSnap = await get(ref(db, `admins/${CU.uid}`));
+  if (!adminSnap.exists() || adminSnap.val() !== true) { show('screenDenied'); return; }
+
+  if (!MISSION_ID) { show('screenNotFound'); return; }
+
+  const snap = await get(ref(db, `all_missions/${MISSION_ID}`));
+  if (!snap.exists()) { show('screenNotFound'); return; }
+
+  missionData = snap.val();
+  show('screenMain');
+  render();
+});
+
+function render() {
+  document.getElementById('missionIdTitle').textContent = MISSION_ID;
+
+  // status pill
+  const pill = document.getElementById('statusPill');
+  const statusCfg = {
+    pending:   { c:'sp-pending',   t:'⏳ En attente' },
+    accepted:  { c:'sp-pending',   t:'✅ Acceptée par un collecteur' },
+    confirmed: { c:'sp-confirmed', t:'📦 Réception confirmée — en attente de validation' },
+    approved:  { c:'sp-approved',  t:'✅ Validée et payée' },
+    rejected:  { c:'sp-rejected',  t:'❌ Refusée' },
+  };
+  const sc = statusCfg[missionData.status] || statusCfg.pending;
+  pill.className = 'status-pill ' + sc.c;
+  pill.textContent = sc.t;
+
+  // si déjà décidé masquer les actions
+  if (missionData.status === 'approved' || missionData.status === 'rejected') {
+    document.getElementById('actionsCard').style.display = 'none';
+  }
+
+  // photo vendeur
+  if (missionData.proofUrl) {
+    document.getElementById('senderPhotoWrap').innerHTML = `<img src="${missionData.proofUrl}" alt="Photo envoyée par le vendeur">`;
+    if (missionData.proofUploadedAt) {
+      document.getElementById('senderPhotoTs').textContent = 'Envoyée le ' + new Date(missionData.proofUploadedAt).toLocaleString('fr-FR');
+    }
+  }
+
+  // photo réception collecteur
+  if (missionData.receptionPhotoUrl) {
+    document.getElementById('rcvPhotoWrap').innerHTML = `<img src="${missionData.receptionPhotoUrl}" alt="Photo de réception">`;
+    if (missionData.receptionConfirmedAt) {
+      let ts = 'Confirmée le ' + new Date(missionData.receptionConfirmedAt).toLocaleString('fr-FR');
+      if (missionData.receptionComment) ts += ' — "' + missionData.receptionComment + '"';
+      document.getElementById('rcvPhotoTs').textContent = ts;
+    }
+  }
+
+  // KYC
+  renderKYC();
+}
+
+async function renderKYC() {
+  const rows = document.getElementById('kycRows');
+  const senderUid = missionData.proofUploadedBy;
+  let kyc = {};
+
+  if (senderUid) {
+    try {
+      const snap = await get(ref(db, `users/${senderUid}/verification`));
+      if (snap.exists()) kyc = snap.val();
+    } catch(e) {}
+  }
+
+  const id = kyc.identity || {};
+  const bk = kyc.bank || {};
+
+  const kycItems = [
+    { k: 'UID vendeur', v: senderUid || '—' },
+    { k: 'Prénom', v: id.first || '—' },
+    { k: 'Nom', v: id.last || '—' },
+    { k: 'Date de naissance', v: id.birth || '—' },
+    { k: 'Adresse', v: id.address ? `${id.address}, ${id.zip} ${id.city}` : '—' },
+    { k: 'Titulaire bancaire', v: bk.holder || '—' },
+    { k: 'IBAN (4 derniers)', v: bk.ibanLast4 ? '•••• ' + bk.ibanLast4 : '—' },
+    { k: 'Statut KYC', v: kyc.status || '—' },
+    { k: 'Pièce d\'identité', v: id.docUrl ? `<a href="${id.docUrl}" target="_blank" class="doc-link">Voir le document</a>` : '—' },
+  ];
+
+  rows.innerHTML = kycItems.map(r => `
+    <div class="info-row"><span class="ik">${r.k}</span><span class="iv">${r.v}</span></div>
+  `).join('');
+}
+
+window.adminDecision = async (decision) => {
+  if (!CU || !missionData) return;
+
+  const comment = document.getElementById('admin-comment').value.trim();
+  if (decision === 'rejected' && !comment) {
+    showToast("Un commentaire est requis pour refuser une mission.", true);
+    return;
+  }
+
+  const ba = document.getElementById('btn-approve');
+  const br = document.getElementById('btn-reject');
+  ba.disabled = true; br.disabled = true;
+  ba.innerHTML = decision === 'approved' ? '<span class="spinner-sm"></span> Validation…' : 'Valider';
+  br.innerHTML = decision === 'rejected' ? '<span class="spinner-sm"></span> Refus…' : 'Refuser';
+
+  try {
+    await update(ref(db, `all_missions/${MISSION_ID}`), {
+      status: decision,
+      adminDecision: decision,
+      adminComment: comment || null,
+      adminDecidedBy: CU.uid,
+      adminDecidedAt: Date.now(),
+    });
+
+    // Si vendeur connu, mettre à jour son statut de vérification en cas de refus
+    if (decision === 'rejected' && missionData.proofUploadedBy) {
+      await update(ref(db, `users/${missionData.proofUploadedBy}/verification`), {
+        status: 'rejected',
+      });
+    }
+
+    showToast(decision === 'approved' ? '✅ Mission validée.' : '❌ Mission refusée.');
+    document.getElementById('actionsCard').style.display = 'none';
+
+    const pill = document.getElementById('statusPill');
+    if (decision === 'approved') { pill.className = 'status-pill sp-approved'; pill.textContent = '✅ Validée et payée'; }
+    else { pill.className = 'status-pill sp-rejected'; pill.textContent = '❌ Refusée'; }
+
+  } catch(e) {
+    console.error(e);
+    showToast("Erreur lors de la décision. Réessaie.", true);
+    ba.disabled = false; br.disabled = false;
+    ba.textContent = '✅ Valider et payer le vendeur';
+    br.textContent = '❌ Refuser cette mission';
+  }
+};
+
+function show(id) {
+  ['screenLoading','screenDenied','screenNotFound','screenMain'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'block' : 'none';
+  });
+}
+
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className = 'toast', 3500);
+}
+</script>
+</body>
+</html>
