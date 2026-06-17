@@ -476,41 +476,45 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .footer-bottom { flex-direction: column; text-align: center; gap: 8px; }
   .footer-bottom p { font-size: 12px; }
 
-  /* ── 10. BARRE DU BAS ── */
-  .mobile-bottom-nav {
-    display: flex !important;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    z-index: 200;
-    background: rgba(255, 255, 255, .97);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-top: 1.5px solid var(--gray-200);
-    height: 62px;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 2px;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .mobile-bottom-nav a {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    flex: 1;
-    height: 100%;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--gray-400);
-    text-decoration: none;
-    padding: 4px 2px;
-    border-radius: 10px;
-    transition: .15s;
-    min-width: 0;
-  }
-  .mobile-bottom-nav a .nav-icon { font-size: 20px; line-height: 1; }
-  .mobile-bottom-nav a.active { color: var(--black); background: var(--gray-100); }
+  /* ── 10. NAV DU BAS (bottom nav) ── */
+.mobile-bottom-nav {
+  display: flex !important;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: rgba(255,255,255,.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1.5px solid var(--gray-200);
+  height: 62px;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px;
+  padding-bottom: env(safe-area-inset-bottom);
+  top: auto;
+}
+
+.mobile-bottom-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-400);
+  text-decoration: none;
+  padding: 4px 2px;
+  border-radius: 10px;
+  transition: .15s;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-bottom-nav a .nav-icon { font-size: 20px; line-height: 1; }
+.mobile-bottom-nav a.active { color: var(--black); background: var(--gray-100); }
 
   /* ── 11. TOAST ── */
   .toast { bottom: 72px; width: calc(100% - 32px); text-align: center; white-space: normal; }
