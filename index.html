@@ -299,10 +299,10 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   #navAuth { display: flex !important; gap: 8px; align-items: center; }
   #navAuth .live-badge,
   #navAuth .plan-badge,
-  #navAuth a[onclick*="dashboard"],
   #navAuth a[onclick*="partenaire"],
   #navAuth a[onclick*="doLogout"] { display: none !important; }
-  #navAuth a[href="reception.html"] {
+  #navAuth a[href="reception.html"],
+  #navAuth a[onclick*="dashboard"] {
     display: inline-flex !important;
     padding: 8px 16px;
     font-size: 13px;
@@ -471,7 +471,6 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   /* TOAST */
   .toast { bottom: 68px; width: calc(100% - 32px); text-align: center; white-space: normal; }
 }
-
 
  
 
