@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirmer la réception — GhostSend</title>
+<link rel="icon" type="image/png" sizes="48x48" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0d0d0d; --white: #fff;
+  --gray-50: #f8f8f8; --gray-100: #f0f0f0; --gray-200: #e4e4e4;
+  --gray-400: #9e9e9e; --gray-600: #555;
+  --green: #16a34a; --green-light: #dcfce7; --green-dark: #14532d;
+  --orange: #ea580c; --orange-light: #fff7ed;
+  --red: #dc2626; --red-light: #fef2f2;
+  --blue: #2563eb; --blue-light: #eff6ff;
+  --r: 18px; --r-sm: 12px; --r-lg: 26px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--gray-50); color: var(--black); min-height: 100vh; }
+h1,h2,h3 { font-family: 'Fredoka', sans-serif; }
+
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:200;
+  background: rgba(255,255,255,.95); backdrop-filter: blur(14px);
+  border-bottom: 1.5px solid var(--gray-200); height:66px;
+  display:flex; align-items:center; justify-content:space-between; padding:0 32px;
+}
+.nav-brand { font-family:'Fredoka',sans-serif; font-size:26px; font-weight:700; color:var(--black); text-decoration:none; display:flex; align-items:center; gap:10px; }
+.nav-back { font-size:14px; font-weight:700; color:var(--gray-600); text-decoration:none; display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px; transition:.2s; }
+.nav-back:hover { background:var(--gray-100); color:var(--black); }
+
+.wrap { max-width: 680px; margin: 0 auto; padding: 110px 24px 80px; }
+
+/* ── état de chargement / accès refusé ── */
+.state-block { text-align:center; padding:60px 24px; }
+.state-block .icon { font-size:48px; margin-bottom:16px; }
+.state-block h2 { font-family:'Fredoka',sans-serif; font-size:24px; font-weight:700; margin-bottom:8px; }
+.state-block p { font-size:14px; color:var(--gray-600); line-height:1.6; max-width:360px; margin:0 auto; }
+
+/* ── en-tête mission ── */
+.mission-header { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r-lg); padding:26px 28px; margin-bottom:24px; }
+.mission-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-400); margin-bottom:6px; }
+.mission-id { font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; margin-bottom:16px; }
+.mission-meta { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; }
+.meta-item { background:var(--gray-50); border:1.5px solid var(--gray-200); border-radius:var(--r-sm); padding:12px 14px; }
+.meta-item .mk { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--gray-400); margin-bottom:4px; }
+.meta-item .mv { font-size:14px; font-weight:700; color:var(--black); }
+
+/* ── preuve d'envoi du vendeur ── */
+.proof-card { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r-lg); padding:26px 28px; margin-bottom:24px; }
+.proof-card-title { font-family:'Fredoka',sans-serif; font-size:18px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:10px; }
+.proof-card-sub { font-size:13px; color:var(--gray-600); margin-bottom:18px; line-height:1.5; }
+.proof-img-wrap { border-radius:var(--r); overflow:hidden; border:1.5px solid var(--gray-200); background:var(--gray-50); }
+.proof-img { width:100%; max-height:320px; object-fit:contain; display:block; }
+.proof-img-placeholder { height:160px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; color:var(--gray-400); font-size:13px; font-weight:700; }
+.proof-ts { font-size:12px; color:var(--gray-400); margin-top:10px; text-align:right; }
+
+/* ── info expéditeur (admin seulement) ── */
+.sender-card { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r-lg); padding:26px 28px; margin-bottom:24px; }
+.sender-card-title { font-family:'Fredoka',sans-serif; font-size:18px; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:10px; }
+.sender-card-note { font-size:12px; color:var(--gray-400); margin-bottom:18px; line-height:1.5; }
+.info-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--gray-100); font-size:14px; }
+.info-row:last-child { border-bottom:none; }
+.info-row .ik { color:var(--gray-600); font-weight:700; }
+.info-row .iv { font-weight:700; color:var(--black); text-align:right; }
+.redacted { letter-spacing:2px; color:var(--gray-400); font-family:monospace; }
+.reveal-btn { font-size:11px; font-weight:700; color:var(--blue); background:none; border:none; cursor:pointer; margin-left:8px; text-decoration:underline; }
+
+/* ── formulaire de confirmation ── */
+.confirm-card { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r-lg); padding:26px 28px; margin-bottom:24px; }
+.confirm-card-title { font-family:'Fredoka',sans-serif; font-size:18px; font-weight:700; margin-bottom:6px; }
+.confirm-card-sub { font-size:13px; color:var(--gray-600); margin-bottom:20px; line-height:1.5; }
+
+.upload-zone { border:2px dashed var(--gray-200); border-radius:var(--r); padding:28px; text-align:center; cursor:pointer; transition:.2s; background:var(--gray-50); }
+.upload-zone:hover { border-color:var(--black); background:white; }
+.upload-zone.has-file { border-style:solid; border-color:var(--green); background:var(--green-light); padding:14px; }
+.upload-zone .u-icon { font-size:30px; margin-bottom:8px; }
+.upload-zone .u-text { font-size:14px; font-weight:700; }
+.upload-zone .u-sub { font-size:12px; color:var(--gray-400); margin-top:4px; }
+.photo-preview { width:100%; max-height:260px; object-fit:contain; border-radius:12px; display:block; margin:0 auto; }
+.upload-preview-row { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--green-dark); justify-content:center; margin-top:10px; }
+.ferr { font-size:12px; color:var(--red); font-weight:700; margin-top:6px; display:none; }
+
+.fg { margin-bottom:14px; }
+.fl { display:block; font-size:13px; font-weight:700; color:var(--black); margin-bottom:5px; }
+.fi { width:100%; padding:11px 14px; border:2px solid var(--gray-200); border-radius:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--black); outline:none; background:white; transition:.2s; resize:vertical; min-height:90px; }
+.fi:focus { border-color:var(--black); }
+.fi-short { resize:none; min-height:unset; height:44px; }
+
+/* ── état déjà confirmé ── */
+.confirmed-banner { display:flex; align-items:flex-start; gap:14px; background:var(--green-light); border:1.5px solid #bbf7d0; border-radius:var(--r-lg); padding:22px 24px; margin-bottom:24px; }
+.confirmed-banner .cb-icon { font-size:30px; flex-shrink:0; }
+.confirmed-banner strong { display:block; font-size:15px; font-weight:800; color:var(--green-dark); margin-bottom:4px; }
+.confirmed-banner span { font-size:13px; color:var(--gray-600); line-height:1.5; }
+
+/* ── warning zone ── */
+.warn-card { display:flex; gap:14px; background:#fff7ed; border:1.5px solid #fed7aa; border-radius:var(--r); padding:16px 18px; margin-bottom:20px; }
+.warn-card .wi { font-size:20px; flex-shrink:0; }
+.warn-card p { font-size:13px; color:#7c2d12; line-height:1.6; }
+
+/* ── btn ── */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 24px; border-radius:var(--r-sm); font-family:'Nunito',sans-serif; font-size:15px; font-weight:700; cursor:pointer; border:none; transition:.2s; width:100%; }
+.btn-black { background:var(--black); color:white; }
+.btn-black:hover:not(:disabled) { background:#222; transform:translateY(-1px); }
+.btn-black:disabled { background:var(--gray-200); color:var(--gray-400); cursor:not-allowed; transform:none; }
+
+.spinner-sm { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--black); color:white; padding:13px 22px; border-radius:12px; font-size:14px; font-weight:600; z-index:999; transition:.3s; max-width:90%; text-align:center; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.err { background:var(--red); }
+
+@media (max-width: 640px) {
+  nav { padding:0 16px; }
+  .wrap { padding:90px 16px 60px; }
+  .mission-header { padding:20px 18px; }
+  .proof-card, .confirm-card, .sender-card { padding:20px 18px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">
+    <img src="logo.jpg" alt="GhostSend" style="width:38px;height:38px;object-fit:contain;border-radius:8px;" onerror="this.style.display='none'">
+    GhostSend
+  </a>
+  <a class="nav-back" href="index.html">← Retour</a>
+</nav>
+
+<div class="wrap" id="mainWrap">
+
+  <!-- Écran de chargement -->
+  <div id="screenLoading" class="state-block">
+    <div class="icon">⏳</div>
+    <h2>Chargement…</h2>
+    <p>Récupération des informations de la mission.</p>
+  </div>
+
+  <!-- Accès refusé -->
+  <div id="screenDenied" class="state-block" style="display:none">
+    <div class="icon">🚫</div>
+    <h2>Accès refusé</h2>
+    <p>Tu n'es pas le collecteur assigné à cette mission. Seul le collecteur qui a accepté la mission peut confirmer la réception.</p>
+  </div>
+
+  <!-- Mission introuvable -->
+  <div id="screenNotFound" class="state-block" style="display:none">
+    <div class="icon">🔍</div>
+    <h2>Mission introuvable</h2>
+    <p>Ce lien de confirmation est invalide ou a déjà expiré. Vérifie l'URL reçue.</p>
+  </div>
+
+  <!-- Contenu principal -->
+  <div id="screenMain" style="display:none">
+
+    <div style="margin-bottom:24px;">
+      <div class="page-tag" style="display:inline-flex;align-items:center;gap:8px;background:var(--black);color:white;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 16px;border-radius:100px;margin-bottom:14px;">📦 Confirmation de réception</div>
+      <h1 style="font-size:clamp(24px,4vw,36px);font-weight:700;line-height:1.1;margin-bottom:8px;">Tu as reçu ce colis ?</h1>
+      <p style="font-size:15px;color:var(--gray-600);line-height:1.6;">Prends une photo du colis reçu en point relais, puis confirme. Cela déclenchera le paiement du vendeur.</p>
+    </div>
+
+    <!-- Bannière si déjà confirmé -->
+    <div id="confirmedBanner" class="confirmed-banner" style="display:none">
+      <div class="cb-icon">✅</div>
+      <div>
+        <strong>Réception déjà confirmée</strong>
+        <span id="confirmedTs">Cette mission a été confirmée. Le vendeur a été notifié.</span>
+      </div>
+    </div>
+
+    <!-- Infos de la mission -->
+    <div class="mission-header">
+      <div class="mission-label">Mission</div>
+      <div class="mission-id" id="missionIdDisplay">—</div>
+      <div class="mission-meta" id="missionMeta"></div>
+    </div>
+
+    <!-- Photo de preuve du vendeur -->
+    <div class="proof-card">
+      <div class="proof-card-title">📸 Photo envoyée par le vendeur</div>
+      <div class="proof-card-sub">Vérifie que cette photo correspond bien au colis que tu as entre les mains.</div>
+      <div class="proof-img-wrap">
+        <div id="proofImgEmpty" class="proof-img-placeholder">
+          <span style="font-size:36px;">📭</span>
+          <span>Aucune photo transmise par le vendeur</span>
+        </div>
+        <img id="proofImg" class="proof-img" alt="Photo de preuve d'envoi du vendeur" style="display:none;">
+      </div>
+      <div class="proof-ts" id="proofTs"></div>
+    </div>
+
+    <!-- Infos expéditeur (admin / collecteur) -->
+    <div class="sender-card" id="senderCard">
+      <div class="sender-card-title">🔒 Informations de l'expéditeur</div>
+      <div class="sender-card-note" id="senderCardNote">En cas de litige ou de non-conformité constatée, ces informations permettent de contacter l'expéditeur ou d'alerter l'administration.</div>
+      <div id="senderInfoRows">
+        <!-- rempli en JS -->
+      </div>
+    </div>
+
+    <!-- Avertissement responsabilité -->
+    <div class="warn-card">
+      <div class="wi">⚠️</div>
+      <p>En confirmant la réception, tu attestes avoir reçu un colis correspondant à la mission et à la photo ci-dessus. Toute fausse confirmation engage ta responsabilité.</p>
+    </div>
+
+    <!-- Formulaire de confirmation -->
+    <div class="confirm-card" id="confirmForm">
+      <div class="confirm-card-title">Confirme la réception</div>
+      <div class="confirm-card-sub">Prends une photo du colis reçu (étiquette visible). La photo sera horodatée et conservée comme preuve.</div>
+
+      <div class="fg">
+        <label class="fl">Photo du colis reçu <span style="color:var(--red)">*</span></label>
+        <div class="upload-zone" id="rcvUploadZone" onclick="document.getElementById('rcv-photo').click()">
+          <input type="file" id="rcv-photo" accept="image/*" capture="environment" style="display:none;" onchange="handleRcvFile(event)">
+          <div id="rcvEmpty">
+            <div class="u-icon">📷</div>
+            <div class="u-text">Prends ou ajoute une photo</div>
+            <div class="u-sub">JPG, PNG ou WEBP — 10 Mo max</div>
+          </div>
+          <div id="rcvFilled" style="display:none;">
+            <img class="photo-preview" id="rcvPreviewImg" alt="Aperçu de la photo de réception">
+            <div class="upload-preview-row"><span>✓</span><span id="rcvFileName"></span></div>
+          </div>
+        </div>
+        <div class="ferr" id="err-rcvphoto"></div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Commentaire <span style="color:var(--gray-400);font-weight:600;">(facultatif)</span></label>
+        <textarea class="fi" id="rcv-comment" placeholder="Ex: colis légèrement abîmé sur le coin, contenu intact. Ou RAS."></textarea>
+      </div>
+
+      <button class="btn btn-black" id="btn-confirm" onclick="submitConfirmation()">
+        Confirmer la réception
+      </button>
+
+      <p style="text-align:center;font-size:12px;color:var(--gray-400);margin-top:14px;line-height:1.6;">
+        En confirmant, tu acceptes que cette action soit définitive et horodatée.<br>
+        Un problème ? <a href="index.html#contact" style="color:var(--black);font-weight:700;">Contacte le support</a>
+      </p>
+    </div>
+
+  </div><!-- /screenMain -->
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════ FIREBASE ══════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain: "ghostly-fbe01.firebaseapp.com",
+  databaseURL: "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ghostly-fbe01",
+  storageBucket: "ghostly-fbe01.firebasestorage.app",
+  messagingSenderId: "290927219079",
+  appId: "1:290927219079:web:d7cd006945d9fe84a74322"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const storage = getStorage(app);
+
+// ── lecture de l'URL ──
+const params = new URLSearchParams(location.search);
+const MISSION_ID = params.get('mission');   // ?mission=XXXX
+const TOKEN = params.get('token');          // ?token=XXXX (optionnel, vérif côté client légère)
+
+let CU = null;
+let missionData = null;
+let rcvFile = null;
+let isAdmin = false;
+
+// ─────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    showToast('Connecte-toi pour accéder à cette page.', true);
+    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    return;
+  }
+  CU = user;
+
+  if (!MISSION_ID) { show('screenNotFound'); return; }
+
+  await loadMission();
+});
+
+async function loadMission() {
+  try {
+    const snap = await get(ref(db, `all_missions/${MISSION_ID}`));
+    if (!snap.exists()) { show('screenNotFound'); return; }
+    missionData = snap.val();
+
+    // ── vérif admin ──
+    const adminSnap = await get(ref(db, `admins/${CU.uid}`));
+    isAdmin = adminSnap.exists() && adminSnap.val() === true;
+
+    // ── vérif accès : collecteur assigné OU admin ──
+    const isAssigned = missionData.collectorUid === CU.uid;
+    if (!isAssigned && !isAdmin) { show('screenDenied'); return; }
+
+    show('screenMain');
+    renderMission();
+  } catch (e) {
+    console.error(e);
+    showToast("Erreur lors du chargement de la mission.", true);
+    show('screenNotFound');
+  }
+}
+
+function renderMission() {
+  // ── ID ──
+  document.getElementById('missionIdDisplay').textContent = MISSION_ID;
+
+  // ── méta-données ──
+  const meta = document.getElementById('missionMeta');
+  const items = [
+    { k: 'Statut', v: statusLabel(missionData.status) },
+    { k: 'Créée le', v: missionData.createdAt ? new Date(missionData.createdAt).toLocaleDateString('fr-FR') : '—' },
+    { k: 'Collecteur', v: missionData.collectorUid === CU.uid ? 'Toi' : (missionData.collectorUid || '—') },
+    { k: 'Type', v: missionData.type || '—' },
+  ];
+  meta.innerHTML = items.map(i => `
+    <div class="meta-item">
+      <div class="mk">${i.k}</div>
+      <div class="mv">${i.v}</div>
+    </div>
+  `).join('');
+
+  // ── photo du vendeur ──
+  if (missionData.proofUrl) {
+    document.getElementById('proofImgEmpty').style.display = 'none';
+    const img = document.getElementById('proofImg');
+    img.src = missionData.proofUrl;
+    img.style.display = 'block';
+    if (missionData.proofUploadedAt) {
+      document.getElementById('proofTs').textContent =
+        'Envoyée le ' + new Date(missionData.proofUploadedAt).toLocaleString('fr-FR');
+    }
+  }
+
+  // ── infos expéditeur ──
+  renderSenderInfo();
+
+  // ── si déjà confirmée ──
+  if (missionData.status === 'confirmed' || missionData.receptionConfirmedAt) {
+    document.getElementById('confirmedBanner').style.display = 'flex';
+    if (missionData.receptionConfirmedAt) {
+      document.getElementById('confirmedTs').textContent =
+        'Confirmée le ' + new Date(missionData.receptionConfirmedAt).toLocaleString('fr-FR') + '.';
+    }
+    document.getElementById('confirmForm').style.display = 'none';
+  }
+}
+
+function renderSenderInfo() {
+  const card = document.getElementById('senderCard');
+  const rows = document.getElementById('senderInfoRows');
+
+  // Collecteur : voit identité masquée sauf prénom + ville
+  // Admin : voit tout
+  if (!isAdmin && missionData.collectorUid === CU.uid) {
+    document.getElementById('senderCardNote').textContent =
+      "Ces informations ont été vérifiées par notre équipe. En cas de problème avec ce colis, le support peut identifier l'expéditeur grâce à elles.";
+    const senderPreview = [
+      { k: 'Prénom', v: missionData.senderFirstName || '—' },
+      { k: 'Ville', v: missionData.senderCity || '—' },
+      { k: 'Pièce d\'identité', v: '<span class="redacted">•••••••••</span> <em style="font-size:11px;color:var(--gray-400)">vérifié par GhostSend</em>' },
+      { k: 'Compte bancaire', v: '<span class="redacted">•••••••••</span> <em style="font-size:11px;color:var(--gray-400)">archivé de façon sécurisée</em>' },
+    ];
+    rows.innerHTML = senderPreview.map(r => `
+      <div class="info-row"><span class="ik">${r.k}</span><span class="iv">${r.v}</span></div>
+    `).join('');
+  } else if (isAdmin) {
+    // Admin voit tout
+    const v = missionData;
+    const adminRows = [
+      { k: 'UID expéditeur', v: v.proofUploadedBy || '—' },
+      { k: 'Prénom', v: v.senderFirstName || '—' },
+      { k: 'Nom', v: v.senderLastName || '<span class="redacted">non soumis</span>' },
+      { k: 'Date de naissance', v: v.senderBirth || '<span class="redacted">—</span>' },
+      { k: 'Adresse', v: v.senderAddress ? `${v.senderAddress}, ${v.senderZip} ${v.senderCity}` : '—' },
+      { k: 'IBAN (4 derniers)', v: v.senderIbanLast4 ? '•••• ' + v.senderIbanLast4 : '—' },
+      { k: 'Document KYC', v: v.senderDocUrl ? `<a href="${v.senderDocUrl}" target="_blank" style="color:var(--blue);font-weight:700;">Voir le fichier</a>` : '—' },
+      { k: 'Photo preuve d\'envoi', v: v.proofUrl ? `<a href="${v.proofUrl}" target="_blank" style="color:var(--blue);font-weight:700;">Voir</a>` : '—' },
+    ];
+    rows.innerHTML = adminRows.map(r => `
+      <div class="info-row"><span class="ik">${r.k}</span><span class="iv">${r.v}</span></div>
+    `).join('');
+  } else {
+    card.style.display = 'none';
+  }
+}
+
+function statusLabel(s) {
+  const m = { pending: '⏳ En attente', accepted: '✅ Acceptée', confirmed: '📦 Confirmée', cancelled: '❌ Annulée' };
+  return m[s] || s || '—';
+}
+
+// ── upload photo de réception ──
+window.handleRcvFile = (e) => {
+  const file = e.target.files[0];
+  const err = document.getElementById('err-rcvphoto');
+  err.style.display = 'none';
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { err.textContent = 'Photo trop lourde (max 10 Mo).'; err.style.display = 'block'; return; }
+  if (!file.type.startsWith('image/')) { err.textContent = 'Le fichier doit être une image.'; err.style.display = 'block'; return; }
+  rcvFile = file;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('rcvPreviewImg').src = ev.target.result;
+    document.getElementById('rcvEmpty').style.display = 'none';
+    document.getElementById('rcvFilled').style.display = 'block';
+    document.getElementById('rcvFileName').textContent = file.name;
+    document.getElementById('rcvUploadZone').classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+};
+
+// ── soumission ──
+window.submitConfirmation = async () => {
+  if (!CU || !missionData) return;
+
+  const err = document.getElementById('err-rcvphoto');
+  err.style.display = 'none';
+
+  if (!rcvFile) {
+    err.textContent = 'Une photo du colis reçu est obligatoire pour confirmer la réception.';
+    err.style.display = 'block';
+    return;
+  }
+
+  // Vérif que c'est bien le collecteur assigné (côté client, la règle Realtime DB fait le vrai check)
+  if (!isAdmin && missionData.collectorUid !== CU.uid) {
+    showToast("Tu n'es pas autorisé à confirmer cette mission.", true);
+    return;
+  }
+
+  const btn = document.getElementById('btn-confirm');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-sm"></span> Envoi en cours…';
+  const resetBtn = () => { btn.disabled = false; btn.textContent = 'Confirmer la réception'; };
+
+  try {
+    // Upload photo de réception
+    const rcvPath = `reception-proofs/${MISSION_ID}/${CU.uid}-${Date.now()}.jpg`;
+    const rcvRef = sRef(storage, rcvPath);
+    await uploadBytes(rcvRef, rcvFile);
+    const rcvUrl = await getDownloadURL(rcvRef);
+
+    const comment = document.getElementById('rcv-comment').value.trim();
+    const now = Date.now();
+
+    // Mise à jour de la mission
+    await update(ref(db, `all_missions/${MISSION_ID}`), {
+      status: 'confirmed',
+      receptionConfirmedAt: now,
+      receptionConfirmedBy: CU.uid,
+      receptionPhotoUrl: rcvUrl,
+      receptionComment: comment || null,
+    });
+
+    // Entrée dans l'historique du collecteur
+    await update(ref(db, `users/${CU.uid}/confirmed_missions/${MISSION_ID}`), {
+      confirmedAt: now,
+      receptionPhotoUrl: rcvUrl,
+    });
+
+    // Masquer le formulaire, afficher la bannière
+    document.getElementById('confirmedBanner').style.display = 'flex';
+    document.getElementById('confirmedTs').textContent =
+      'Confirmée le ' + new Date(now).toLocaleString('fr-FR') + '.';
+    document.getElementById('confirmForm').style.display = 'none';
+
+    // Rafraîchir la photo de réception dans la zone preuve vendeur
+    if (missionData.proofUrl) {
+      document.getElementById('proofImg').src = missionData.proofUrl;
+      document.getElementById('proofImg').style.display = 'block';
+      document.getElementById('proofImgEmpty').style.display = 'none';
+    }
+
+    showToast('✅ Réception confirmée. Le vendeur sera notifié.');
+    btn.textContent = 'Réception confirmée ✓';
+
+  } catch (e) {
+    console.error(e);
+    showToast("Erreur lors de la confirmation. Réessaie.", true);
+    resetBtn();
+  }
+};
+
+// ── utilitaires ──
+function show(id) {
+  ['screenLoading','screenDenied','screenNotFound','screenMain'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? (id === 'screenMain' ? 'block' : 'block') : 'none';
+  });
+}
+
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className = 'toast', 3500);
+}
+</script>
+
+</body>
+</html>
