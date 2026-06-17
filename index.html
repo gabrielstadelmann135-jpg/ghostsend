@@ -293,24 +293,22 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   :root { --r: 14px; --r-lg: 20px; }
 
   /* NAV */
-  nav { height: 56px; padding: 0 16px; }
-  .nav-brand { font-size: 22px; }
-  #navPublic { display: none !important; }
-  #navAuth { display: none !important; }
- #navAuth.auth-visible { display: flex !important; gap: 8px; align-items: center; }
-#navAuth.auth-visible .live-badge,
-#navAuth.auth-visible .plan-badge,
-#navAuth.auth-visible a[onclick*="dashboard"],
-#navAuth.auth-visible a[onclick*="partenaire"],
-#navAuth.auth-visible a[onclick*="doLogout"] { display: none !important; }
-#navAuth.auth-visible a[href="reception.html"] {
+nav { height: 56px; padding: 0 16px; }
+.nav-brand { font-size: 22px; }
+#navPublic { display: none !important; }
+#navAuth { display: flex !important; gap: 8px; align-items: center; }
+#navAuth .live-badge,
+#navAuth .plan-badge,
+#navAuth a[onclick*="dashboard"],
+#navAuth a[onclick*="partenaire"],
+#navAuth a[onclick*="doLogout"] { display: none !important; }
+#navAuth a[href="reception.html"] {
   display: inline-flex !important;
   padding: 8px 16px;
   font-size: 13px;
 }
-  .nav-burger { display: flex !important; flex-direction: column; gap: 5px; cursor: pointer; padding: 6px; background: none; border: none; }
-  .nav-burger span { display: block; width: 22px; height: 2px; background: var(--black); border-radius: 2px; }
-
+.nav-burger { display: flex !important; flex-direction: column; gap: 5px; cursor: pointer; padding: 6px; background: none; border: none; }
+.nav-burger span { display: block; width: 22px; height: 2px; background: var(--black); border-radius: 2px; }
   /* HERO */
   .hero { padding: 36px 16px 44px; min-height: auto; }
   .hero h1 { font-size: clamp(34px, 10vw, 52px); }
