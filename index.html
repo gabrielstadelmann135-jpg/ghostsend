@@ -472,7 +472,39 @@ nav { position: fixed; top:0; left:0; right:0; z-index:200; background: rgba(255
   .toast { bottom: 68px; width: calc(100% - 32px); text-align: center; white-space: normal; }
 }
 
+@media (max-width: 768px) {
+  nav > *:not(.nav-brand) {
+    display: none !important;
+  }
+  nav {
+    justify-content: flex-start !important;
+  }
+  nav::after {
+    content: "";
+  }
+}
 
+  @media (max-width: 768px) {
+  /* Cache TOUT dans la nav sauf le logo */
+  nav > #navPublic,
+  nav > .nav-burger,
+  nav > #navAuth .live-badge,
+  nav > #navAuth .plan-badge,
+  nav > #navAuth a[onclick],
+  nav > #navAuth a[href]:not([href="reception.html"]) {
+    display: none !important;
+  }
+
+  /* Force l'affichage de #navAuth et du bouton Réception uniquement */
+  nav > #navAuth {
+    display: flex !important;
+  }
+  nav > #navAuth a[href="reception.html"] {
+    display: inline-flex !important;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
 
 
 
