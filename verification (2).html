@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vérification & missions — GhostSend</title>
+<link rel="icon" type="image/png" sizes="48x48" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- EmailJS pour l'envoi sécurisé des données sensibles -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0d0d0d; --white: #fff;
+  --gray-50: #f8f8f8; --gray-100: #f0f0f0; --gray-200: #e4e4e4;
+  --gray-400: #9e9e9e; --gray-600: #555;
+  --green: #16a34a; --green-light: #dcfce7; --green-dark: #14532d;
+  --orange: #ea580c; --orange-light: #fff7ed;
+  --red: #dc2626; --red-light: #fef2f2;
+  --blue: #2563eb; --blue-light: #eff6ff;
+  --r: 18px; --r-sm: 12px; --r-lg: 26px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--gray-50); color: var(--black); min-height: 100vh; }
+h1,h2,h3 { font-family: 'Fredoka', sans-serif; }
+
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:200;
+  background: rgba(255,255,255,.95); backdrop-filter: blur(14px);
+  border-bottom: 1.5px solid var(--gray-200);
+  height:66px; display:flex; align-items:center; justify-content:space-between; padding:0 32px;
+}
+.nav-brand { font-family:'Fredoka',sans-serif; font-size:26px; font-weight:700; color:var(--black); text-decoration:none; display:flex; align-items:center; gap:10px; }
+.nav-back { font-size:14px; font-weight:700; color:var(--gray-600); text-decoration:none; display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px; transition:.2s; }
+.nav-back:hover { background:var(--gray-100); color:var(--black); }
+
+.wrap { max-width: 820px; margin: 0 auto; padding: 110px 24px 80px; }
+
+.page-tag { display:inline-flex; align-items:center; gap:8px; background:var(--black); color:white; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:6px 16px; border-radius:100px; margin-bottom:18px; }
+.page-title { font-size:clamp(28px,4vw,40px); font-weight:700; line-height:1.1; margin-bottom:10px; }
+.page-sub { font-size:16px; color:var(--gray-600); line-height:1.6; max-width:600px; }
+
+/* ── role tabs ── */
+.role-tabs { display:flex; gap:6px; background:var(--gray-100); border-radius:100px; padding:5px; margin:30px 0 32px; }
+.role-tab { flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:11px 14px; border-radius:100px; font-size:14px; font-weight:700; color:var(--gray-600); cursor:pointer; transition:.2s; border:none; background:none; font-family:'Nunito',sans-serif; white-space:nowrap; }
+.role-tab.active { background:var(--black); color:white; }
+.role-tab .rt-dot { width:7px; height:7px; border-radius:50%; background:var(--orange); display:none; }
+.role-tab.has-pending .rt-dot { display:inline-block; }
+.role-tab.active .rt-dot { background:#fbbf24; }
+.role-section { display:none; }
+.role-section.active { display:block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+.status-banner { display:flex; align-items:flex-start; gap:14px; border-radius:var(--r-lg); padding:20px 22px; margin:0 0 28px; border:1.5px solid; }
+.status-banner.s-none { background:var(--gray-100); border-color:var(--gray-200); }
+.status-banner.s-pending { background:var(--orange-light); border-color:#fed7aa; }
+.status-banner.s-verified { background:var(--green-light); border-color:#bbf7d0; }
+.status-banner.s-rejected { background:var(--red-light); border-color:#fca5a5; }
+.status-icon { font-size:26px; flex-shrink:0; line-height:1; }
+.status-text strong { display:block; font-size:15px; font-weight:800; margin-bottom:3px; }
+.status-text span { font-size:13px; color:var(--gray-600); line-height:1.5; }
+
+.stepper { display:flex; align-items:center; gap:6px; margin-bottom:36px; }
+.step-pill { flex:1; height:6px; border-radius:100px; background:var(--gray-200); transition:.3s; }
+.step-pill.done { background:var(--black); }
+.step-pill.current { background:var(--gray-400); }
+
+.v-card { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r-lg); padding:30px 28px; margin-bottom:20px; }
+.v-card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
+.v-card-title { font-family:'Fredoka',sans-serif; font-size:19px; font-weight:700; display:flex; align-items:center; gap:10px; }
+.v-card-num { width:30px; height:30px; border-radius:50%; background:var(--black); color:white; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.v-card-sub { font-size:13px; color:var(--gray-400); margin-bottom:20px; line-height:1.5; }
+.v-card.locked { opacity:.45; pointer-events:none; }
+.check-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:4px 11px; border-radius:100px; background:var(--green-light); color:var(--green-dark); }
+.check-badge.todo { background:var(--gray-100); color:var(--gray-400); }
+.check-badge.review { background:var(--orange-light); color:var(--orange); }
+
+.fg { margin-bottom:14px; }
+.fl { display:block; font-size:13px; font-weight:700; color:var(--black); margin-bottom:5px; }
+.fl .opt { color:var(--gray-400); font-weight:600; }
+.fi { width:100%; padding:11px 14px; border:2px solid var(--gray-200); border-radius:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--black); outline:none; background:white; transition:.2s; }
+.fi:focus { border-color:var(--black); }
+.ferr { font-size:12px; color:var(--red); font-weight:700; margin-top:5px; display:none; }
+.frow2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+.upload-zone { border:2px dashed var(--gray-200); border-radius:var(--r); padding:28px; text-align:center; cursor:pointer; transition:.2s; background:var(--gray-50); }
+.upload-zone:hover { border-color:var(--black); background:white; }
+.upload-zone.has-file { border-style:solid; border-color:var(--green); background:var(--green-light); padding:16px; }
+.upload-zone .u-icon { font-size:30px; margin-bottom:8px; }
+.upload-zone .u-text { font-size:14px; font-weight:700; }
+.upload-zone .u-sub { font-size:12px; color:var(--gray-400); margin-top:4px; }
+.photo-preview { width:100%; max-height:280px; object-fit:contain; border-radius:12px; display:block; margin:0 auto; }
+.upload-preview-row { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700; color:var(--green-dark); justify-content:center; margin-top:10px; }
+
+.security-note { display:flex; gap:12px; background:var(--blue-light); border:1.5px solid #bfdbfe; border-radius:var(--r); padding:16px 18px; margin-bottom:18px; }
+.security-note .sn-icon { font-size:20px; flex-shrink:0; }
+.security-note p { font-size:13px; color:#1e3a8a; line-height:1.6; }
+
+.mail-note { display:flex; gap:12px; background:#fefce8; border:1.5px solid #fde68a; border-radius:var(--r); padding:16px 18px; margin-bottom:18px; }
+.mail-note .mn-icon { font-size:20px; flex-shrink:0; }
+.mail-note p { font-size:13px; color:#78350f; line-height:1.6; }
+
+.scope-note { background:var(--gray-50); border:1.5px solid var(--gray-200); border-radius:var(--r); padding:18px 20px; margin-top:8px; }
+.scope-note h4 { font-size:13px; font-weight:800; margin-bottom:8px; display:flex; align-items:center; gap:7px; }
+.scope-note ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+.scope-note li { font-size:12.5px; color:var(--gray-600); line-height:1.5; display:flex; gap:8px; }
+.scope-note li.yes::before { content:'✓'; color:var(--green-dark); font-weight:800; flex-shrink:0; }
+.scope-note li.no::before { content:'✕'; color:var(--gray-400); font-weight:800; flex-shrink:0; }
+
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 24px; border-radius:var(--r-sm); font-family:'Nunito',sans-serif; font-size:15px; font-weight:700; text-decoration:none; cursor:pointer; border:none; transition:.2s; width:100%; }
+.btn-black { background:var(--black); color:white; }
+.btn-black:hover:not(:disabled) { background:#222; transform:translateY(-1px); }
+.btn-black:disabled { background:var(--gray-200); color:var(--gray-400); cursor:not-allowed; transform:none; }
+.btn-outline { background:white; color:var(--black); border:2px solid var(--gray-200); }
+.btn-outline:hover { border-color:var(--black); }
+.btn-sm { padding:9px 16px; font-size:13px; width:auto; }
+
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--black); color:white; padding:13px 22px; border-radius:12px; font-size:14px; font-weight:600; z-index:999; transition:.3s; max-width:90%; text-align:center; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.err { background:var(--red); }
+
+.spinner-sm { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.hp { position:absolute; left:-9999px; opacity:0; height:0; overflow:hidden; }
+
+/* ── mission cards ── */
+.empty-state { text-align:center; padding:50px 20px; color:var(--gray-400); }
+.empty-state .es-icon { font-size:38px; margin-bottom:10px; }
+.empty-state .es-text { font-size:14px; font-weight:700; color:var(--gray-600); }
+.empty-state .es-sub { font-size:13px; margin-top:4px; }
+
+.section-label { font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--gray-400); margin:28px 0 12px; }
+.section-label:first-child { margin-top:0; }
+
+.mission-card { background:white; border:1.5px solid var(--gray-200); border-radius:var(--r); padding:22px; margin-bottom:14px; }
+.mc-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:14px; }
+.mc-id { font-size:12px; font-weight:700; color:var(--gray-400); font-family:monospace; }
+.mc-title { font-size:16px; font-weight:700; margin-top:2px; }
+.mc-pill { font-size:11px; font-weight:800; padding:5px 12px; border-radius:100px; white-space:nowrap; flex-shrink:0; }
+.mc-pill.wait { background:var(--orange-light); color:var(--orange); }
+.mc-pill.transit { background:var(--blue-light); color:var(--blue); }
+.mc-pill.done { background:var(--green-light); color:var(--green-dark); }
+.mc-meta { display:flex; flex-wrap:wrap; gap:16px; font-size:13px; color:var(--gray-600); margin-bottom:14px; }
+.mc-meta span { display:flex; align-items:center; gap:6px; }
+.mc-photos { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.mc-photos.single { grid-template-columns:1fr; max-width:260px; }
+.mc-photo-box { border-radius:12px; overflow:hidden; border:1.5px solid var(--gray-200); cursor:pointer; position:relative; background:var(--gray-50); }
+.mc-photo-box img { width:100%; height:140px; object-fit:cover; display:block; }
+.mc-photo-box .mc-photo-label { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,.6); color:white; font-size:11px; font-weight:700; padding:5px 8px; }
+.mc-actions { display:flex; gap:10px; }
+
+.lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:999; display:none; align-items:center; justify-content:center; padding:30px; cursor:zoom-out; }
+.lightbox.show { display:flex; }
+.lightbox img { max-width:100%; max-height:100%; border-radius:14px; }
+
+@media (max-width: 640px) {
+  nav { padding:0 16px; }
+  .wrap { padding:90px 16px 60px; }
+  .frow2 { grid-template-columns:1fr; }
+  .v-card { padding:22px 18px; }
+  .role-tabs { flex-wrap:wrap; border-radius:16px; }
+  .mc-photos { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">
+    <img src="logo.jpg" alt="GhostSend" style="width:38px;height:38px;object-fit:contain;border-radius:8px;" onerror="this.style.display='none'">
+    GhostSend
+  </a>
+  <a class="nav-back" href="index.html">← Retour au site</a>
+</nav>
+
+<div class="wrap">
+  <div class="page-tag">👻 Sécurité &amp; missions</div>
+  <h1 class="page-title">Ton espace vérification</h1>
+  <p class="page-sub">Cet espace s'adapte à ton rôle dans une mission : vendeur, receveur ou livreur. Choisis l'onglet qui te concerne.</p>
+
+  <div class="role-tabs">
+    <button class="role-tab active" id="tab-vendeur" onclick="switchRole('vendeur')">📦 Vendeur <span class="rt-dot"></span></button>
+    <button class="role-tab" id="tab-receveur" onclick="switchRole('receveur')">🎁 Receveur <span class="rt-dot"></span></button>
+    <button class="role-tab" id="tab-livreur" onclick="switchRole('livreur')">🛵 Livreur <span class="rt-dot"></span></button>
+  </div>
+
+  <!-- ══════════════════════════ RÔLE : VENDEUR ══════════════════════════ -->
+  <div class="role-section active" id="role-vendeur">
+
+    <div class="status-banner s-none" id="statusBanner">
+      <div class="status-icon">⏳</div>
+      <div class="status-text">
+        <strong id="statusTitle">Compte non vérifié</strong>
+        <span id="statusDesc">Complète les 3 étapes ci-dessous pour activer ton compte.</span>
+      </div>
+    </div>
+
+    <div class="stepper" id="stepper">
+      <div class="step-pill" id="pill-1"></div>
+      <div class="step-pill" id="pill-2"></div>
+      <div class="step-pill" id="pill-3"></div>
+    </div>
+
+    <!-- ÉTAPE 1 : PREUVE PHOTO D'ENVOI -->
+    <div class="v-card" id="card-proof">
+      <div class="v-card-head">
+        <div class="v-card-title"><span class="v-card-num">1</span>Photo de preuve d'envoi</div>
+        <span class="check-badge todo" id="badge-proof">À faire</span>
+      </div>
+      <div class="v-card-sub">Prends une photo du colis avec l'étiquette collée, prête à être remise au livreur. Visible uniquement par toi, le receveur, le livreur de la mission et notre équipe en cas de litige.</div>
+
+      <div class="fg">
+        <label class="fl">Numéro de mission <span class="opt">(visible dans ton tableau de bord)</span></label>
+        <input type="text" class="fi" id="proof-mission-id" placeholder="Ex: -NxAbC123dEfG">
+        <div class="ferr" id="err-mission"></div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Photo du colis</label>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('proof-doc').click()">
+          <input type="file" id="proof-doc" accept="image/*" capture="environment" style="display:none;" onchange="handleProofFile(event)">
+          <div id="upload-empty">
+            <div class="u-icon">📦</div>
+            <div class="u-text">Clique pour prendre ou ajouter une photo</div>
+            <div class="u-sub">JPG, PNG ou WEBP — 8 Mo max</div>
+          </div>
+          <div id="upload-filled" style="display:none;">
+            <img class="photo-preview" id="proof-preview-img" alt="Aperçu">
+            <div class="upload-preview-row"><span>✓</span><span id="file-name"></span></div>
+          </div>
+        </div>
+        <div class="ferr" id="err-doc"></div>
+      </div>
+
+      <div class="scope-note">
+        <h4>🔍 Ce que cette étape vérifie réellement</h4>
+        <ul>
+          <li class="yes">Photo horodatée associée à un numéro de mission précis</li>
+          <li class="yes">Visible par le receveur, le livreur lié, et notre équipe en cas de doute</li>
+          <li class="no">Aucune vérification automatique du contenu du colis</li>
+          <li class="no">Ne remplace pas une preuve de dépôt officielle du transporteur</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 : IDENTITÉ -->
+    <div class="v-card locked" id="card-identity">
+      <div class="v-card-head">
+        <div class="v-card-title"><span class="v-card-num">2</span>Identité et adresse</div>
+        <span class="check-badge todo" id="badge-identity">À faire</span>
+      </div>
+      <div class="v-card-sub">
+        Tes informations d'identité et ta pièce d'identité sont transmises directement à notre équipe par e-mail sécurisé — elles ne sont pas stockées dans la base de données. Notre équipe les vérifie manuellement sous 48h.
+      </div>
+
+      <div class="mail-note">
+        <div class="mn-icon">✉️</div>
+        <p><strong>Envoi sécurisé :</strong> ta pièce d'identité sera envoyée directement à Ghost.send86@gmail.com et ne transitera pas par nos serveurs. Seul ton statut de vérification est enregistré en base.</p>
+      </div>
+
+      <div class="frow2">
+        <div class="fg"><label class="fl">Prénom légal</label><input type="text" class="fi" id="id-first" placeholder="Théo"></div>
+        <div class="fg"><label class="fl">Nom légal</label><input type="text" class="fi" id="id-last" placeholder="Martin"></div>
+      </div>
+      <div class="fg"><label class="fl">Date de naissance</label><input type="date" class="fi" id="id-birth"></div>
+      <div class="fg"><label class="fl">Adresse complète</label><input type="text" class="fi" id="id-address" placeholder="12 rue des Lilas"></div>
+      <div class="frow2">
+        <div class="fg"><label class="fl">Code postal</label><input type="text" class="fi" id="id-zip" placeholder="75011" maxlength="5"></div>
+        <div class="fg"><label class="fl">Ville</label><input type="text" class="fi" id="id-city" placeholder="Paris"></div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Pièce d'identité <span class="opt">(carte d'identité, passeport ou titre de séjour)</span></label>
+        <div class="upload-zone" id="upload-zone-id" onclick="document.getElementById('id-doc').click()">
+          <input type="file" id="id-doc" accept="image/*,.pdf" style="display:none;" onchange="handleIdFile(event)">
+          <div id="upload-id-empty">
+            <div class="u-icon">📄</div>
+            <div class="u-text">Clique pour ajouter un fichier</div>
+            <div class="u-sub">JPG, PNG ou PDF — 10 Mo max</div>
+          </div>
+          <div id="upload-id-filled" style="display:none;">
+            <div class="upload-preview-row"><span>✓</span><span id="id-file-name"></span></div>
+          </div>
+        </div>
+        <div class="ferr" id="err-iddoc"></div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 3 : RIB -->
+    <div class="v-card locked" id="card-bank">
+      <div class="v-card-head">
+        <div class="v-card-title"><span class="v-card-num">3</span>Coordonnées bancaires</div>
+        <span class="check-badge todo" id="badge-bank">À faire</span>
+      </div>
+      <div class="v-card-sub">Utilisées uniquement pour tes versements et remboursements. Jamais partagées avec d'autres utilisateurs.</div>
+
+      <div class="security-note">
+        <div class="sn-icon">🔒</div>
+        <p>Seuls les 4 derniers chiffres de ton IBAN sont enregistrés en base. Le numéro complet est transmis par e-mail sécurisé à notre équipe.</p>
+      </div>
+
+      <div class="fg"><label class="fl">Titulaire du compte</label><input type="text" class="fi" id="bk-holder" placeholder="Doit correspondre au nom déclaré à l'étape 2"></div>
+      <div class="fg">
+        <label class="fl">IBAN</label>
+        <input type="text" class="fi" id="bk-iban" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" autocomplete="off">
+        <div class="ferr" id="err-iban"></div>
+      </div>
+      <div class="fg"><label class="fl">BIC / SWIFT <span class="opt">(optionnel)</span></label><input type="text" class="fi" id="bk-bic" placeholder="BNPAFRPPXXX"></div>
+
+      <input type="text" class="hp" id="hp-field" tabindex="-1" autocomplete="off">
+    </div>
+
+    <button class="btn btn-black" id="btn-submit" onclick="submitVerification()">
+      Envoyer mon dossier de vérification
+    </button>
+
+    <p style="text-align:center;font-size:12px;color:var(--gray-400);margin-top:16px;line-height:1.6;">
+      En soumettant ce formulaire, tu confirmes que les informations fournies sont exactes et acceptes que notre équipe les consulte dans le cadre de la vérification.
+    </p>
+  </div>
+
+  <!-- ══════════════════════════ RÔLE : RECEVEUR ══════════════════════════ -->
+  <div class="role-section" id="role-receveur">
+    <p style="font-size:13px;color:var(--gray-600);margin-bottom:24px;line-height:1.6;">
+      Tu retrouves ici chaque mission qui t'est destinée. Dès que le vendeur a déposé sa photo, elle apparaît. La photo du livreur s'ajoute à la livraison.
+    </p>
+
+    <div id="receveur-waiting-wrap" style="display:none;">
+      <div class="section-label">Photo envoyée, en attente de livraison</div>
+      <div id="receveur-waiting-list"></div>
+    </div>
+    <div id="receveur-transit-wrap" style="display:none;">
+      <div class="section-label">En cours de livraison</div>
+      <div id="receveur-transit-list"></div>
+    </div>
+    <div id="receveur-done-wrap" style="display:none;">
+      <div class="section-label">Livrées</div>
+      <div id="receveur-done-list"></div>
+    </div>
+
+    <div class="empty-state" id="receveur-empty">
+      <div class="es-icon">🎁</div>
+      <div class="es-text">Aucune mission pour le moment</div>
+      <div class="es-sub">Les missions où tu es désigné comme receveur apparaîtront ici.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════ RÔLE : LIVREUR ══════════════════════════ -->
+  <div class="role-section" id="role-livreur">
+
+    <div class="status-banner s-none" id="courierStatusBanner">
+      <div class="status-icon">⏳</div>
+      <div class="status-text">
+        <strong id="courierStatusTitle">Identité non vérifiée</strong>
+        <span id="courierStatusDesc">Valide ton identité une seule fois avant de pouvoir confirmer une livraison.</span>
+      </div>
+    </div>
+
+    <div class="v-card" id="card-courier-id">
+      <div class="v-card-head">
+        <div class="v-card-title"><span class="v-card-num">🛵</span>Vérification d'identité livreur</div>
+        <span class="check-badge todo" id="badge-courier-id">À faire</span>
+      </div>
+      <div class="v-card-sub">
+        Obligatoire pour assurer la traçabilité des remises. <strong>Ton numéro de téléphone et ta pièce d'identité sont envoyés directement par e-mail à notre équipe</strong> — ils ne sont pas stockés en base de données.
+      </div>
+
+      <div class="mail-note">
+        <div class="mn-icon">✉️</div>
+        <p><strong>Envoi sécurisé :</strong> tes données sensibles (téléphone + pièce d'identité) sont transmises par e-mail à Ghost.send86@gmail.com. Seul ton statut de vérification est conservé en base.</p>
+      </div>
+
+      <div class="frow2">
+        <div class="fg"><label class="fl">Prénom légal</label><input type="text" class="fi" id="cr-first" placeholder="Théo"></div>
+        <div class="fg"><label class="fl">Nom légal</label><input type="text" class="fi" id="cr-last" placeholder="Martin"></div>
+      </div>
+      <div class="fg"><label class="fl">Date de naissance</label><input type="date" class="fi" id="cr-birth"></div>
+
+      <div class="fg">
+        <label class="fl">Téléphone <span class="opt">(envoyé par e-mail uniquement)</span></label>
+        <input type="tel" class="fi" id="cr-phone" placeholder="06 12 34 56 78">
+        <div class="ferr" id="err-crphone"></div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Pièce d'identité <span class="opt">(envoyée par e-mail uniquement)</span></label>
+        <div class="upload-zone" id="upload-zone-cr" onclick="document.getElementById('cr-doc').click()">
+          <input type="file" id="cr-doc" accept="image/*,.pdf" style="display:none;" onchange="handleCourierIdFile(event)">
+          <div id="upload-cr-empty">
+            <div class="u-icon">📄</div>
+            <div class="u-text">Clique pour ajouter un fichier</div>
+            <div class="u-sub">JPG, PNG ou PDF — 10 Mo max</div>
+          </div>
+          <div id="upload-cr-filled" style="display:none;">
+            <div class="upload-preview-row"><span>✓</span><span id="cr-file-name"></span></div>
+          </div>
+        </div>
+        <div class="ferr" id="err-crdoc"></div>
+      </div>
+
+      <button class="btn btn-black" id="btn-courier-submit" onclick="submitCourierVerification()">
+        Valider mon identité de livreur
+      </button>
+    </div>
+
+    <!-- Missions du livreur (masquées jusqu'à vérification) -->
+    <div id="courier-missions" style="display:none;">
+      <div class="section-label">À récupérer chez le vendeur</div>
+      <div id="livreur-pickup-list"></div>
+      <div class="section-label">En cours de livraison</div>
+      <div id="livreur-transit-list"></div>
+      <div class="section-label">Livrées</div>
+      <div id="livreur-done-list"></div>
+      <div class="empty-state" id="livreur-empty" style="display:none;">
+        <div class="es-icon">🛵</div>
+        <div class="es-text">Aucune mission assignée pour le moment</div>
+        <div class="es-sub">Les missions qui te sont confiées apparaîtront ici.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modale confirmation livraison -->
+<div class="lightbox" id="deliveryModalBg" style="cursor:default;">
+  <div style="background:white;border-radius:var(--r-lg);max-width:420px;width:100%;padding:26px;cursor:default;" onclick="event.stopPropagation()">
+    <h3 style="font-size:18px;margin-bottom:6px;">Confirmer la remise du colis</h3>
+    <p style="font-size:13px;color:var(--gray-600);margin-bottom:18px;line-height:1.5;">Prends une photo au moment de la remise. Elle sera visible par le vendeur, le receveur et notre équipe.</p>
+    <div class="upload-zone" id="upload-zone-delivery" onclick="document.getElementById('delivery-doc').click()">
+      <input type="file" id="delivery-doc" accept="image/*" capture="environment" style="display:none;" onchange="handleDeliveryFile(event)">
+      <div id="upload-delivery-empty">
+        <div class="u-icon">📸</div>
+        <div class="u-text">Clique pour prendre la photo</div>
+        <div class="u-sub">JPG, PNG ou WEBP — 8 Mo max</div>
+      </div>
+      <div id="upload-delivery-filled" style="display:none;">
+        <img class="photo-preview" id="delivery-preview-img" alt="Aperçu" style="max-height:200px;">
+      </div>
+    </div>
+    <div class="ferr" id="err-delivery" style="margin-bottom:4px;"></div>
+    <div style="display:flex; gap:10px; margin-top:16px;">
+      <button class="btn btn-outline" onclick="closeDeliveryModal()">Annuler</button>
+      <button class="btn btn-black" id="btn-confirm-delivery" onclick="confirmDelivery()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
+  <img id="lightbox-img" src="" alt="Photo en plein écran">
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════ FIREBASE + LOGIQUE ══════════════════════════ -->
+<script type="module">
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, get, update, query, orderByChild, equalTo, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+/* ────────────────────────────────
+   CONFIG — remplace les clés EmailJS
+   par les tiennes (serviceId, templateId, publicKey)
+──────────────────────────────── */
+const EMAILJS_SERVICE_ID  = 'service_ghostsend';   // ← ton Service ID EmailJS
+const EMAILJS_TPL_VENDEUR = 'template_vendeur_verif'; // ← template pour dossier vendeur
+const EMAILJS_TPL_LIVREUR = 'template_livreur_verif'; // ← template pour identité livreur
+const EMAILJS_PUBLIC_KEY  = 'VOTRE_CLE_PUBLIQUE_EMAILJS'; // ← ta clé publique EmailJS
+
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain: "ghostly-fbe01.firebaseapp.com",
+  databaseURL: "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ghostly-fbe01",
+  storageBucket: "ghostly-fbe01.firebasestorage.app",
+  messagingSenderId: "290927219079",
+  appId: "1:290927219079:web:d7cd006945d9fe84a74322"
+};
+
+const app     = initializeApp(firebaseConfig);
+const auth    = getAuth(app);
+const db      = getDatabase(app);
+const storage = getStorage(app);
+
+let CU = null;
+let proofDone        = false;
+let proofFile        = null;
+let idDocFile        = null;
+let courierIdFile    = null;
+let courierVerified  = false;
+let activeDeliveryMissionId = null;
+let deliveryFile     = null;
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    showToast('Connecte-toi pour accéder à la vérification.', true);
+    setTimeout(() => window.location.href = 'index.html', 1500);
+    return;
+  }
+  CU = user;
+  loadVendeurStatus(user.uid);
+  loadCourierStatus(user.uid);
+  listenReceveurMissions(user.uid);
+  listenLivreurMissions(user.uid);
+});
+
+/* ── tabs ── */
+window.switchRole = (role) => {
+  ['vendeur','receveur','livreur'].forEach(r => {
+    document.getElementById('role-' + r).classList.toggle('active', r === role);
+    document.getElementById('tab-'  + r).classList.toggle('active', r === role);
+  });
+};
+
+/* ════════════════════════════════════════
+   VENDEUR
+════════════════════════════════════════ */
+async function loadVendeurStatus(uid) {
+  /* users/$uid est lisible par l'utilisateur lui-même → OK avec les règles */
+  const snap = await get(ref(db, `users/${uid}/verification`));
+  const v = snap.val() || {};
+  renderStatusBanner(v.status || 'none');
+
+  if (v.proofSubmitted) {
+    proofDone = true;
+    setBadge('badge-proof', 'done');
+    unlockCard('card-identity');
+    document.getElementById('proof-mission-id').value    = v.proofMissionId || '';
+    document.getElementById('proof-mission-id').disabled = true;
+  }
+  if (v.identitySubmitted) {
+    unlockCard('card-identity');
+    setBadge('badge-identity', v.status === 'verified' ? 'done' : 'review');
+  }
+  if (v.bankSubmitted) {
+    unlockCard('card-bank');
+    setBadge('badge-bank', v.status === 'verified' ? 'done' : 'review');
+  }
+  if (v.status === 'pending') document.getElementById('tab-vendeur').classList.add('has-pending');
+}
+
+function renderStatusBanner(status) {
+  const banner = document.getElementById('statusBanner');
+  const title  = document.getElementById('statusTitle');
+  const desc   = document.getElementById('statusDesc');
+  const icon   = banner.querySelector('.status-icon');
+  banner.className = 'status-banner';
+  const cfg = {
+    none:     { c:'s-none',     icon:'⏳', t:'Compte non vérifié',     d:"Complète les 3 étapes ci-dessous pour activer ton compte." },
+    pending:  { c:'s-pending',  icon:'🔎', t:'Vérification en cours',  d:"Ton dossier a été envoyé. Notre équipe l'examine sous 48h ouvrées." },
+    verified: { c:'s-verified', icon:'✅', t:'Compte vérifié',         d:"Ton identité et tes coordonnées bancaires ont été validées." },
+    rejected: { c:'s-rejected', icon:'⚠️', t:'Dossier refusé',        d:"Un document n'a pas pu être validé. Vérifie tes informations et renvoie ton dossier." }
+  };
+  const c = cfg[status] || cfg.none;
+  banner.classList.add(c.c);
+  icon.textContent  = c.icon;
+  title.textContent = c.t;
+  desc.textContent  = c.d;
+}
+
+window.handleProofFile = (e) => {
+  const file = e.target.files[0];
+  const err  = document.getElementById('err-doc');
+  err.style.display = 'none';
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024)       { err.textContent = 'Photo trop lourde (max 8 Mo).';     err.style.display = 'block'; return; }
+  if (!file.type.startsWith('image/'))    { err.textContent = 'Le fichier doit être une image.';   err.style.display = 'block'; return; }
+  proofFile = file;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('proof-preview-img').src = ev.target.result;
+    document.getElementById('upload-empty').style.display  = 'none';
+    document.getElementById('upload-filled').style.display = 'block';
+    document.getElementById('file-name').textContent       = file.name;
+    document.getElementById('upload-zone').classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+};
+
+async function submitProofIfNeeded() {
+  if (proofDone) return true;
+  const missionId = document.getElementById('proof-mission-id').value.trim();
+  const errM = document.getElementById('err-mission');
+  const errD = document.getElementById('err-doc');
+  errM.style.display = 'none'; errD.style.display = 'none';
+  if (!missionId) { errM.textContent = 'Indique le numéro de mission.'; errM.style.display = 'block'; return false; }
+  if (!proofFile) { errD.textContent = 'Ajoute une photo avant de continuer.'; errD.style.display = 'block'; return false; }
+
+  /* Upload de la photo de preuve dans Storage — accessible publiquement via URL signée.
+     Écriture sur all_missions/$id → autorisée par les règles (auth !== null + .write:true sur $missionId) */
+  const path    = `verification-proofs/${CU.uid}/${missionId}-${Date.now()}.jpg`;
+  const fileRef = sRef(storage, path);
+  await uploadBytes(fileRef, proofFile);
+  const proofUrl = await getDownloadURL(fileRef);
+
+  await update(ref(db, `all_missions/${missionId}`), {
+    proofUrl,
+    proofUploadedBy: CU.uid,
+    proofUploadedAt: Date.now(),
+    status: 'attente_collecte'
+  });
+
+  /* Enregistrement du statut de preuve sous users/$uid/verification
+     → lisible/modifiable uniquement par l'utilisateur lui-même, conforme aux règles */
+  await update(ref(db, `users/${CU.uid}/verification`), {
+    proofSubmitted:   true,
+    proofMissionId:   missionId,
+    proofUrl,
+    proofSubmittedAt: Date.now()
+  });
+
+  proofDone = true;
+  setBadge('badge-proof', 'done');
+  unlockCard('card-identity');
+  document.getElementById('proof-mission-id').disabled = true;
+  return true;
+}
+
+window.handleIdFile = (e) => {
+  const file = e.target.files[0];
+  const err  = document.getElementById('err-iddoc');
+  err.style.display = 'none';
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { err.textContent = 'Fichier trop volumineux (max 10 Mo).'; err.style.display = 'block'; return; }
+  const ok = ['image/jpeg','image/png','image/webp','application/pdf'];
+  if (!ok.includes(file.type)) { err.textContent = 'Format non accepté (JPG, PNG ou PDF).'; err.style.display = 'block'; return; }
+  idDocFile = file;
+  document.getElementById('upload-id-empty').style.display  = 'none';
+  document.getElementById('upload-id-filled').style.display = 'block';
+  document.getElementById('id-file-name').textContent        = file.name;
+  document.getElementById('upload-zone-id').classList.add('has-file');
+};
+
+function unlockCard(id)  { document.getElementById(id).classList.remove('locked'); }
+function setBadge(id, state) {
+  const el = document.getElementById(id);
+  if (state === 'done')   { el.textContent = '✓ Complété'; el.className = 'check-badge'; }
+  else if (state === 'review') { el.textContent = 'En revue'; el.className = 'check-badge review'; }
+  else                    { el.textContent = 'À faire';   el.className = 'check-badge todo'; }
+  updateStepper();
+}
+
+function updateStepper() {
+  const states = ['badge-proof','badge-identity','badge-bank'].map(id => document.getElementById(id).textContent.includes('Complété'));
+  states.forEach((done, i) => {
+    const pill = document.getElementById('pill-' + (i + 1));
+    pill.className = 'step-pill' + (done ? ' done' : (i === states.findIndex(s => !s) ? ' current' : ''));
+  });
+}
+
+function isPlausibleIban(value) {
+  const cleaned    = value.replace(/\s/g, '').toUpperCase();
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(cleaned)) return false;
+  const rearranged = cleaned.slice(4) + cleaned.slice(0, 4);
+  const numeric    = rearranged.replace(/[A-Z]/g, c => (c.charCodeAt(0) - 55).toString());
+  let remainder    = '';
+  for (const digit of numeric) { remainder = ((BigInt(remainder + digit)) % 97n).toString(); }
+  return remainder === '1';
+}
+
+/* Convertit un fichier en base64 (pour EmailJS) */
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+window.submitVerification = async () => {
+  if (!CU) return;
+  if (document.getElementById('hp-field').value) return; // honeypot
+
+  const btn = document.getElementById('btn-submit');
+  const first   = document.getElementById('id-first').value.trim();
+  const last    = document.getElementById('id-last').value.trim();
+  const birth   = document.getElementById('id-birth').value;
+  const address = document.getElementById('id-address').value.trim();
+  const zip     = document.getElementById('id-zip').value.trim();
+  const city    = document.getElementById('id-city').value.trim();
+  const holder  = document.getElementById('bk-holder').value.trim();
+  const iban    = document.getElementById('bk-iban').value.trim();
+  const bic     = document.getElementById('bk-bic').value.trim();
+
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="spinner-sm"></span> Envoi en cours...';
+  const resetBtn = () => { btn.disabled = false; btn.textContent = 'Envoyer mon dossier de vérification'; };
+
+  try {
+    const proofOk = await submitProofIfNeeded();
+    if (!proofOk) { resetBtn(); return; }
+
+    if (!first || !last || !birth || !address || !zip || !city) { showToast("Complète tous les champs d'identité.", true); resetBtn(); return; }
+    if (!/^\d{5}$/.test(zip))  { showToast('Code postal invalide.', true); resetBtn(); return; }
+    if (!idDocFile) { document.getElementById('err-iddoc').textContent = "Ajoute une pièce d'identité."; document.getElementById('err-iddoc').style.display = 'block'; resetBtn(); return; }
+    if (!holder)    { showToast('Indique le titulaire du compte bancaire.', true); resetBtn(); return; }
+
+    const errIban = document.getElementById('err-iban');
+    errIban.style.display = 'none';
+    if (!isPlausibleIban(iban)) { errIban.textContent = 'Cet IBAN ne semble pas valide. Vérifie-le.'; errIban.style.display = 'block'; resetBtn(); return; }
+
+    const cleanIban = iban.replace(/\s/g, '').toUpperCase();
+
+    /* ── Conversion de la pièce d'identité en base64 pour EmailJS ── */
+    const idDocB64 = await fileToBase64(idDocFile);
+
+    /* ── Envoi par e-mail (données sensibles) via EmailJS ── */
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TPL_VENDEUR, {
+      to_email:   'Ghost.send86@gmail.com',
+      user_uid:   CU.uid,
+      user_email: CU.email || 'inconnu',
+      first, last, birth, address, zip, city,
+      holder,
+      iban_full:  cleanIban,
+      bic:        bic || 'non fourni',
+      id_doc_name: idDocFile.name,
+      id_doc_b64: idDocB64,   // ← pièce d'identité en base64
+      submitted_at: new Date().toLocaleString('fr-FR')
+    });
+
+    /* ── Enregistrement en Firebase : statut uniquement, PAS de données sensibles ──
+       Conforme aux règles : users/$uid en écriture par $uid === auth.uid             */
+    await update(ref(db, `users/${CU.uid}/verification`), {
+      status:            'pending',
+      identitySubmitted: true,
+      bankSubmitted:     true,
+      identity: {
+        first, last, birth, address, zip, city,
+        submittedAt: Date.now()
+        /* ← PAS de docUrl ni de données bancaires en clair en base */
+      },
+      bank: {
+        holder,
+        ibanLast4: cleanIban.slice(-4),
+        /* ibanFull n'est PAS stocké en base — transmis par e-mail uniquement */
+        submittedAt: Date.now()
+      },
+      submittedAt: Date.now()
+    });
+
+    setBadge('badge-identity', 'review');
+    setBadge('badge-bank',     'review');
+    renderStatusBanner('pending');
+    btn.textContent = 'Dossier envoyé ✓';
+    showToast('Dossier envoyé par e-mail. Réponse sous 48h ouvrées.');
+  } catch (e) {
+    console.error(e);
+    showToast("Erreur lors de l'envoi. Vérifie ta connexion et réessaie.", true);
+    resetBtn();
+  }
+};
+
+/* ════════════════════════════════════════
+   RECEVEUR
+   → all_missions est lisible (.read:true) donc la query fonctionne.
+   NB : pour que orderByChild('receveurUid') soit efficace,
+   ajoute l'index dans les règles Firebase :
+   "all_missions": { ".indexOn": ["receveurUid","livreurUid"] }
+════════════════════════════════════════ */
+function listenReceveurMissions(uid) {
+  const q = query(ref(db, 'all_missions'), orderByChild('receveurUid'), equalTo(uid));
+  onValue(q, (snap) => {
+    renderReceveurList(Object.entries(snap.val() || {}));
+  }, (err) => {
+    console.warn('Lecture missions receveur :', err.message);
+  });
+}
+
+function renderReceveurList(entries) {
+  const wait    = document.getElementById('receveur-waiting-list');
+  const transit = document.getElementById('receveur-transit-list');
+  const done    = document.getElementById('receveur-done-list');
+  wait.innerHTML = ''; transit.innerHTML = ''; done.innerHTML = '';
+  let wc = 0, tc = 0, dc = 0;
+
+  entries.sort((a, b) => (b[1].proofUploadedAt || 0) - (a[1].proofUploadedAt || 0));
+
+  entries.forEach(([id, m]) => {
+    const status = m.status || 'attente_collecte';
+    const card   = document.createElement('div');
+    card.className = 'mission-card';
+
+    const pillCfg = {
+      attente_collecte: { cls:'wait',    label:'En attente du livreur' },
+      en_livraison:     { cls:'transit', label:'En route vers toi'     },
+      livree:           { cls:'done',    label:'Livrée'                }
+    }[status] || { cls:'wait', label:'En attente' };
+
+    let photosHtml = `<div class="mc-photos${m.deliveryProofUrl ? '' : ' single'}">`;
+    if (m.proofUrl)         photosHtml += `<div class="mc-photo-box" onclick="openLightbox('${m.proofUrl}')"><img src="${m.proofUrl}" alt="Photo d'envoi"><div class="mc-photo-label">Envoyé par le vendeur</div></div>`;
+    if (m.deliveryProofUrl) photosHtml += `<div class="mc-photo-box" onclick="openLightbox('${m.deliveryProofUrl}')"><img src="${m.deliveryProofUrl}" alt="Photo de remise"><div class="mc-photo-label">Remis par le livreur</div></div>`;
+    photosHtml += '</div>';
+
+    card.innerHTML = `
+      <div class="mc-top">
+        <div><div class="mc-id">#${id}</div><div class="mc-title">${m.vendeurName ? 'De ' + escapeHtml(m.vendeurName) : 'Colis à recevoir'}</div></div>
+        <span class="mc-pill ${pillCfg.cls}">${pillCfg.label}</span>
+      </div>
+      <div class="mc-meta">${m.dropCity ? `<span>📍 ${escapeHtml(m.dropCity)}</span>` : ''}</div>
+      ${photosHtml}
+    `;
+    if (status === 'livree')       { done.appendChild(card);    dc++; }
+    else if (status === 'en_livraison') { transit.appendChild(card); tc++; }
+    else                           { wait.appendChild(card);    wc++; }
+  });
+
+  document.getElementById('receveur-waiting-wrap').style.display = wc ? 'block' : 'none';
+  document.getElementById('receveur-transit-wrap').style.display = tc ? 'block' : 'none';
+  document.getElementById('receveur-done-wrap').style.display    = dc ? 'block' : 'none';
+  document.getElementById('receveur-empty').style.display        = entries.length ? 'none' : 'block';
+}
+
+/* ════════════════════════════════════════
+   LIVREUR
+════════════════════════════════════════ */
+async function loadCourierStatus(uid) {
+  /* users/$uid/courierVerification → lisible par l'utilisateur lui-même */
+  const snap = await get(ref(db, `users/${uid}/courierVerification`));
+  const v    = snap.val() || {};
+  renderCourierBanner(v.status || 'none');
+  if (v.status === 'verified') {
+    courierVerified = true;
+    setCourierBadge('done');
+    document.getElementById('card-courier-id').classList.add('locked');
+    document.getElementById('courier-missions').style.display = 'block';
+  } else if (v.status === 'pending') {
+    setCourierBadge('review');
+    document.getElementById('card-courier-id').classList.add('locked');
+    document.getElementById('tab-livreur').classList.add('has-pending');
+  }
+}
+
+function renderCourierBanner(status) {
+  const banner = document.getElementById('courierStatusBanner');
+  const title  = document.getElementById('courierStatusTitle');
+  const desc   = document.getElementById('courierStatusDesc');
+  const icon   = banner.querySelector('.status-icon');
+  banner.className = 'status-banner';
+  const cfg = {
+    none:     { c:'s-none',     icon:'⏳', t:'Identité non vérifiée', d:"Valide ton identité une seule fois avant de pouvoir confirmer une livraison." },
+    pending:  { c:'s-pending',  icon:'🔎', t:'Vérification en cours', d:"Ton dossier a été reçu. Notre équipe l'examine sous 48h ouvrées." },
+    verified: { c:'s-verified', icon:'✅', t:'Identité vérifiée',     d:"Tu peux récupérer et livrer des missions." },
+    rejected: { c:'s-rejected', icon:'⚠️', t:'Document refusé',      d:"Ton document n'a pas pu être validé. Renvoie une pièce d'identité lisible." }
+  };
+  const c = cfg[status] || cfg.none;
+  banner.classList.add(c.c);
+  icon.textContent  = c.icon;
+  title.textContent = c.t;
+  desc.textContent  = c.d;
+}
+
+function setCourierBadge(state) {
+  const el = document.getElementById('badge-courier-id');
+  if (state === 'done')   { el.textContent = '✓ Vérifié'; el.className = 'check-badge'; }
+  else if (state === 'review') { el.textContent = 'En revue'; el.className = 'check-badge review'; }
+  else                    { el.textContent = 'À faire';   el.className = 'check-badge todo'; }
+}
+
+window.handleCourierIdFile = (e) => {
+  const file = e.target.files[0];
+  const err  = document.getElementById('err-crdoc');
+  err.style.display = 'none';
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { err.textContent = 'Fichier trop volumineux (max 10 Mo).'; err.style.display = 'block'; return; }
+  const ok = ['image/jpeg','image/png','image/webp','application/pdf'];
+  if (!ok.includes(file.type)) { err.textContent = 'Format non accepté (JPG, PNG ou PDF).'; err.style.display = 'block'; return; }
+  courierIdFile = file;
+  document.getElementById('upload-cr-empty').style.display  = 'none';
+  document.getElementById('upload-cr-filled').style.display = 'block';
+  document.getElementById('cr-file-name').textContent        = file.name;
+  document.getElementById('upload-zone-cr').classList.add('has-file');
+};
+
+window.submitCourierVerification = async () => {
+  if (!CU) return;
+  const btn   = document.getElementById('btn-courier-submit');
+  const first = document.getElementById('cr-first').value.trim();
+  const last  = document.getElementById('cr-last').value.trim();
+  const birth = document.getElementById('cr-birth').value;
+  const phone = document.getElementById('cr-phone').value.trim();
+
+  if (!first || !last || !birth || !phone) { showToast('Complète tous les champs.', true); return; }
+
+  const errPhone = document.getElementById('err-crphone');
+  errPhone.style.display = 'none';
+  if (!/^(\+33|0)[0-9 .-]{8,14}$/.test(phone.replace(/\s/g,''))) {
+    errPhone.textContent = 'Numéro de téléphone invalide.';
+    errPhone.style.display = 'block';
+    return;
+  }
+
+  if (!courierIdFile) {
+    document.getElementById('err-crdoc').textContent = "Ajoute une pièce d'identité.";
+    document.getElementById('err-crdoc').style.display = 'block';
+    return;
+  }
+
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="spinner-sm"></span> Envoi en cours...';
+
+  try {
+    /* Conversion de la pièce d'identité en base64 pour l'e-mail */
+    const idDocB64 = await fileToBase64(courierIdFile);
+
+    /* ── Envoi par e-mail — données sensibles (téléphone + pièce d'identité) ── */
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TPL_LIVREUR, {
+      to_email:    'Ghost.send86@gmail.com',
+      user_uid:    CU.uid,
+      user_email:  CU.email || 'inconnu',
+      first, last, birth,
+      phone,                       // ← téléphone envoyé par mail uniquement
+      id_doc_name: courierIdFile.name,
+      id_doc_b64:  idDocB64,       // ← pièce d'identité en base64
+      submitted_at: new Date().toLocaleString('fr-FR')
+    });
+
+    /* ── Firebase : statut uniquement, SANS téléphone ni pièce d'identité ── */
+    await update(ref(db, `users/${CU.uid}/courierVerification`), {
+      status: 'pending',
+      identity: {
+        first, last, birth,
+        /* phone et id doc NON stockés en base — transmis par e-mail */
+        submittedAt: Date.now()
+      },
+      submittedAt: Date.now()
+    });
+
+    renderCourierBanner('pending');
+    setCourierBadge('review');
+    document.getElementById('card-courier-id').classList.add('locked');
+    document.getElementById('tab-livreur').classList.add('has-pending');
+    showToast('Identité envoyée par e-mail. Réponse sous 48h ouvrées.');
+  } catch (e) {
+    console.error(e);
+    showToast("Erreur lors de l'envoi. Vérifie ta connexion et réessaie.", true);
+    btn.disabled  = false;
+    btn.textContent = 'Valider mon identité de livreur';
+  }
+};
+
+function listenLivreurMissions(uid) {
+  const q = query(ref(db, 'all_missions'), orderByChild('livreurUid'), equalTo(uid));
+  onValue(q, (snap) => {
+    renderLivreurList(Object.entries(snap.val() || {}));
+  }, (err) => {
+    console.warn('Lecture missions livreur :', err.message);
+  });
+}
+
+function renderLivreurList(entries) {
+  const pickup  = document.getElementById('livreur-pickup-list');
+  const transit = document.getElementById('livreur-transit-list');
+  const done    = document.getElementById('livreur-done-list');
+  pickup.innerHTML = ''; transit.innerHTML = ''; done.innerHTML = '';
+  let pc = 0, tc = 0, dc = 0;
+
+  entries.forEach(([id, m]) => {
+    const status = m.status || 'attente_collecte';
+    const card   = document.createElement('div');
+    card.className = 'mission-card';
+
+    if (status === 'attente_collecte') {
+      card.innerHTML = `
+        <div class="mc-top">
+          <div><div class="mc-id">#${id}</div><div class="mc-title">${m.vendeurName ? 'Chez ' + escapeHtml(m.vendeurName) : 'Colis à récupérer'}</div></div>
+          <span class="mc-pill wait">À récupérer</span>
+        </div>
+        <div class="mc-meta">${m.pickupCity ? `<span>📍 ${escapeHtml(m.pickupCity)}</span>` : ''}</div>
+        ${m.proofUrl ? `<div class="mc-photos single"><div class="mc-photo-box" onclick="openLightbox('${m.proofUrl}')"><img src="${m.proofUrl}" alt="Photo du colis"><div class="mc-photo-label">Photo du vendeur</div></div></div>` : ''}
+        <div class="mc-actions"><button class="btn btn-black btn-sm" onclick="markPickedUp('${id}')">Marquer comme récupéré</button></div>
+      `;
+      pickup.appendChild(card); pc++;
+    } else if (status === 'en_livraison') {
+      card.innerHTML = `
+        <div class="mc-top">
+          <div><div class="mc-id">#${id}</div><div class="mc-title">${m.receveurName ? 'Pour ' + escapeHtml(m.receveurName) : 'Colis à livrer'}</div></div>
+          <span class="mc-pill transit">En cours</span>
+        </div>
+        <div class="mc-meta">${m.dropCity ? `<span>📍 ${escapeHtml(m.dropCity)}</span>` : ''}</div>
+        <div class="mc-actions"><button class="btn btn-black btn-sm" onclick="openDeliveryModal('${id}')">Je suis arrivé — confirmer la remise</button></div>
+      `;
+      transit.appendChild(card); tc++;
+    } else {
+      card.innerHTML = `
+        <div class="mc-top">
+          <div><div class="mc-id">#${id}</div><div class="mc-title">${m.receveurName ? 'Pour ' + escapeHtml(m.receveurName) : 'Colis livré'}</div></div>
+          <span class="mc-pill done">Livrée</span>
+        </div>
+        ${m.deliveryProofUrl ? `<div class="mc-photos single"><div class="mc-photo-box" onclick="openLightbox('${m.deliveryProofUrl}')"><img src="${m.deliveryProofUrl}" alt="Photo de remise"><div class="mc-photo-label">Photo de remise</div></div></div>` : ''}
+      `;
+      done.appendChild(card); dc++;
+    }
+  });
+
+  document.getElementById('livreur-empty').style.display = entries.length ? 'none' : 'block';
+}
+
+window.markPickedUp = async (missionId) => {
+  /* all_missions/$missionId → .write:"auth !== null" → autorisé */
+  try {
+    await update(ref(db, `all_missions/${missionId}`), { status: 'en_livraison', pickedUpAt: Date.now() });
+    showToast('Colis marqué comme récupéré.');
+  } catch (e) {
+    showToast('Impossible de mettre à jour la mission.', true);
+  }
+};
+
+/* ── Confirmation livraison ── */
+window.openDeliveryModal = (missionId) => {
+  if (!courierVerified) { showToast("Valide d'abord ton identité de livreur.", true); return; }
+  activeDeliveryMissionId = missionId;
+  deliveryFile = null;
+  document.getElementById('upload-delivery-empty').style.display  = 'block';
+  document.getElementById('upload-delivery-filled').style.display = 'none';
+  document.getElementById('upload-zone-delivery').classList.remove('has-file');
+  document.getElementById('err-delivery').style.display = 'none';
+  document.getElementById('deliveryModalBg').classList.add('show');
+};
+window.closeDeliveryModal = () => {
+  document.getElementById('deliveryModalBg').classList.remove('show');
+  activeDeliveryMissionId = null;
+};
+
+window.handleDeliveryFile = (e) => {
+  const file = e.target.files[0];
+  const err  = document.getElementById('err-delivery');
+  err.style.display = 'none';
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024)    { err.textContent = 'Photo trop lourde (max 8 Mo).';   err.style.display = 'block'; return; }
+  if (!file.type.startsWith('image/')) { err.textContent = 'Le fichier doit être une image.'; err.style.display = 'block'; return; }
+  deliveryFile = file;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('delivery-preview-img').src           = ev.target.result;
+    document.getElementById('upload-delivery-empty').style.display  = 'none';
+    document.getElementById('upload-delivery-filled').style.display = 'block';
+    document.getElementById('upload-zone-delivery').classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+};
+
+window.confirmDelivery = async () => {
+  const err = document.getElementById('err-delivery');
+  if (!deliveryFile) { err.textContent = 'Ajoute une photo avant de confirmer.'; err.style.display = 'block'; return; }
+  const btn = document.getElementById('btn-confirm-delivery');
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="spinner-sm"></span> Envoi...';
+  try {
+    const path    = `delivery-proofs/${CU.uid}/${activeDeliveryMissionId}-${Date.now()}.jpg`;
+    const fileRef = sRef(storage, path);
+    await uploadBytes(fileRef, deliveryFile);
+    const deliveryProofUrl = await getDownloadURL(fileRef);
+
+    /* Mise à jour all_missions → autorisée (.write:"auth !== null") */
+    await update(ref(db, `all_missions/${activeDeliveryMissionId}`), {
+      status: 'livree',
+      deliveryProofUrl,
+      deliveryConfirmedBy: CU.uid,
+      deliveryConfirmedAt: Date.now()
+    });
+
+    closeDeliveryModal();
+    showToast('Livraison confirmée. Merci !');
+  } catch (e) {
+    showToast("Erreur lors de l'envoi. Réessaie.", true);
+  } finally {
+    btn.disabled  = false;
+    btn.textContent = 'Confirmer';
+  }
+};
+
+/* ── Utilitaires ── */
+window.openLightbox = (url) => {
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox').classList.add('show');
+};
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className = 'toast', 3500);
+}
+</script>
+</body>
+</html>
