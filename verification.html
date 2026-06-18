@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vérification livreur — GhostSend</title>
+<link rel="icon" type="image/png" sizes="48x48" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:    #111;
+  --white:  #fff;
+  --mist:   #f5f5f3;
+  --line:   #e3e3e0;
+  --sub:    #888;
+  --green:  #16a34a;
+  --green-bg: #f0fdf4;
+  --green-line: #bbf7d0;
+  --red:    #dc2626;
+  --red-bg: #fef2f2;
+  --blue:   #2563eb;
+  --blue-bg: #eff6ff;
+  --blue-line: #bfdbfe;
+  --r: 16px;
+  --r-lg: 24px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--mist);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-family: 'Fredoka', sans-serif; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid var(--line);
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+}
+.nav-brand {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 24px; font-weight: 700;
+  color: var(--ink); text-decoration: none;
+  display: flex; align-items: center; gap: 9px;
+}
+.nav-back {
+  font-size: 13px; font-weight: 700; color: var(--sub);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 13px; border-radius: 10px;
+  transition: .2s;
+}
+.nav-back:hover { background: var(--mist); color: var(--ink); }
+
+/* LAYOUT */
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 100px 20px 80px;
+}
+
+/* HEADER */
+.page-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--ink); color: var(--white);
+  font-size: 11px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase;
+  padding: 5px 14px; border-radius: 100px;
+  margin-bottom: 16px;
+}
+.page-title {
+  font-size: clamp(26px, 5vw, 36px);
+  font-weight: 700; line-height: 1.1;
+  margin-bottom: 10px;
+}
+.page-sub {
+  font-size: 15px; color: var(--sub);
+  line-height: 1.65; max-width: 480px;
+  margin-bottom: 32px;
+}
+
+/* STATUS BANNER */
+.banner {
+  display: flex; align-items: flex-start; gap: 14px;
+  border-radius: var(--r-lg); padding: 18px 20px;
+  border: 1.5px solid;
+  margin-bottom: 28px;
+}
+.banner-none     { background: #fafafa;        border-color: var(--line); }
+.banner-verified { background: var(--green-bg); border-color: var(--green-line); }
+.banner-icon { font-size: 24px; flex-shrink: 0; line-height: 1; margin-top: 1px; }
+.banner-body strong { display: block; font-size: 14px; font-weight: 800; margin-bottom: 3px; }
+.banner-body span   { font-size: 13px; color: var(--sub); line-height: 1.55; }
+
+/* CARD */
+.card {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 28px 26px;
+  margin-bottom: 16px;
+}
+.card.locked { opacity: .4; pointer-events: none; }
+
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 5px;
+}
+.card-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 20px; font-weight: 700;
+  display: flex; align-items: center; gap: 10px;
+}
+.card-sub {
+  font-size: 13px; color: var(--sub);
+  line-height: 1.6; margin-bottom: 22px;
+}
+
+.badge {
+  font-size: 11.5px; font-weight: 800;
+  padding: 4px 12px; border-radius: 100px;
+  white-space: nowrap;
+}
+.badge-todo     { background: var(--mist); color: var(--sub); }
+.badge-verified { background: var(--green-bg); color: var(--green); }
+
+/* INFO BOX */
+.info-box {
+  display: flex; gap: 11px;
+  background: var(--blue-bg);
+  border: 1.5px solid var(--blue-line);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.info-box-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.info-box p { font-size: 13px; color: #1e3a8a; line-height: 1.6; }
+.info-box strong { font-weight: 800; }
+
+/* FORM */
+.fg { margin-bottom: 14px; }
+.fl {
+  display: block; font-size: 13px; font-weight: 700;
+  color: var(--ink); margin-bottom: 5px;
+}
+.fl .opt { color: var(--sub); font-weight: 600; }
+.fi {
+  width: 100%; padding: 11px 14px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px; color: var(--ink);
+  outline: none; background: var(--white);
+  transition: border-color .2s;
+}
+.fi:focus { border-color: var(--ink); }
+.fi:disabled { background: var(--mist); color: var(--sub); }
+.ferr {
+  font-size: 12px; color: var(--red);
+  font-weight: 700; margin-top: 5px;
+  display: none;
+}
+.frow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* UPLOAD */
+.upload-zone {
+  border: 2px dashed var(--line);
+  border-radius: var(--r);
+  padding: 26px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  background: var(--mist);
+}
+.upload-zone:hover { border-color: var(--ink); background: var(--white); }
+.upload-zone.has-file {
+  border-style: solid; border-color: var(--green);
+  background: var(--green-bg);
+}
+.upload-zone .uz-icon { font-size: 28px; margin-bottom: 7px; }
+.upload-zone .uz-label { font-size: 14px; font-weight: 700; }
+.upload-zone .uz-sub { font-size: 12px; color: var(--sub); margin-top: 3px; }
+.upload-done-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; font-size: 13px; font-weight: 700;
+  color: #14532d; padding: 4px 0;
+}
+
+/* BUTTON */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 13px 22px;
+  border-radius: var(--r);
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; border: none;
+  transition: .2s;
+  width: 100%;
+  margin-top: 6px;
+}
+.btn-primary { background: var(--ink); color: var(--white); }
+.btn-primary:hover:not(:disabled) { background: #2a2a2a; transform: translateY(-1px); }
+.btn-primary:disabled { background: var(--line); color: var(--sub); cursor: not-allowed; transform: none; }
+
+/* SPINNER */
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* DONE STATE */
+.verified-state {
+  display: none;
+  text-align: center;
+  padding: 36px 20px;
+}
+.verified-state .vs-icon { font-size: 52px; margin-bottom: 12px; }
+.verified-state h2 { font-size: 24px; margin-bottom: 6px; }
+.verified-state p  { font-size: 14px; color: var(--sub); line-height: 1.6; }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 22px; left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--ink); color: var(--white);
+  padding: 12px 22px; border-radius: 12px;
+  font-size: 14px; font-weight: 600;
+  z-index: 999; transition: .35s;
+  max-width: 90%; text-align: center;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.err  { background: var(--red); }
+
+@media (max-width: 560px) {
+  nav { padding: 0 14px; }
+  .wrap { padding: 86px 14px 60px; }
+  .frow2 { grid-template-columns: 1fr; }
+  .card { padding: 20px 16px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">
+    <img src="logo.jpg" alt="GhostSend" style="width:36px;height:36px;object-fit:contain;border-radius:8px;" onerror="this.style.display='none'">
+    GhostSend
+  </a>
+  <a class="nav-back" href="index.html">← Retour</a>
+</nav>
+
+<div class="wrap">
+
+  <div class="page-eyebrow">🛵 Espace livreur</div>
+  <h1 class="page-title">Vérification d'identité</h1>
+  <p class="page-sub">
+    Obligatoire une seule fois. Dès validation par notre équipe, tu pourras récupérer et livrer des missions sur GhostSend.
+  </p>
+
+  <!-- STATUS BANNER -->
+  <div class="banner banner-none" id="statusBanner">
+    <div class="banner-icon" id="bannerIcon">⏳</div>
+    <div class="banner-body">
+      <strong id="bannerTitle">Identité non vérifiée</strong>
+      <span id="bannerDesc">Complète le formulaire ci-dessous. Notre équipe examine les dossiers sous 48h ouvrées.</span>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="card" id="formCard">
+    <div class="card-header">
+      <div class="card-title">Informations personnelles</div>
+      <span class="badge badge-todo" id="badge">À faire</span>
+    </div>
+    <div class="card-sub">
+      Ton prénom, nom, date de naissance, téléphone et pièce d'identité sont stockés de façon sécurisée sur nos serveurs et consultés uniquement par notre équipe.
+    </div>
+
+    <div class="info-box">
+      <div class="info-box-icon">🔒</div>
+      <p><strong>Confidentialité :</strong> tes données ne sont jamais partagées avec d'autres utilisateurs. Seul ton statut de vérification (en cours / validé) est visible dans l'appli.</p>
+    </div>
+
+    <div class="frow2">
+      <div class="fg">
+        <label class="fl">Prénom légal</label>
+        <input type="text" class="fi" id="cr-first" placeholder="Théo" autocomplete="given-name">
+      </div>
+      <div class="fg">
+        <label class="fl">Nom légal</label>
+        <input type="text" class="fi" id="cr-last" placeholder="Martin" autocomplete="family-name">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">Date de naissance</label>
+      <input type="date" class="fi" id="cr-birth" autocomplete="bday">
+      <div class="ferr" id="err-birth"></div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">Numéro de téléphone</label>
+      <input type="tel" class="fi" id="cr-phone" placeholder="06 12 34 56 78" autocomplete="tel">
+      <div class="ferr" id="err-phone"></div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">Pièce d'identité <span class="opt">(carte d'identité, passeport ou titre de séjour)</span></label>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('cr-doc').click()">
+        <input type="file" id="cr-doc" accept="image/*,.pdf" style="display:none;" onchange="handleIdFile(event)">
+        <div id="uploadEmpty">
+          <div class="uz-icon">📄</div>
+          <div class="uz-label">Clique pour ajouter un fichier</div>
+          <div class="uz-sub">JPG, PNG ou PDF — 10 Mo max</div>
+        </div>
+        <div id="uploadFilled" style="display:none;">
+          <div class="upload-done-row">
+            <span>✓</span>
+            <span id="docFileName"></span>
+          </div>
+        </div>
+      </div>
+      <div class="ferr" id="err-doc"></div>
+    </div>
+
+    <button class="btn btn-primary" id="btnSubmit" onclick="submitVerification()">
+      Envoyer mon dossier
+    </button>
+  </div>
+
+  <!-- PENDING / VERIFIED state -->
+  <div class="verified-state" id="verifiedState">
+    <div class="vs-icon" id="vsIcon">🔎</div>
+    <h2 id="vsTitle">Dossier reçu</h2>
+    <p id="vsDesc">Notre équipe examine tes informations sous 48h ouvrées. Tu recevras une notification dès validation.</p>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ FIREBASE ══ -->
+<script type="module">
+import { initializeApp }     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain:        "ghostly-fbe01.firebaseapp.com",
+  databaseURL:       "https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "ghostly-fbe01",
+  storageBucket:     "ghostly-fbe01.firebasestorage.app",
+  messagingSenderId: "290927219079",
+  appId:             "1:290927219079:web:d7cd006945d9fe84a74322"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+let CU       = null;
+let docFile  = null;
+
+/* ── Auth ── */
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    CU = user;
+    loadStatus(user.uid);
+  }
+});
+
+/* ── Charger le statut existant ── */
+async function loadStatus(uid) {
+  try {
+    const snap = await get(ref(db, `users/${uid}/courierVerification`));
+    const v    = snap.val() || {};
+    applyStatus(v.status || 'none');
+  } catch (e) {
+    console.warn('Lecture statut :', e.message);
+  }
+}
+
+/* ── Affichage selon le statut ── */
+function applyStatus(status) {
+  const banner = document.getElementById('statusBanner');
+  const icon   = document.getElementById('bannerIcon');
+  const title  = document.getElementById('bannerTitle');
+  const desc   = document.getElementById('bannerDesc');
+  const badge  = document.getElementById('badge');
+
+  if (status === 'verified') {
+    banner.className  = 'banner banner-verified';
+    icon.textContent  = '✅';
+    title.textContent = 'Identité vérifiée';
+    desc.textContent  = 'Tu peux désormais récupérer et livrer des missions GhostSend.';
+    badge.textContent = '✓ Vérifié';
+    badge.className   = 'badge badge-verified';
+    showVerifiedState();
+  } else {
+    banner.className  = 'banner banner-none';
+    icon.textContent  = '⏳';
+    title.textContent = 'Identité non vérifiée';
+    desc.textContent  = 'Complète le formulaire ci-dessous pour activer ton accès livreur.';
+    badge.textContent = 'À faire';
+    badge.className   = 'badge badge-todo';
+  }
+}
+
+function showVerifiedState() {
+  document.getElementById('formCard').style.display   = 'none';
+  document.getElementById('verifiedState').style.display = 'block';
+  document.getElementById('vsIcon').textContent  = '✅';
+  document.getElementById('vsTitle').textContent = 'Identité validée';
+  document.getElementById('vsDesc').textContent  = 'Tu peux désormais récupérer et livrer des missions GhostSend.';
+}
+
+/* ── Gestion du fichier ── */
+window.handleIdFile = (e) => {
+  const file = e.target.files[0];
+  const err  = document.getElementById('err-doc');
+  err.style.display = 'none';
+  if (!file) return;
+
+  if (file.size > 10 * 1024 * 1024) {
+    err.textContent = 'Fichier trop volumineux (max 10 Mo).';
+    err.style.display = 'block'; return;
+  }
+  const accepted = ['image/jpeg','image/png','image/webp','application/pdf'];
+  if (!accepted.includes(file.type)) {
+    err.textContent = 'Format non accepté (JPG, PNG ou PDF).';
+    err.style.display = 'block'; return;
+  }
+
+  docFile = file;
+  document.getElementById('uploadEmpty').style.display  = 'none';
+  document.getElementById('uploadFilled').style.display = 'block';
+  document.getElementById('docFileName').textContent    = file.name;
+  document.getElementById('uploadZone').classList.add('has-file');
+};
+
+/* ── Soumission ── */
+window.submitVerification = async () => {
+
+  const first = document.getElementById('cr-first').value.trim();
+  const last  = document.getElementById('cr-last').value.trim();
+  const birth = document.getElementById('cr-birth').value;
+  const phone = document.getElementById('cr-phone').value.trim();
+
+  /* Réinitialiser erreurs */
+  ['err-birth','err-phone','err-doc'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  let valid = true;
+
+  if (!first || !last) {
+    showToast('Indique ton prénom et ton nom.', true); valid = false;
+  }
+  if (!birth) {
+    document.getElementById('err-birth').textContent = 'Indique ta date de naissance.';
+    document.getElementById('err-birth').style.display = 'block'; valid = false;
+  } else {
+    const age = (Date.now() - new Date(birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    if (age < 18) {
+      document.getElementById('err-birth').textContent = 'Tu dois avoir au moins 18 ans.';
+      document.getElementById('err-birth').style.display = 'block'; valid = false;
+    }
+  }
+  const cleanPhone = phone.replace(/[\s.\-]/g, '');
+  if (!phone || !/^(\+33|0)[0-9]{8,9}$/.test(cleanPhone)) {
+    document.getElementById('err-phone').textContent = 'Numéro de téléphone invalide (format français).';
+    document.getElementById('err-phone').style.display = 'block'; valid = false;
+  }
+  if (!docFile) {
+    document.getElementById('err-doc').textContent = 'Ajoute une pièce d\'identité.';
+    document.getElementById('err-doc').style.display = 'block'; valid = false;
+  }
+
+  if (!valid) return;
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="spinner"></span> Envoi en cours…';
+
+  try {
+    /* ── 1. Convertir la pièce d'identité en base64 ── */
+    const idDocBase64 = await fileToBase64(docFile);
+
+    /* Chemin d'écriture : sous users/{uid} si connecté, sinon courier_applications/{clé aléatoire} */
+    const dbPath = CU
+      ? `users/${CU.uid}/courierVerification`
+      : `courier_applications/${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    await update(ref(db, dbPath), {
+      status: 'verified',
+      identity: {
+        first,
+        last,
+        birth,
+        phone,
+        submittedAt: Date.now()
+      },
+      idDoc: {
+        base64:   idDocBase64,        /* pièce d'identité encodée base64 */
+        fileName: docFile.name,
+        mimeType: docFile.type,
+        sizeBytes: docFile.size
+      },
+      submittedAt: Date.now(),
+      uid:   CU?.uid  || null,
+      email: CU?.email || null
+    });
+
+    applyStatus('verified');
+    showToast('Identité vérifiée ✓');
+    btn.textContent = 'Identité vérifiée ✓';
+
+  } catch (e) {
+    console.error('Erreur soumission :', e);
+    showToast('Erreur lors de l\'envoi. Vérifie ta connexion et réessaie.', true);
+    btn.disabled    = false;
+    btn.textContent = 'Envoyer mon dossier';
+  }
+};
+
+/* Convertit un File en base64 */
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ── Toast ── */
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className = 'toast', 3500);
+}
+</script>
+</body>
+</html>
