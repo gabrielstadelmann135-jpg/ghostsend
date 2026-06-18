@@ -2595,6 +2595,22 @@ if (_navAuth) {
 }
 </script>
 
+
+  <script type="module">
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const auth = getAuth();
+const db   = getDatabase();
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  const snap = await get(ref(db, `users/${user.uid}/verification/status`));
+  if (snap.val() !== 'verified') {
+    await update(ref(db, `users/${user.uid}/verification`), { status: 'verified' });
+  }
+});
+</script>
   
 </body>
 </html>
