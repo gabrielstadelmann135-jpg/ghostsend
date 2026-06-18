@@ -2410,6 +2410,191 @@ z-index:9999;
 </div>
 
 
+  <script>
+// ══════════════════════════════════════════
+// VÉRIFICATIONS PARTENAIRE & VENDEUR
+// ══════════════════════════════════════════
+
+// On attend que Firebase soit prêt
+const _verifInterval = setInterval(() => {
+  if (typeof firebase !== 'undefined' || window._ghostVerifLoaded) return;
+}, 100);
+
+// Patch acceptMission avec vérif courierVerification
+const _origAcceptMission = window.acceptMission;
+window.acceptMission = async (missionId) => {
+  if (!window.CU) { window.openAuth('login'); return; }
+
+  try {
+    const { getDatabase, ref, get, update } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+    const db2 = getDatabase();
+    const verifSnap = await get(ref(db2, `users/${window.CU.uid}/courierVerification`));
+    const verifStatus = verifSnap.val()?.status;
+
+    if (verifStatus !== 'verified') {
+      const msgs = {
+        pending:  '🔎 Ton dossier est en cours de vérification (48h ouvrées).',
+        rejected: '⚠️ Ton document a été refusé. Renvoie une pièce d\'identité lisible.',
+        none:     '🔒 Tu dois vérifier ton identité avant d\'accepter une mission.'
+      };
+      window.showToast(msgs[verifStatus] || msgs.none);
+      setTimeout(() => window.location.href = 'verification.html', 1400);
+      return;
+    }
+
+    await update(ref(db2, `all_missions/${missionId}`), {
+      collectorUid:  window.CU.uid,
+      collectorName: window.CU.displayName,
+      status:        'accepted',
+      acceptedAt:    Date.now()
+    });
+    window.showToast('✅ Mission acceptée !');
+
+  } catch(e) {
+    console.error('acceptMission:', e);
+    window.showToast('❌ Erreur. Réessaie.', true);
+  }
+};
+
+// Bannière partenaire (courierVerification)
+async function _injectCourierBanner() {
+  if (!window.CU) return;
+  try {
+    const { getDatabase, ref, get } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+    const db2 = getDatabase();
+    const snap = await get(ref(db2, `users/${window.CU.uid}/courierVerification`));
+    const status = snap.val()?.status;
+    if (status === 'verified') return;
+
+    const existing = document.getElementById('courierAlert');
+    if (existing) return;
+
+    const dashHeader = document.querySelector('#page-partenaire-dash .dash-header');
+    if (!dashHeader) return;
+
+    const msgs = {
+      none:     '🔒 Identité non vérifiée — tu ne peux pas encore accepter de missions.',
+      pending:  '🔎 Vérification en cours — réponse sous 48h ouvrées.',
+      rejected: '⚠️ Document refusé — renvoie une pièce d\'identité lisible.'
+    };
+
+    const banner = document.createElement('div');
+    banner.id = 'courierAlert';
+    banner.style.cssText = `
+      background:#fef2f2;
+      border:1.5px solid #fca5a5;
+      border-radius:18px;
+      padding:16px 20px;
+      margin-bottom:20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:12px;
+    `;
+    banner.innerHTML = `
+      <div>
+        <div style="font-weight:700;font-size:15px;">${msgs[status] || msgs.none}</div>
+        <div style="font-size:13px;color:#555;margin-top:3px;">Complète la vérification pour débloquer les missions.</div>
+      </div>
+      <a href="verification.html" style="display:inline-flex;align-items:center;padding:8px 16px;background:#0d0d0d;color:white;border-radius:12px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;">→ Me vérifier</a>
+    `;
+    dashHeader.insertAdjacentElement('afterend', banner);
+  } catch(e) {
+    console.error('_injectCourierBanner:', e);
+  }
+}
+
+// Bannière vendeur (verification)
+async function _injectVendeurBanner() {
+  if (!window.CU) return;
+  try {
+    const { getDatabase, ref, get } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+    const db2 = getDatabase();
+    const snap = await get(ref(db2, `users/${window.CU.uid}/verification`));
+    const status = snap.val()?.status;
+    if (status === 'verified') return;
+
+    const existing = document.getElementById('verifAlert');
+    if (existing) return;
+
+    const dashHeader = document.querySelector('#page-dashboard .dash-header');
+    if (!dashHeader) return;
+
+    const msgs = {
+      none:     '🔒 Compte non vérifié — tu ne peux pas encore envoyer de colis.',
+      pending:  '🔎 Vérification en cours — réponse sous 48h ouvrées.',
+      rejected: '⚠️ Dossier refusé — renvoie tes documents.'
+    };
+
+    const banner = document.createElement('div');
+    banner.id = 'verifAlert';
+    banner.style.cssText = `
+      background:#fef2f2;
+      border:1.5px solid #fca5a5;
+      border-radius:18px;
+      padding:16px 20px;
+      margin-bottom:20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:12px;
+    `;
+    banner.innerHTML = `
+      <div>
+        <div style="font-weight:700;font-size:15px;">${msgs[status] || msgs.none}</div>
+        <div style="font-size:13px;color:#555;margin-top:3px;">Complète la vérification pour débloquer l'envoi de colis.</div>
+      </div>
+      <a href="verification.html" style="display:inline-flex;align-items:center;padding:8px 16px;background:#0d0d0d;color:white;border-radius:12px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;">→ Me vérifier</a>
+    `;
+    dashHeader.insertAdjacentElement('afterend', banner);
+  } catch(e) {
+    console.error('_injectVendeurBanner:', e);
+  }
+}
+
+// Patch openNewShipment avec vérif verification
+const _origOpenNewShipment = window.openNewShipment;
+window.openNewShipment = async () => {
+  if (!window.CU) { window.openAuth('login'); return; }
+  try {
+    const { getDatabase, ref, get } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+    const db2 = getDatabase();
+    const snap = await get(ref(db2, `users/${window.CU.uid}/verification`));
+    const status = snap.val()?.status;
+    if (status !== 'verified') {
+      const msgs = {
+        pending:  '🔎 Vérification en cours — patiente encore un peu.',
+        rejected: '⚠️ Dossier refusé — renvoie tes documents.',
+        none:     '🔒 Vérifie ton compte avant d\'envoyer un colis.'
+      };
+      window.showToast(msgs[status] || msgs.none);
+      setTimeout(() => window.location.href = 'verification.html', 1400);
+      return;
+    }
+  } catch(e) { console.error(e); }
+
+  document.getElementById('shipSuggestion').style.display = 'none';
+  document.getElementById('shipPrice').style.display = 'none';
+  document.getElementById('shipmentModal').classList.add('open');
+};
+
+// Déclenchement automatique quand l'utilisateur est connecté
+// On surveille CU via un MutationObserver sur le navAuth
+const _navAuth = document.getElementById('navAuth');
+if (_navAuth) {
+  new MutationObserver(() => {
+    if (_navAuth.style.display !== 'none') {
+      setTimeout(() => {
+        _injectCourierBanner();
+        _injectVendeurBanner();
+      }, 1500); // laisse le temps à Firebase de charger CU
+    }
+  }).observe(_navAuth, { attributes: true, attributeFilter: ['style'] });
+}
+</script>
+
   
 </body>
 </html>
