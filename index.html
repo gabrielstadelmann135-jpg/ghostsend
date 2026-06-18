@@ -2640,7 +2640,35 @@ window.acceptMission = async (missionId) => {
 };
 </script>
 
+<script type="module">
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+const db2  = getDatabase();
+const auth = getAuth();
+
+window.acceptMission = async (missionId) => {
+  const user = auth.currentUser;
+  if (!user) { window.openAuth('login'); return; }
+
+  const snap   = await get(ref(db2, `users/${user.uid}/courierVerification/status`));
+  const status = snap.val();
+
+  if (status !== 'verified') {
+    window.showToast('🔒 Vérifie ton identité livreur avant d\'accepter une mission.');
+    setTimeout(() => window.location.href = 'verification-livreur.html', 1400);
+    return;
+  }
+
+  await update(ref(db2, `all_missions/${missionId}`), {
+    collectorUid:  user.uid,
+    collectorName: user.displayName,
+    status:        'accepted',
+    acceptedAt:    Date.now()
+  });
+  window.showToast('✅ Mission acceptée !');
+};
+</script>
   
 </body>
 </html>
