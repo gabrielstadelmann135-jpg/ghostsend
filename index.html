@@ -2626,7 +2626,7 @@ window.acceptMission = async (missionId) => {
 
   if (status !== 'verified') {
     window.showToast('🔒 Vérifie ton identité livreur avant d\'accepter une mission.');
-    setTimeout(() => window.location.href = 'verification-livreur.html', 1400);
+    setTimeout(() => window.location.href = 'verification.html', 1400);
     return;
   }
 
