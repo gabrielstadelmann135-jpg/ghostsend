@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostSend — Réception colis</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #111; --white: #fff;
+  --mist: #f5f5f3; --line: #e3e3e0; --sub: #888;
+  --green: #16a34a; --green-bg: #f0fdf4; --green-line: #bbf7d0; --green-dark: #14532d;
+  --orange: #d97706; --orange-bg: #fffbeb; --orange-line: #fde68a;
+  --red: #dc2626; --red-bg: #fef2f2; --red-line: #fca5a5;
+  --blue: #2563eb; --blue-bg: #eff6ff; --blue-line: #bfdbfe;
+  --r: 16px; --r-lg: 24px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--mist); color: var(--ink); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+h1,h2,h3 { font-family: 'Fredoka', sans-serif; }
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,.96); backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid var(--line);
+  height: 62px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+}
+.nav-brand { font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; color:var(--ink); text-decoration:none; display:flex; align-items:center; gap:8px; }
+.nav-back { font-size:13px; font-weight:700; color:var(--sub); text-decoration:none; padding:7px 13px; border-radius:10px; transition:.2s; }
+.nav-back:hover { background:var(--mist); color:var(--ink); }
+
+/* LAYOUT */
+.wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 70px; }
+
+/* STATS */
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 26px; }
+.stat { background: var(--white); border: 1.5px solid var(--line); border-radius: var(--r); padding: 16px; text-align: center; }
+.stat-val { font-family:'Fredoka',sans-serif; font-size:28px; font-weight:700; }
+.stat-label { font-size:11px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
+
+/* TABS */
+.tabs { display:flex; background:var(--white); border:1.5px solid var(--line); border-radius:var(--r); padding:4px; gap:4px; margin-bottom:22px; }
+.tab-btn { flex:1; padding:10px 8px; border:none; background:none; cursor:pointer; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; border-radius:calc(var(--r) - 2px); transition:.2s; color:var(--sub); display:flex; align-items:center; justify-content:center; gap:6px; }
+.tab-btn.active { background:var(--ink); color:var(--white); }
+.tab-content { display:none; }
+.tab-content.active { display:block; animation:fadeIn .2s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+/* CARD */
+.card { background:var(--white); border:1.5px solid var(--line); border-radius:var(--r-lg); padding:24px; margin-bottom:16px; }
+.card-title { font-family:'Fredoka',sans-serif; font-size:19px; font-weight:700; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+
+/* COLIS CARD */
+.colis-card { background:var(--white); border:2px solid var(--line); border-radius:var(--r); padding:20px; margin-bottom:12px; transition:.2s; }
+.colis-card.needs-rdv { border-color:var(--orange); background:var(--orange-bg); }
+.colis-card.has-rdv   { border-color:var(--blue);   background:var(--blue-bg); }
+.colis-card.done      { opacity:.55; }
+.colis-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.colis-id   { font-family:'Fredoka',sans-serif; font-size:19px; font-weight:700; }
+.colis-meta { font-size:13px; color:var(--sub); margin-top:3px; line-height:1.5; }
+
+/* PAYMENT BOX */
+.payment-box { background:var(--ink); color:var(--white); border-radius:var(--r); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.payment-label { font-size:13px; opacity:.6; }
+.payment-amount { font-family:'Fredoka',sans-serif; font-size:28px; font-weight:700; }
+.payment-method { font-size:11px; background:rgba(255,255,255,.15); padding:3px 10px; border-radius:100px; margin-top:4px; display:inline-block; }
+
+/* SECURITY PIN */
+.pin-wrap { display:flex; gap:10px; justify-content:center; margin:16px 0; }
+.pin-digit { width:52px; height:64px; border:2px solid var(--line); border-radius:12px; background:var(--mist); display:flex; align-items:center; justify-content:center; font-family:'Fredoka',sans-serif; font-size:30px; font-weight:700; transition:.2s; }
+.pin-digit.filled { background:var(--ink); color:var(--white); border-color:var(--ink); }
+.pin-digit.error  { background:var(--red-bg); border-color:var(--red); color:var(--red); animation:shake .3s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+/* PINPAD */
+.pinpad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:260px; margin:0 auto; }
+.pin-key { padding:16px; border:2px solid var(--line); border-radius:12px; background:var(--white); font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; cursor:pointer; transition:.15s; text-align:center; user-select:none; }
+.pin-key:hover  { background:var(--mist); border-color:var(--ink); }
+.pin-key:active { background:var(--ink); color:var(--white); transform:scale(.95); }
+.pin-key.del    { font-size:18px; color:var(--sub); }
+
+/* BADGE */
+.badge { display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:100px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+.b-wait   { background:var(--orange-bg); color:var(--orange); }
+.b-rdv    { background:var(--blue-bg);   color:var(--blue); }
+.b-ok     { background:var(--green-bg);  color:var(--green-dark); }
+.b-alert  { background:var(--red-bg);    color:var(--red); }
+
+/* SCANNER */
+.scanner-box { position:relative; border-radius:var(--r); overflow:hidden; background:#0a0a0a; aspect-ratio:1; max-width:360px; margin:0 auto; width:100%; }
+#video { width:100%; height:100%; object-fit:cover; display:block; }
+.scan-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.scan-frame { width:180px; height:180px; position:relative; }
+.sf-tl,.sf-tr,.sf-bl,.sf-br { position:absolute; width:28px; height:28px; }
+.sf-tl { top:0;left:0;    border-top:3px solid white; border-left:3px solid white;  border-radius:4px 0 0 0; }
+.sf-tr { top:0;right:0;   border-top:3px solid white; border-right:3px solid white; border-radius:0 4px 0 0; }
+.sf-bl { bottom:0;left:0; border-bottom:3px solid white; border-left:3px solid white;  border-radius:0 0 0 4px; }
+.sf-br { bottom:0;right:0;border-bottom:3px solid white; border-right:3px solid white; border-radius:0 0 4px 0; }
+.scan-line { position:absolute; left:0;right:0; height:2px; background:linear-gradient(90deg,transparent,#fff 30%,#fff 70%,transparent); animation:scanLine 2s ease-in-out infinite; }
+@keyframes scanLine { 0%,100%{top:10%;opacity:.8} 50%{top:90%;opacity:1} }
+.scan-status { text-align:center; padding:13px; font-size:14px; font-weight:700; border-radius:var(--r); margin-top:12px; }
+.ss-idle     { background:var(--mist);    color:var(--sub); }
+.ss-scanning { background:var(--blue-bg); color:var(--blue); }
+.ss-ok       { background:var(--green-bg);color:var(--green-dark); }
+.ss-err      { background:var(--red-bg);  color:var(--red); }
+
+/* SIGNALEMENT */
+.signal-options { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
+.signal-opt { padding:14px; border:2px solid var(--line); border-radius:var(--r); cursor:pointer; text-align:center; font-size:13px; font-weight:700; transition:.2s; }
+.signal-opt:hover { border-color:var(--ink); }
+.signal-opt.selected { border-color:var(--red); background:var(--red-bg); color:var(--red); }
+.signal-opt .so-icon { font-size:24px; display:block; margin-bottom:5px; }
+
+/* FORM */
+.fg { margin-bottom:14px; }
+.fl { display:block; font-size:13px; font-weight:700; margin-bottom:5px; }
+.fi { width:100%; padding:11px 14px; border:2px solid var(--line); border-radius:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--ink); outline:none; background:var(--white); transition:.2s; }
+.fi:focus { border-color:var(--ink); }
+.time-slots { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
+.time-slot { background:var(--mist); border:2px solid var(--line); border-radius:10px; padding:10px; text-align:center; cursor:pointer; font-size:13px; font-weight:700; transition:.2s; }
+.time-slot:hover  { border-color:var(--ink); background:var(--white); }
+.time-slot.active { background:var(--ink); color:var(--white); border-color:var(--ink); }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:11px 20px; border-radius:var(--r); font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; cursor:pointer; border:none; transition:.2s; text-decoration:none; }
+.btn-primary  { background:var(--ink);   color:var(--white); }
+.btn-primary:hover:not(:disabled)  { background:#2a2a2a; transform:translateY(-1px); }
+.btn-green  { background:var(--green);  color:var(--white); }
+.btn-green:hover:not(:disabled)  { background:#15803d; transform:translateY(-1px); }
+.btn-red    { background:var(--red);    color:var(--white); }
+.btn-red:hover    { background:#b91c1c; }
+.btn-outline{ background:var(--white);  color:var(--ink); border:2px solid var(--line); }
+.btn-outline:hover{ border-color:var(--ink); }
+.btn:disabled { opacity:.4; cursor:not-allowed; transform:none !important; }
+.btn-full { width:100%; }
+.btn-sm { padding:8px 14px; font-size:13px; }
+
+/* OVERLAY / MODAL */
+.overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.55); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:20px; }
+.overlay.open { display:flex; }
+.modal { background:var(--white); border-radius:var(--r-lg); padding:32px 28px; max-width:420px; width:100%; position:relative; animation:mIn .3s ease; max-height:90vh; overflow-y:auto; }
+@keyframes mIn { from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none} }
+.modal-x { position:absolute; top:12px; right:12px; background:var(--mist); border:none; cursor:pointer; width:32px; height:32px; border-radius:50%; font-size:16px; display:flex; align-items:center; justify-content:center; }
+.modal-title { font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; margin-bottom:5px; }
+.modal-sub   { font-size:13px; color:var(--sub); margin-bottom:22px; line-height:1.5; }
+
+/* STEP INDICATOR */
+.steps { display:flex; align-items:center; gap:0; margin-bottom:24px; }
+.step-item { flex:1; text-align:center; }
+.step-circle { width:32px; height:32px; border-radius:50%; background:var(--mist); border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; margin:0 auto 4px; transition:.3s; }
+.step-circle.done   { background:var(--ink); border-color:var(--ink); color:var(--white); }
+.step-circle.active { background:var(--white); border-color:var(--ink); color:var(--ink); }
+.step-label { font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.04em; }
+.step-line { flex:1; height:2px; background:var(--line); margin-top:-20px; transition:.3s; }
+.step-line.done { background:var(--ink); }
+
+/* LIVE DOT */
+.live { display:inline-flex; align-items:center; gap:5px; background:var(--green-bg); color:var(--green-dark); font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
+.live-dot { width:5px; height:5px; background:var(--green); border-radius:50%; animation:blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+
+/* EMPTY */
+.empty { text-align:center; padding:44px 20px; }
+.empty-icon  { font-size:40px; margin-bottom:10px; }
+.empty-title { font-family:'Fredoka',sans-serif; font-size:18px; font-weight:700; margin-bottom:5px; }
+.empty-sub   { font-size:13px; color:var(--sub); }
+
+/* SPINNER */
+.spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* TOAST */
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(120px); background:var(--ink); color:var(--white); padding:12px 22px; border-radius:12px; font-size:14px; font-weight:600; z-index:999; transition:.3s; white-space:nowrap; pointer-events:none; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.err  { background:var(--red); }
+
+@media(max-width:640px){
+  .wrap { padding:16px 14px 80px; }
+  .stats { grid-template-columns:repeat(2,1fr); }
+  .time-slots { grid-template-columns:repeat(2,1fr); }
+  .signal-options { grid-template-columns:1fr; }
+  nav { padding:0 14px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">👻 GhostSend</a>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="live"><div class="live-dot"></div>En direct</div>
+    <a class="nav-back" href="index.html">← Retour</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div style="margin-bottom:24px;">
+    <h1 style="font-size:clamp(24px,4vw,34px);font-weight:700;margin-bottom:5px;">📦 Réception de colis</h1>
+    <p style="font-size:14px;color:var(--sub);">Le livreur apporte ton colis, tu paies sur place et confirmes la remise par code de sécurité.</p>
+  </div>
+
+  <div class="stats" id="statsRow">
+    <div class="stat"><div class="stat-val" id="s-att">—</div><div class="stat-label">En attente</div></div>
+    <div class="stat"><div class="stat-val" id="s-rdv">—</div><div class="stat-label">RDV fixés</div></div>
+    <div class="stat"><div class="stat-val" id="s-auj">—</div><div class="stat-label">Attendus auj.</div></div>
+    <div class="stat"><div class="stat-val" id="s-done">—</div><div class="stat-label">Reçus ce mois</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('attente')">📋 En attente</button>
+    <button class="tab-btn" onclick="switchTab('scanner')">📱 Scanner QR</button>
+    <button class="tab-btn" onclick="switchTab('historique')">✅ Historique</button>
+  </div>
+
+  <!-- ─── ATTENTE ─── -->
+  <div class="tab-content active" id="tab-attente">
+    <div class="card">
+      <div class="card-title">📬 Colis à recevoir</div>
+      <div id="colis-list">
+        <div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucun colis en attente</div><div class="empty-sub">Les livraisons apparaîtront ici automatiquement.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SCANNER ─── -->
+  <div class="tab-content" id="tab-scanner">
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-title">📱 Scanner le QR du livreur</div>
+      <div class="scanner-box">
+        <video id="video" autoplay muted playsinline></video>
+        <div class="scan-overlay">
+          <div class="scan-frame">
+            <div class="sf-tl"></div><div class="sf-tr"></div>
+            <div class="sf-bl"></div><div class="sf-br"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+      </div>
+      <div class="scan-status ss-idle" id="scan-status">📷 Appuie sur Démarrer pour activer la caméra</div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button class="btn btn-primary btn-full" id="btnStart" onclick="startScanner()">▶ Démarrer</button>
+        <button class="btn btn-outline btn-full" id="btnStop"  onclick="stopScanner()" style="display:none;">⏹ Arrêter</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⌨️ Code manuel</div>
+      <div class="fg">
+        <label class="fl">Code QR (ex: GS-A1B2C3D4)</label>
+        <div style="display:flex;gap:10px;">
+          <input type="text" class="fi" id="manual-code" placeholder="GS-XXXXXXXX" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')">
+          <button class="btn btn-primary" onclick="processQRCode(document.getElementById('manual-code').value.trim())">Valider</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── HISTORIQUE ─── -->
+  <div class="tab-content" id="tab-historique">
+    <div class="card">
+      <div class="card-title">✅ Colis reçus</div>
+      <div id="historique-list">
+        <div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Aucun historique</div><div class="empty-sub">Les colis confirmés apparaîtront ici.</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ MODAL RDV ═══ -->
+<div class="overlay" id="rdvModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('rdvModal')">✕</button>
+    <div class="modal-title">📅 Fixer un RDV</div>
+    <div class="modal-sub" id="rdv-sub">Choisis quand tu veux recevoir ton colis</div>
+    <div class="fg">
+      <label class="fl">Jour</label>
+      <select class="fi" id="rdv-day">
+        <option value="Aujourd'hui">Aujourd'hui</option>
+        <option value="Demain">Demain</option>
+        <option value="Dans 2 jours">Dans 2 jours</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">Créneau</label>
+      <div class="time-slots" id="rdv-slots"></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Note pour le livreur <span style="color:var(--sub);font-weight:600;">(optionnel)</span></label>
+      <input type="text" class="fi" id="rdv-note" placeholder="Sonner à l'interphone, code portail...">
+    </div>
+    <div style="color:var(--red);font-size:13px;font-weight:700;display:none;margin-bottom:10px;" id="rdv-err"></div>
+    <button class="btn btn-primary btn-full" onclick="confirmRdv()" style="margin-top:6px;">Confirmer le RDV →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL PAIEMENT + SÉCURITÉ ═══ -->
+<div class="overlay" id="payModal">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-x" onclick="closeModal('payModal')">✕</button>
+
+    <!-- Steps -->
+    <div class="steps" id="paySteps">
+      <div class="step-item">
+        <div class="step-circle active" id="sc1">1</div>
+        <div class="step-label">Paiement</div>
+      </div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-item">
+        <div class="step-circle" id="sc2">2</div>
+        <div class="step-label">Code PIN</div>
+      </div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-item">
+        <div class="step-circle" id="sc3">3</div>
+        <div class="step-label">Confirmation</div>
+      </div>
+    </div>
+
+    <!-- STEP 1 : Paiement -->
+    <div id="pay-step1">
+      <div class="modal-title">💳 Paiement au livreur</div>
+      <div class="modal-sub" id="pay-sub">Règle le montant ci-dessous directement au livreur avant de confirmer.</div>
+      <div class="payment-box" id="pay-box">
+        <div>
+          <div class="payment-label">Montant à payer</div>
+          <div class="payment-amount" id="pay-amount">—</div>
+          <span class="payment-method">💵 Espèces au livreur</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;opacity:.5;margin-bottom:4px;">Colis</div>
+          <div style="font-family:'Fredoka',sans-serif;font-size:16px;font-weight:700;" id="pay-code">—</div>
+        </div>
+      </div>
+      <div style="background:var(--orange-bg);border:1.5px solid var(--orange-line);border-radius:var(--r);padding:14px 16px;margin-bottom:18px;font-size:13px;color:#78350f;line-height:1.6;">
+        ⚠️ <strong>Important :</strong> remets l'argent au livreur <strong>avant</strong> de valider. Une fois confirmé, la transaction est définitive.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-green btn-full" onclick="goPayStep(2)">✓ J'ai payé le livreur →</button>
+        <button class="btn btn-outline btn-full" onclick="reportProblem()">⚠️ Signaler un problème</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 : Code PIN -->
+    <div id="pay-step2" style="display:none;">
+      <div class="modal-title">🔐 Code de sécurité</div>
+      <div class="modal-sub">Le livreur t'a communiqué un code à 4 chiffres. Saisis-le pour valider la remise.</div>
+      <div class="pin-wrap" id="pinDisplay">
+        <div class="pin-digit" id="pd0">—</div>
+        <div class="pin-digit" id="pd1">—</div>
+        <div class="pin-digit" id="pd2">—</div>
+        <div class="pin-digit" id="pd3">—</div>
+      </div>
+      <div id="pin-err" style="text-align:center;color:var(--red);font-size:13px;font-weight:700;display:none;margin-bottom:10px;">Code incorrect. Demande au livreur de te le redonner.</div>
+      <div class="pinpad" id="pinpad">
+        <div class="pin-key" onclick="pinPress('1')">1</div>
+        <div class="pin-key" onclick="pinPress('2')">2</div>
+        <div class="pin-key" onclick="pinPress('3')">3</div>
+        <div class="pin-key" onclick="pinPress('4')">4</div>
+        <div class="pin-key" onclick="pinPress('5')">5</div>
+        <div class="pin-key" onclick="pinPress('6')">6</div>
+        <div class="pin-key" onclick="pinPress('7')">7</div>
+        <div class="pin-key" onclick="pinPress('8')">8</div>
+        <div class="pin-key" onclick="pinPress('9')">9</div>
+        <div class="pin-key del" onclick="pinPress('back')">⌫</div>
+        <div class="pin-key" onclick="pinPress('0')">0</div>
+        <div class="pin-key del" onclick="pinPress('clear')">✕</div>
+      </div>
+      <button class="btn btn-outline btn-full" onclick="goPayStep(1)" style="margin-top:14px;">← Retour</button>
+    </div>
+
+    <!-- STEP 3 : Confirmation finale -->
+    <div id="pay-step3" style="display:none;">
+      <div style="text-align:center;padding:10px 0;">
+        <div style="width:70px;height:70px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);">✓</div>
+        <div class="modal-title" style="text-align:center;">Remise confirmée !</div>
+        <p style="font-size:14px;color:var(--sub);margin:8px 0 20px;line-height:1.6;">Le paiement et la remise du colis ont été validés. La commission du livreur est débloquée.</p>
+      </div>
+      <div style="background:var(--mist);border-radius:var(--r);padding:16px;margin-bottom:18px;">
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Récapitulatif</div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding:5px 0;border-bottom:1px solid var(--line);">
+          <span>Colis</span><span id="recap-code">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding:5px 0;border-bottom:1px solid var(--line);">
+          <span>Montant payé</span><span id="recap-amount" style="color:var(--green-dark);">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding:5px 0;">
+          <span>Livreur</span><span id="recap-collector">—</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline btn-full" onclick="reportProblem()">⚠️ Signaler un pb</button>
+        <button class="btn btn-primary btn-full" onclick="closeModal('payModal')">Terminé →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL SIGNALEMENT ═══ -->
+<div class="overlay" id="reportModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('reportModal')">✕</button>
+    <div class="modal-title">🚨 Signaler un problème</div>
+    <div class="modal-sub">Notre équipe sera notifiée immédiatement et te contactera sous 2h.</div>
+    <div class="signal-options" id="signal-opts">
+      <div class="signal-opt" onclick="selectSignal(this,'colis_abime')"><span class="so-icon">📦</span>Colis abîmé</div>
+      <div class="signal-opt" onclick="selectSignal(this,'livreur_absent')"><span class="so-icon">🚶</span>Livreur absent</div>
+      <div class="signal-opt" onclick="selectSignal(this,'montant_incorrect')"><span class="so-icon">💰</span>Montant incorrect</div>
+      <div class="signal-opt" onclick="selectSignal(this,'colis_manquant')"><span class="so-icon">❓</span>Colis manquant</div>
+      <div class="signal-opt" onclick="selectSignal(this,'livreur_suspect')"><span class="so-icon">⚠️</span>Comportement suspect</div>
+      <div class="signal-opt" onclick="selectSignal(this,'autre')"><span class="so-icon">📝</span>Autre problème</div>
+    </div>
+    <div class="fg">
+      <label class="fl">Détails <span style="color:var(--sub);font-weight:600;">(optionnel)</span></label>
+      <textarea class="fi" id="report-detail" rows="3" placeholder="Décris le problème..." style="resize:vertical;"></textarea>
+    </div>
+    <div style="color:var(--red);font-size:13px;font-weight:700;display:none;margin-bottom:10px;" id="report-err"></div>
+    <button class="btn btn-red btn-full" onclick="submitReport()">🚨 Envoyer le signalement</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+@keyframes popIn { from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1} }
+
+<!-- ═══ FIREBASE ═══ -->
+<script type="module">
+import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const cfg = {
+  apiKey:"AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain:"ghostly-fbe01.firebaseapp.com",
+  databaseURL:"https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"ghostly-fbe01",
+  storageBucket:"ghostly-fbe01.firebasestorage.app",
+  messagingSenderId:"290927219079",
+  appId:"1:290927219079:web:d7cd006945d9fe84a74322"
+};
+const app  = initializeApp(cfg);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+let CU = null;
+window._allColis = {};
+window._currentRdvId  = null;
+window._currentPayId  = null;
+window._selectedSlot  = null;
+window._selectedSignal = null;
+window._pinValue = '';
+
+// ── PIN du livreur (généré côté serveur ou stocké sur la mission) ──
+// Format : 4 derniers chiffres du timestamp de création, ou champ dédié
+function getMissionPin(m) {
+  if (m.securityPin) return String(m.securityPin);
+  if (m.createdAt)   return String(m.createdAt).slice(-4);
+  return '0000';
+}
+
+onAuthStateChanged(auth, user => {
+  CU = user;
+  if (user) listenMissions(user.uid);
+});
+
+function listenMissions(uid) {
+  onValue(ref(db, 'all_missions'), snap => {
+    const d = snap.val() || {};
+    window._allColis = {};
+    Object.entries(d).forEach(([id, m]) => {
+      // Afficher les missions destinées à cet utilisateur (receveur)
+      if (!m || m.status === 'received') {
+        if (m) window._allColis[id] = { id, ...m };
+        return;
+      }
+      window._allColis[id] = { id, ...m };
+    });
+    renderAll();
+  });
+}
+
+function renderAll() {
+  const arr = Object.values(window._allColis);
+  const pending  = arr.filter(c => c.status !== 'received' && c.status !== 'collected_confirmed');
+  const received = arr.filter(c => c.status === 'received' || c.status === 'collected_confirmed');
+
+  const today = new Date().toDateString();
+  document.getElementById('s-att').textContent  = pending.filter(c => !c.rdvSlot).length;
+  document.getElementById('s-rdv').textContent  = pending.filter(c => c.rdvSlot).length;
+  document.getElementById('s-auj').textContent  = pending.filter(c => c.rdvSlot && c.rdvSlot.includes("Aujourd")).length;
+  document.getElementById('s-done').textContent = received.length;
+
+  renderList(pending);
+  renderHistory(received);
+}
+
+function renderList(arr) {
+  const el = document.getElementById('colis-list');
+  if (!arr.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucun colis en attente</div><div class="empty-sub">Les livraisons assignées apparaîtront ici.</div></div>';
+    return;
+  }
+  arr.sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+  el.innerHTML = arr.map(c => {
+    const code = 'GS-' + c.id.slice(-8).toUpperCase();
+    const hasRdv = !!c.rdvSlot;
+    const cls = hasRdv ? 'colis-card has-rdv' : 'colis-card needs-rdv';
+    const commission = c.commission ? parseFloat(c.commission).toFixed(2) : '0.80';
+    return `
+    <div class="${cls}">
+      <div class="colis-head">
+        <div>
+          <div class="colis-id">${code}</div>
+          <div class="colis-meta">
+            ${c.carrier || 'Transporteur inconnu'} · ${c.weight || '?'}kg
+            ${c.collectorName ? ' · 🛵 ' + c.collectorName : ''}
+          </div>
+        </div>
+        <span class="badge ${hasRdv ? 'b-rdv' : 'b-wait'}">${hasRdv ? '📅 RDV fixé' : '⏳ En attente'}</span>
+      </div>
+      ${hasRdv ? `<div style="background:rgba(37,99,235,.08);border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:13px;font-weight:700;color:var(--blue);">📅 ${c.rdvSlot}${c.rdvNote ? ' · 📝 ' + c.rdvNote : ''}</div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--mist);border-radius:10px;padding:10px 14px;margin-bottom:12px;">
+        <span style="font-size:13px;color:var(--sub);font-weight:700;">💵 À payer au livreur</span>
+        <span style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;">${commission}€</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${!hasRdv ? `<button class="btn btn-primary btn-sm" onclick="openRdvModal('${c.id}','${code}')">📅 Fixer un RDV</button>` : `<button class="btn btn-outline btn-sm" onclick="openRdvModal('${c.id}','${code}')">✏️ Modifier RDV</button>`}
+        <button class="btn btn-green btn-sm" onclick="openPayModal('${c.id}','${code}')">✅ Valider la remise</button>
+        <button class="btn btn-outline btn-sm" onclick="window._openReport('${c.id}')">⚠️ Signaler</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory(arr) {
+  const el = document.getElementById('historique-list');
+  if (!arr.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Aucun historique</div><div class="empty-sub">Les colis confirmés apparaîtront ici.</div></div>';
+    return;
+  }
+  arr.sort((a,b) => (b.receivedAt||0)-(a.receivedAt||0));
+  el.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;">' + arr.map(c => {
+    const code = 'GS-'+c.id.slice(-8).toUpperCase();
+    const d = c.receivedAt ? new Date(c.receivedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `
+    <div class="colis-card done">
+      <div class="colis-head">
+        <div>
+          <div class="colis-id">${code}</div>
+          <div class="colis-meta">${c.carrier||'—'} · Confirmé le ${d}${c.receptionNote ? ' · 📝 '+c.receptionNote : ''}</div>
+        </div>
+        <span class="badge b-ok">✓ Reçu</span>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ── RDV ──
+window.openRdvModal = (id, code) => {
+  window._currentRdvId = id;
+  window._selectedSlot = null;
+  document.getElementById('rdv-sub').textContent = 'Colis : ' + code;
+  document.getElementById('rdv-err').style.display = 'none';
+  const slots = ['8h–10h','10h–12h','12h–14h','14h–16h','16h–18h','18h–20h'];
+  document.getElementById('rdv-slots').innerHTML = slots.map(s =>
+    `<div class="time-slot" onclick="selectSlot(this,'${s}')">${s}</div>`
+  ).join('');
+  document.getElementById('rdvModal').classList.add('open');
+};
+
+window.selectSlot = (el, slot) => {
+  document.querySelectorAll('#rdv-slots .time-slot').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  window._selectedSlot = slot;
+};
+
+window.confirmRdv = async () => {
+  const err = document.getElementById('rdv-err');
+  if (!window._selectedSlot) { err.textContent='Sélectionne un créneau.'; err.style.display='block'; return; }
+  const day  = document.getElementById('rdv-day').value;
+  const note = document.getElementById('rdv-note').value.trim();
+  const slot = day + ' ' + window._selectedSlot;
+  await update(ref(db, `all_missions/${window._currentRdvId}`), { rdvSlot:slot, rdvNote:note, rdvSetAt:Date.now() });
+  window.closeModal('rdvModal');
+  window.showToast('📅 RDV confirmé : ' + slot);
+};
+
+// ── PAIEMENT & SÉCURITÉ ──
+window.openPayModal = (id, code) => {
+  window._currentPayId = id;
+  window._pinValue = '';
+  const m = window._allColis[id] || {};
+  const amount = m.commission ? parseFloat(m.commission).toFixed(2)+'€' : '0,80€';
+  document.getElementById('pay-amount').textContent   = amount;
+  document.getElementById('pay-code').textContent     = code;
+  document.getElementById('recap-code').textContent   = code;
+  document.getElementById('recap-amount').textContent = amount;
+  document.getElementById('recap-collector').textContent = m.collectorName || 'Livreur GhostSend';
+  goPayStep(1);
+  document.getElementById('payModal').classList.add('open');
+};
+
+window.goPayStep = (step) => {
+  [1,2,3].forEach(i => {
+    document.getElementById('pay-step'+i).style.display = i===step ? 'block' : 'none';
+    const sc = document.getElementById('sc'+i);
+    sc.className = 'step-circle' + (i < step ? ' done' : i===step ? ' active' : '');
+    if (sc.className.includes('done')) sc.textContent = '✓';
+    else sc.textContent = i;
+  });
+  [1,2].forEach(i => {
+    document.getElementById('sl'+i).className = 'step-line' + (i < step ? ' done' : '');
+  });
+  if (step === 2) { window._pinValue = ''; updatePinDisplay(); }
+};
+
+window.pinPress = (key) => {
+  const err = document.getElementById('pin-err');
+  err.style.display = 'none';
+  document.querySelectorAll('.pin-digit').forEach(d => d.classList.remove('error'));
+  if (key === 'back')  { window._pinValue = window._pinValue.slice(0,-1); }
+  else if (key === 'clear') { window._pinValue = ''; }
+  else if (window._pinValue.length < 4) { window._pinValue += key; }
+  updatePinDisplay();
+  if (window._pinValue.length === 4) setTimeout(validatePin, 200);
+};
+
+function updatePinDisplay() {
+  for (let i=0;i<4;i++) {
+    const el = document.getElementById('pd'+i);
+    el.textContent = window._pinValue[i] ? '●' : '—';
+    el.className   = 'pin-digit' + (window._pinValue[i] ? ' filled' : '');
+  }
+}
+
+async function validatePin() {
+  const m = window._allColis[window._currentPayId] || {};
+  const expected = getMissionPin(m);
+  if (window._pinValue === expected) {
+    // PIN correct → confirmer en base
+    await update(ref(db, `all_missions/${window._currentPayId}`), {
+      status: 'received',
+      receivedAt: Date.now(),
+      paymentConfirmedAt: Date.now(),
+      pinValidated: true,
+      receiverUid: CU ? CU.uid : 'anonymous'
+    });
+    goPayStep(3);
+    window.showToast('✅ Remise confirmée !');
+  } else {
+    document.querySelectorAll('.pin-digit').forEach(d => d.classList.add('error'));
+    document.getElementById('pin-err').style.display = 'block';
+    setTimeout(() => { window._pinValue = ''; updatePinDisplay(); }, 1000);
+  }
+}
+
+// ── SIGNALEMENT ──
+window._openReport = (id) => {
+  window._currentPayId = id;
+  window._selectedSignal = null;
+  document.querySelectorAll('.signal-opt').forEach(o => o.classList.remove('selected'));
+  document.getElementById('report-detail').value = '';
+  document.getElementById('report-err').style.display = 'none';
+  document.getElementById('reportModal').classList.add('open');
+};
+
+window.reportProblem = () => {
+  window.closeModal('payModal');
+  window._openReport(window._currentPayId);
+};
+
+window.selectSignal = (el, type) => {
+  document.querySelectorAll('.signal-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  window._selectedSignal = type;
+};
+
+window.submitReport = async () => {
+  const err = document.getElementById('report-err');
+  if (!window._selectedSignal) { err.textContent='Sélectionne un type de problème.'; err.style.display='block'; return; }
+  const detail = document.getElementById('report-detail').value.trim();
+  const m = window._allColis[window._currentPayId] || {};
+  await push(ref(db, 'reports'), {
+    missionId: window._currentPayId,
+    type: window._selectedSignal,
+    detail,
+    collectorName: m.collectorName || null,
+    reportedBy: CU ? CU.uid : 'anonymous',
+    reportedAt: Date.now()
+  });
+  await update(ref(db, `all_missions/${window._currentPayId}`), { hasReport: true, reportedAt: Date.now() });
+  window.closeModal('reportModal');
+  window.showToast('🚨 Signalement envoyé. On te contacte sous 2h.');
+};
+
+// ── QR PROCESSING ──
+window.processQRCode = (code) => {
+  if (!code) { setScanStatus('err','❌ Code vide'); return; }
+  const match = Object.values(window._allColis).find(c => {
+    const gen = 'GS-' + c.id.slice(-8).toUpperCase();
+    return gen === code.toUpperCase() || c.id === code;
+  });
+  if (match) {
+    stopScanner();
+    setScanStatus('ok','✅ Colis trouvé — ' + code);
+    switchTab('attente');
+    setTimeout(() => openPayModal(match.id, code), 500);
+  } else {
+    setScanStatus('err','❌ Code inconnu : ' + code);
+  }
+};
+</script>
+
+<!-- QR SCANNER + UTILS -->
+<script>
+let _scanActive=false, _stream=null, _animFrame=null;
+
+function switchTab(name) {
+  ['attente','scanner','historique'].forEach((n,i) => {
+    document.querySelectorAll('.tab-btn')[i].classList.toggle('active', n===name);
+    document.getElementById('tab-'+n).classList.toggle('active', n===name);
+  });
+  if (name !== 'scanner') stopScanner();
+}
+
+async function startScanner() {
+  try {
+    _stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    const v = document.getElementById('video');
+    v.srcObject = _stream; v.play();
+    _scanActive = true;
+    document.getElementById('btnStart').style.display = 'none';
+    document.getElementById('btnStop').style.display  = 'flex';
+    setScanStatus('scanning','🔍 Scan en cours... Présente le QR code');
+    requestAnimationFrame(scanLoop);
+  } catch { setScanStatus('err','❌ Caméra inaccessible. Utilise la saisie manuelle.'); }
+}
+
+function stopScanner() {
+  _scanActive = false;
+  if (_animFrame) cancelAnimationFrame(_animFrame);
+  if (_stream) { _stream.getTracks().forEach(t=>t.stop()); _stream=null; }
+  const v = document.getElementById('video');
+  if (v) v.srcObject = null;
+  document.getElementById('btnStart').style.display = 'flex';
+  document.getElementById('btnStop').style.display  = 'none';
+  setScanStatus('idle','📷 Appuie sur Démarrer pour activer la caméra');
+}
+
+function scanLoop() {
+  if (!_scanActive) return;
+  const v = document.getElementById('video');
+  if (v && v.readyState === v.HAVE_ENOUGH_DATA && typeof jsQR !== 'undefined') {
+    const c = document.createElement('canvas');
+    c.width=v.videoWidth; c.height=v.videoHeight;
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+    const d = c.getContext('2d').getImageData(0,0,c.width,c.height);
+    const qr = jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
+    if (qr) { processQRCode(qr.data); return; }
+  }
+  _animFrame = requestAnimationFrame(scanLoop);
+}
+
+function setScanStatus(type, msg) {
+  const el = document.getElementById('scan-status');
+  el.className = 'scan-status ss-'+type;
+  el.textContent = msg;
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr?' err':'');
+  setTimeout(() => t.className='toast', 3500);
+}
+
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay').forEach(m=>m.classList.remove('open')); });
+
+window.switchTab=switchTab; window.startScanner=startScanner; window.stopScanner=stopScanner;
+window.closeModal=closeModal; window.showToast=showToast; window.setScanStatus=setScanStatus;
+</script>
+</body>
+</html>
