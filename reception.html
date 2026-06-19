@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostSend — Livraison</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#111;--white:#fff;
+  --mist:#f5f5f3;--line:#e3e3e0;--sub:#888;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-line:#bbf7d0;--green-dark:#14532d;
+  --orange:#d97706;--orange-bg:#fffbeb;--orange-line:#fde68a;
+  --red:#dc2626;--red-bg:#fef2f2;--red-line:#fca5a5;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-line:#bfdbfe;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-line:#ddd6fe;
+  --r:16px;--r-lg:22px
+}
+body{font-family:'Nunito',sans-serif;background:var(--mist);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Fredoka',sans-serif}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(16px);border-bottom:1.5px solid var(--line);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.nav-brand{font-family:'Fredoka',sans-serif;font-size:21px;font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:8px}
+.nav-back{font-size:13px;font-weight:700;color:var(--sub);text-decoration:none;padding:7px 13px;border-radius:10px;transition:.2s}
+.nav-back:hover{background:var(--mist);color:var(--ink)}
+.live{display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);color:var(--green-dark);font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px}
+.live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* WRAP */
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 80px}
+
+/* MODE SWITCHER — le cœur de la page */
+.mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--white);border:2px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:24px}
+.mode-btn{padding:18px 12px;border:none;background:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--sub);display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s;border-right:2px solid var(--line)}
+.mode-btn:last-child{border-right:none}
+.mode-btn.active{background:var(--ink);color:var(--white)}
+.mode-btn .mode-icon{font-size:22px}
+.mode-panel{display:none}
+.mode-panel.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.stat{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r);padding:14px;text-align:center}
+.stat-val{font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700}
+.stat-label{font-size:10px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+/* CARD */
+.card{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:20px;margin-bottom:14px}
+.card-title{font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* MISSION / COLIS CARD */
+.item-card{background:var(--white);border:2px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:10px;transition:.2s}
+.item-card:hover{border-color:#ccc}
+.item-card.urgent{border-color:var(--orange);background:var(--orange-bg)}
+.item-card.ready{border-color:var(--blue);background:var(--blue-bg)}
+.item-card.done{opacity:.5}
+.item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.item-id{font-family:'Fredoka',sans-serif;font-size:17px;font-weight:700}
+.item-meta{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.5}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.b-wait{background:var(--orange-bg);color:var(--orange)}
+.b-ready{background:var(--blue-bg);color:var(--blue)}
+.b-ok{background:var(--green-bg);color:var(--green-dark)}
+.b-purple{background:var(--purple-bg);color:var(--purple)}
+
+/* INFO BOX */
+.info-box{border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:13px;font-weight:700;line-height:1.5}
+.ib-addr{background:var(--mist);color:var(--ink)}
+.ib-earn{background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:space-between}
+.earn-num{font-family:'Fredoka',sans-serif;font-size:24px;font-weight:700}
+.ib-code{background:var(--purple-bg);color:var(--purple);border:1.5px solid var(--purple-line)}
+.ib-pay{background:var(--green-bg);color:var(--green-dark);border:1.5px solid var(--green-line);display:flex;align-items:center;justify-content:space-between}
+.pay-num{font-family:'Fredoka',sans-serif;font-size:24px;font-weight:700}
+
+/* PIN DISPLAY */
+.pin-box{text-align:center;padding:16px;background:var(--green-bg);border:2px solid var(--green-line);border-radius:var(--r);margin-bottom:12px}
+.pin-label{font-size:11px;font-weight:800;color:var(--green-dark);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.pin-digits{font-family:'Fredoka',sans-serif;font-size:44px;font-weight:700;letter-spacing:10px;color:var(--green-dark);cursor:pointer;transition:.2s}
+.pin-digits.hidden{filter:blur(8px)}
+.pin-digits.hidden:hover{filter:blur(4px)}
+.pin-sub{font-size:12px;color:var(--green);margin-top:6px;font-weight:700}
+
+/* PIN INPUT (receveur) */
+.pin-wrap{display:flex;gap:8px;justify-content:center;margin:14px 0}
+.pin-digit{width:48px;height:58px;border:2px solid var(--line);border-radius:12px;background:var(--mist);display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-size:28px;font-weight:700;transition:.2s}
+.pin-digit.filled{background:var(--ink);color:var(--white);border-color:var(--ink)}
+.pin-digit.error{background:var(--red-bg);border-color:var(--red);color:var(--red);animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:240px;margin:0 auto}
+.pkey{padding:14px;border:2px solid var(--line);border-radius:10px;background:var(--white);font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;user-select:none}
+.pkey:hover{background:var(--mist);border-color:var(--ink)}
+.pkey:active{background:var(--ink);color:var(--white);transform:scale(.95)}
+.pkey.del{font-size:16px;color:var(--sub)}
+
+/* CHAT */
+.chat-box{border:1.5px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.chat-header{background:var(--ink);color:white;padding:10px 14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.chat-msgs{padding:12px;max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;background:var(--mist)}
+.msg{max-width:78%}
+.msg.me{align-self:flex-end}
+.msg.them{align-self:flex-start}
+.msg-bubble{padding:8px 12px;border-radius:12px;font-size:13px;font-weight:600;line-height:1.5}
+.msg.them .msg-bubble{background:white;border:1.5px solid var(--line);border-radius:12px 12px 12px 3px}
+.msg.me .msg-bubble{background:var(--ink);color:white;border-radius:12px 12px 3px 12px}
+.msg-time{font-size:10px;color:var(--sub);margin-top:2px;font-weight:700}
+.msg.me .msg-time{text-align:right}
+.chat-in{display:flex;gap:8px;padding:8px;border-top:1.5px solid var(--line);background:white}
+.chat-fi{flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;outline:none}
+.chat-fi:focus{border-color:var(--ink)}
+
+/* SCANNER */
+.scan-box{position:relative;border-radius:var(--r);overflow:hidden;background:#0a0a0a;aspect-ratio:1;max-width:320px;margin:0 auto}
+#video{width:100%;height:100%;object-fit:cover;display:block}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-frame{width:160px;height:160px;position:relative}
+.sf-tl,.sf-tr,.sf-bl,.sf-br{position:absolute;width:24px;height:24px}
+.sf-tl{top:0;left:0;border-top:3px solid white;border-left:3px solid white;border-radius:3px 0 0 0}
+.sf-tr{top:0;right:0;border-top:3px solid white;border-right:3px solid white;border-radius:0 3px 0 0}
+.sf-bl{bottom:0;left:0;border-bottom:3px solid white;border-left:3px solid white;border-radius:0 0 0 3px}
+.sf-br{bottom:0;right:0;border-bottom:3px solid white;border-right:3px solid white;border-radius:0 0 3px 0}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#fff 30%,#fff 70%,transparent);animation:scanLine 2s ease-in-out infinite}
+@keyframes scanLine{0%,100%{top:10%}50%{top:90%}}
+.scan-status{text-align:center;padding:10px;font-size:13px;font-weight:700;border-radius:var(--r);margin-top:10px}
+.ss-idle{background:var(--mist);color:var(--sub)}
+.ss-scan{background:var(--blue-bg);color:var(--blue)}
+.ss-ok{background:var(--green-bg);color:var(--green-dark)}
+.ss-err{background:var(--red-bg);color:var(--red)}
+
+/* CARRIER PILL */
+.carrier{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:8px;font-size:11px;font-weight:800;margin-bottom:10px;border:1.5px solid}
+.c-mr{background:#FFF3E0;color:#E65100;border-color:#FFB74D}
+.c-lp{background:#E3F2FD;color:#1565C0;border-color:#90CAF9}
+.c-cp{background:#F3E5F5;color:#6A1B9A;border-color:#CE93D8}
+.c-other{background:var(--mist);color:var(--sub);border-color:var(--line)}
+
+/* FORM */
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:12px;font-weight:700;margin-bottom:4px}
+.fi{width:100%;padding:10px 13px;border:2px solid var(--line);border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--ink);outline:none;background:var(--white);transition:.2s}
+.fi:focus{border-color:var(--ink)}
+
+/* BTN */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:var(--r);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:.2s;text-decoration:none}
+.btn-primary{background:var(--ink);color:var(--white)}
+.btn-primary:hover{background:#2a2a2a;transform:translateY(-1px)}
+.btn-green{background:var(--green);color:var(--white)}
+.btn-green:hover{background:#15803d;transform:translateY(-1px)}
+.btn-purple{background:var(--purple);color:var(--white)}
+.btn-purple:hover{background:#6d28d9;transform:translateY(-1px)}
+.btn-outline{background:var(--white);color:var(--ink);border:2px solid var(--line)}
+.btn-outline:hover{border-color:var(--ink)}
+.btn-red{background:var(--red);color:var(--white)}
+.btn-full{width:100%}
+.btn-sm{padding:8px 13px;font-size:12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* OVERLAY */
+.overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:var(--r-lg);padding:28px 22px;max-width:420px;width:100%;position:relative;animation:mIn .25s ease;max-height:90vh;overflow-y:auto}
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+.modal-x{position:absolute;top:12px;right:12px;background:var(--mist);border:none;cursor:pointer;width:30px;height:30px;border-radius:50%;font-size:15px;display:flex;align-items:center;justify-content:center}
+.modal-title{font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--sub);margin-bottom:18px;line-height:1.5}
+
+/* STEPS */
+.step-bar{display:flex;align-items:center;gap:0;margin-bottom:20px}
+.step-item{flex:1;text-align:center}
+.step-circle{width:30px;height:30px;border-radius:50%;background:var(--mist);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin:0 auto 4px;transition:.3s}
+.step-circle.done{background:var(--ink);border-color:var(--ink);color:white}
+.step-circle.active{background:white;border-color:var(--ink);color:var(--ink)}
+.step-label{font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.04em}
+.step-line{flex:1;height:2px;background:var(--line);margin-top:-19px;transition:.3s}
+.step-line.done{background:var(--ink)}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink);color:white;padding:11px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;transition:.3s;white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+
+/* EMPTY */
+.empty{text-align:center;padding:36px 16px}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.empty-title{font-family:'Fredoka',sans-serif;font-size:17px;font-weight:700;margin-bottom:4px}
+.empty-sub{font-size:12px;color:var(--sub)}
+
+/* CONFIRM CHECK */
+.check-anim{width:64px;height:64px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+@media(max-width:540px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .mode-btn{font-size:13px}
+  .btn-row{flex-direction:column}
+  .btn-row .btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">👻 GhostSend</a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="live"><div class="live-dot"></div>Live</div>
+    <a class="nav-back" href="index.html">← Retour</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div style="margin-bottom:20px;">
+    <h1 style="font-size:clamp(22px,5vw,30px);font-weight:700;margin-bottom:4px;">📦 Livraison</h1>
+    <p style="font-size:13px;color:var(--sub);">Deux rôles, une seule page — livreur ou receveur.</p>
+  </div>
+
+  <!-- ── MODE SWITCH ── -->
+  <div class="mode-switch">
+    <button class="mode-btn active" id="btnLivreur" onclick="switchMode('livreur')">
+      <span class="mode-icon">🛵</span> Je livre
+    </button>
+    <button class="mode-btn" id="btnReceveur" onclick="switchMode('receveur')">
+      <span class="mode-icon">📬</span> Je reçois
+    </button>
+  </div>
+
+  <!-- ══════════ MODE LIVREUR ══════════ -->
+  <div class="mode-panel active" id="panel-livreur">
+
+    <div class="stats" id="livreur-stats">
+      <div class="stat"><div class="stat-val" id="ls-missions">—</div><div class="stat-label">Missions dispo</div></div>
+      <div class="stat"><div class="stat-val" id="ls-today">—</div><div class="stat-label">Aujourd'hui</div></div>
+      <div class="stat"><div class="stat-val" id="ls-done">—</div><div class="stat-label">Livrés</div></div>
+      <div class="stat"><div class="stat-val" id="ls-earn">—</div><div class="stat-label">Gains (€)</div></div>
+    </div>
+
+    <!-- Missions à livrer -->
+    <div class="card">
+      <div class="card-title">📍 Colis à livrer</div>
+      <div id="livreur-list">
+        <div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucune mission</div><div class="empty-sub">Les colis dans ta zone apparaîtront ici.</div></div>
+      </div>
+    </div>
+
+    <!-- Scanner QR vendeur -->
+    <div class="card">
+      <div class="card-title">📱 Scanner QR du vendeur</div>
+      <div class="scan-box">
+        <video id="video" autoplay muted playsinline></video>
+        <div class="scan-overlay">
+          <div class="scan-frame">
+            <div class="sf-tl"></div><div class="sf-tr"></div>
+            <div class="sf-bl"></div><div class="sf-br"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+      </div>
+      <div class="scan-status ss-idle" id="scan-status">📷 Appuie pour démarrer</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-primary btn-full" id="btnStart" onclick="startScanner()">▶ Démarrer</button>
+        <button class="btn btn-outline btn-full" id="btnStop" onclick="stopScanner()" style="display:none;">⏹ Arrêter</button>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <input type="text" class="fi" id="manual-code" placeholder="Saisie manuelle : GS-XXXXXXXX" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')">
+        <button class="btn btn-outline" onclick="processQR(document.getElementById('manual-code').value.trim())">OK</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════ MODE RECEVEUR ══════════ -->
+  <div class="mode-panel" id="panel-receveur">
+
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="rs-att">—</div><div class="stat-label">En attente</div></div>
+      <div class="stat"><div class="stat-val" id="rs-rdv">—</div><div class="stat-label">RDV fixés</div></div>
+      <div class="stat"><div class="stat-val" id="rs-auj">—</div><div class="stat-label">Attendus auj.</div></div>
+      <div class="stat"><div class="stat-val" id="rs-done">—</div><div class="stat-label">Reçus</div></div>
+    </div>
+
+    <!-- Colis en attente -->
+    <div class="card">
+      <div class="card-title">📬 Mes colis</div>
+      <div id="receveur-list">
+        <div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucun colis</div><div class="empty-sub">Les livraisons apparaîtront ici.</div></div>
+      </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="card">
+      <div class="card-title">✅ Reçus</div>
+      <div id="receveur-histo">
+        <div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Aucun historique</div><div class="empty-sub">Les colis confirmés apparaîtront ici.</div></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ═══ MODAL LIVREUR : DÉTAIL MISSION ═══ -->
+<div class="overlay" id="missionModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('missionModal')">✕</button>
+    <div class="modal-title" id="mm-title">Mission</div>
+    <div class="modal-sub" id="mm-sub"></div>
+    <div id="mm-body"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL LIVREUR : CODE RELAY ═══ -->
+<div class="overlay" id="relayModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('relayModal')">✕</button>
+    <div class="modal-title">🔑 Code de retrait</div>
+    <div class="modal-sub" id="relay-sub">Mondial Relay — demande le code au destinataire</div>
+
+    <div style="background:var(--blue-bg);border:1.5px solid var(--blue-line);border-radius:var(--r);padding:14px;margin-bottom:16px;font-size:13px;color:#1e40af;line-height:1.6;">
+      <strong>Comment ça marche :</strong><br>
+      1. Le destinataire a reçu un code de retrait Mondial Relay<br>
+      2. Discute avec lui via le chat ci-dessous<br>
+      3. Entre le code → l'adresse se débloque
+    </div>
+
+    <div class="chat-box">
+      <div class="chat-header">
+        <div style="width:26px;height:26px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;">👤</div>
+        <span id="chat-name">Destinataire</span>
+        <div style="margin-left:auto;font-size:10px;opacity:.6;">En ligne</div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg me">
+          <div class="msg-bubble">Bonjour ! Je suis le livreur GhostSend. Pouvez-vous me donner votre code de retrait Mondial Relay ?</div>
+          <div class="msg-time">À l'instant</div>
+        </div>
+      </div>
+      <div class="chat-in">
+        <input type="text" class="chat-fi" id="chat-input" placeholder="Message..." onkeypress="if(event.key==='Enter')sendMsg()">
+        <button class="btn btn-primary btn-sm" onclick="sendMsg()">→</button>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">Code reçu</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="fi" id="relay-code" placeholder="Ex: 45392" style="font-family:'Fredoka',sans-serif;font-size:18px;letter-spacing:4px;text-align:center;" oninput="this.value=this.value.replace(/[^0-9A-Za-z]/g,'').toUpperCase()">
+        <button class="btn btn-green" onclick="validateRelay()">✓</button>
+      </div>
+      <div style="color:var(--red);font-size:12px;font-weight:700;display:none;margin-top:6px;" id="relay-err">Code invalide.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL LIVREUR : ENVOYER PIN ═══ -->
+<div class="overlay" id="pinLivreurModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('pinLivreurModal')">✕</button>
+    <div class="modal-title">🔐 Code de remise</div>
+    <div class="modal-sub" id="pinl-sub">Montre ce code au destinataire</div>
+
+    <div class="pin-box">
+      <div class="pin-label">PIN de remise</div>
+      <div class="pin-digits hidden" id="pin-show" onclick="revealPin()">●●●●</div>
+      <div class="pin-sub" id="pin-show-sub">👆 Appuie pour révéler</div>
+    </div>
+
+    <div style="background:var(--blue-bg);border:1.5px solid var(--blue-line);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#1e40af;">
+      ℹ️ Le destinataire saisit ce code dans son application pour confirmer la réception.
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-purple btn-full" onclick="sendPinSMS()">📱 Envoyer par SMS</button>
+      <button class="btn btn-primary btn-full" onclick="closeModal('pinLivreurModal')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL RECEVEUR : RDV ═══ -->
+<div class="overlay" id="rdvModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('rdvModal')">✕</button>
+    <div class="modal-title">📅 Fixer un RDV</div>
+    <div class="modal-sub" id="rdv-sub"></div>
+    <div class="fg">
+      <label class="fl">Jour</label>
+      <select class="fi" id="rdv-day">
+        <option>Aujourd'hui</option><option>Demain</option><option>Dans 2 jours</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">Créneau</label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px;" id="rdv-slots"></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Note livreur <span style="color:var(--sub);font-weight:600;">(optionnel)</span></label>
+      <input type="text" class="fi" id="rdv-note" placeholder="Code portail, interphone...">
+    </div>
+    <div style="color:var(--red);font-size:12px;font-weight:700;display:none;margin-bottom:8px;" id="rdv-err"></div>
+    <button class="btn btn-primary btn-full" onclick="confirmRdv()">Confirmer →</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL RECEVEUR : PAIEMENT + PIN ═══ -->
+<div class="overlay" id="payModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('payModal')">✕</button>
+
+    <div class="step-bar" id="pay-steps">
+      <div class="step-item"><div class="step-circle active" id="sc1">1</div><div class="step-label">Paiement</div></div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-item"><div class="step-circle" id="sc2">2</div><div class="step-label">Code PIN</div></div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-item"><div class="step-circle" id="sc3">3</div><div class="step-label">Confirmé</div></div>
+    </div>
+
+    <!-- Step 1 -->
+    <div id="pay-s1">
+      <div class="modal-title">💳 Payer le livreur</div>
+      <div class="modal-sub" id="pay-sub">Règle le montant avant de valider.</div>
+      <div class="ib-pay info-box" style="margin-bottom:12px;">
+        <div>
+          <div style="font-size:12px;opacity:.7;">Montant à payer</div>
+          <div class="pay-num" id="pay-amount">—</div>
+          <span style="font-size:11px;background:rgba(22,163,74,.2);padding:2px 8px;border-radius:100px;margin-top:4px;display:inline-block;">💵 Espèces au livreur</span>
+        </div>
+        <div style="text-align:right;font-size:12px;opacity:.7;">Colis<br><strong id="pay-code" style="font-family:'Fredoka',sans-serif;font-size:15px;opacity:1;">—</strong></div>
+      </div>
+      <div style="background:var(--orange-bg);border:1.5px solid var(--orange-line);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#78350f;">
+        ⚠️ Remets l'argent <strong>avant</strong> de valider. Transaction définitive.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn btn-green btn-full" onclick="goStep(2)">✓ J'ai payé →</button>
+        <button class="btn btn-outline btn-full" onclick="openReport()">⚠️ Signaler un problème</button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="pay-s2" style="display:none;">
+      <div class="modal-title">🔐 Code de sécurité</div>
+      <div class="modal-sub">Saisis le code à 4 chiffres communiqué par le livreur.</div>
+      <div class="pin-wrap" id="pinDisplay">
+        <div class="pin-digit" id="pd0">—</div>
+        <div class="pin-digit" id="pd1">—</div>
+        <div class="pin-digit" id="pd2">—</div>
+        <div class="pin-digit" id="pd3">—</div>
+      </div>
+      <div style="color:var(--red);font-size:12px;font-weight:700;display:none;text-align:center;margin-bottom:10px;" id="pin-err">Code incorrect. Redemande au livreur.</div>
+      <div class="pinpad" id="pinpad">
+        <div class="pkey" onclick="pinPress('1')">1</div><div class="pkey" onclick="pinPress('2')">2</div><div class="pkey" onclick="pinPress('3')">3</div>
+        <div class="pkey" onclick="pinPress('4')">4</div><div class="pkey" onclick="pinPress('5')">5</div><div class="pkey" onclick="pinPress('6')">6</div>
+        <div class="pkey" onclick="pinPress('7')">7</div><div class="pkey" onclick="pinPress('8')">8</div><div class="pkey" onclick="pinPress('9')">9</div>
+        <div class="pkey del" onclick="pinPress('back')">⌫</div><div class="pkey" onclick="pinPress('0')">0</div><div class="pkey del" onclick="pinPress('clear')">✕</div>
+      </div>
+      <button class="btn btn-outline btn-full" onclick="goStep(1)" style="margin-top:12px;">← Retour</button>
+    </div>
+
+    <!-- Step 3 -->
+    <div id="pay-s3" style="display:none;text-align:center;padding:10px 0;">
+      <div class="check-anim">✓</div>
+      <div class="modal-title">Remise confirmée !</div>
+      <p style="font-size:13px;color:var(--sub);margin:8px 0 18px;line-height:1.6;">Paiement et remise validés. La commission du livreur est débloquée.</p>
+      <div style="background:var(--mist);border-radius:var(--r);padding:14px;margin-bottom:16px;text-align:left;">
+        <div style="font-size:10px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Récap</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:4px 0;border-bottom:1px solid var(--line);"><span>Colis</span><span id="recap-code">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:4px 0;border-bottom:1px solid var(--line);"><span>Payé</span><span id="recap-amount" style="color:var(--green-dark);">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;padding:4px 0;"><span>Livreur</span><span id="recap-collector">—</span></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-full" onclick="openReport()">⚠️ Problème</button>
+        <button class="btn btn-primary btn-full" onclick="closeModal('payModal')">Terminé →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL SIGNALEMENT ═══ -->
+<div class="overlay" id="reportModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('reportModal')">✕</button>
+    <div class="modal-title">🚨 Signaler</div>
+    <div class="modal-sub">L'équipe GhostSend sera notifiée immédiatement.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;" id="report-opts">
+      <div class="report-opt" onclick="selReport(this,'colis_abime')" style="padding:12px;border:2px solid var(--line);border-radius:var(--r);cursor:pointer;text-align:center;font-size:13px;font-weight:700;transition:.2s;">📦<br>Colis abîmé</div>
+      <div class="report-opt" onclick="selReport(this,'livreur_absent')" style="padding:12px;border:2px solid var(--line);border-radius:var(--r);cursor:pointer;text-align:center;font-size:13px;font-weight:700;transition:.2s;">🚶<br>Livreur absent</div>
+      <div class="report-opt" onclick="selReport(this,'montant_incorrect')" style="padding:12px;border:2px solid var(--line);border-radius:var(--r);cursor:pointer;text-align:center;font-size:13px;font-weight:700;transition:.2s;">💰<br>Montant incorrect</div>
+      <div class="report-opt" onclick="selReport(this,'suspect')" style="padding:12px;border:2px solid var(--line);border-radius:var(--r);cursor:pointer;text-align:center;font-size:13px;font-weight:700;transition:.2s;">⚠️<br>Comportement suspect</div>
+    </div>
+    <div class="fg">
+      <label class="fl">Détails <span style="color:var(--sub);">(optionnel)</span></label>
+      <textarea class="fi" id="report-detail" rows="3" placeholder="Décris le problème..." style="resize:vertical;"></textarea>
+    </div>
+    <div style="color:var(--red);font-size:12px;font-weight:700;display:none;margin-bottom:8px;" id="report-err">Sélectionne un type.</div>
+    <button class="btn btn-red btn-full" onclick="submitReport()">🚨 Envoyer</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══ FIREBASE ═══ -->
+<script type="module">
+import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const cfg = {
+  apiKey:"AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain:"ghostly-fbe01.firebaseapp.com",
+  databaseURL:"https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"ghostly-fbe01",
+  storageBucket:"ghostly-fbe01.firebasestorage.app",
+  messagingSenderId:"290927219079",
+  appId:"1:290927219079:web:d7cd006945d9fe84a74322"
+};
+const app  = initializeApp(cfg);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+let CU = null;
+window._missions  = {};
+window._activeMid = null;
+window._pinValue  = '';
+window._curPin    = '';
+window._selReport = null;
+window._selSlot   = null;
+window._curRdvId  = null;
+
+function getPin(m) {
+  if (m.securityPin) return String(m.securityPin).padStart(4,'0');
+  if (m.createdAt)   return String(m.createdAt).slice(-4);
+  return '0000';
+}
+function isRelay(m) {
+  return (m.carrier||'').toLowerCase().includes('mondial') || (m.carrier||'').toLowerCase().includes('relay');
+}
+function carrierCls(c) {
+  const s = (c||'').toLowerCase();
+  if (s.includes('mondial')||s.includes('relay')) return 'c-mr';
+  if (s.includes('poste')||s.includes('colissimo')) return 'c-lp';
+  if (s.includes('chrono')) return 'c-cp';
+  return 'c-other';
+}
+
+onAuthStateChanged(auth, user => {
+  CU = user;
+  window.CU = user;
+  if (user) listenAll(user.uid);
+});
+
+function listenAll(uid) {
+  onValue(ref(db, 'all_missions'), snap => {
+    const d = snap.val() || {};
+    window._missions = {};
+    Object.entries(d).forEach(([id,m]) => { if (m) window._missions[id] = {id,...m}; });
+    renderAll();
+  });
+  // Messages entrants
+  onValue(ref(db, 'messages'), snap => {
+    const msgs = snap.val() || {};
+    Object.entries(msgs).forEach(([id,msg]) => {
+      if (msg.missionId === window._activeMid && msg.from === 'recipient' && !msg._shown) {
+        addChatMsg(msg.text,'them');
+        update(ref(db,`messages/${id}`),{_shown:true});
+      }
+    });
+  });
+}
+
+function renderAll() {
+  const arr = Object.values(window._missions);
+  const active   = arr.filter(m => m.status !== 'received' && m.status !== 'collected_confirmed');
+  const done     = arr.filter(m => m.status === 'received' || m.status === 'collected_confirmed');
+  const dispo    = active.filter(m => !m.collectorUid);
+  const today    = active.filter(m => m.rdvSlot && m.rdvSlot.includes('Aujourd'));
+
+  // Stats livreur
+  document.getElementById('ls-missions').textContent = dispo.length;
+  document.getElementById('ls-today').textContent    = today.length;
+  document.getElementById('ls-done').textContent     = done.length;
+  const gains = done.reduce((s,m) => s + parseFloat(m.commission||0.80), 0);
+  document.getElementById('ls-earn').textContent     = gains.toFixed(2);
+
+  // Stats receveur
+  const rdvSet = active.filter(m => m.rdvSlot);
+  document.getElementById('rs-att').textContent  = active.filter(m=>!m.rdvSlot).length;
+  document.getElementById('rs-rdv').textContent  = rdvSet.length;
+  document.getElementById('rs-auj').textContent  = today.length;
+  document.getElementById('rs-done').textContent = done.length;
+
+  renderLivreur(dispo);
+  renderReceveur(active, done);
+}
+
+// ── LIVREUR ──
+function renderLivreur(arr) {
+  const el = document.getElementById('livreur-list');
+  if (!arr.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucune mission</div><div class="empty-sub">Reviens plus tard !</div></div>'; return; }
+  arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  el.innerHTML = arr.map(m => {
+    const code = 'GS-'+m.id.slice(-8).toUpperCase();
+    const needCode = isRelay(m) && !m.relayCodeValidated;
+    const commission = parseFloat(m.commission||0.80).toFixed(2);
+    return `
+    <div class="item-card ${needCode?'urgent':'ready'}">
+      <div class="item-head">
+        <div>
+          <div class="item-id">${code}</div>
+          <div class="item-meta">${m.weight||'?'}kg · ${m.carrier||'Transporteur'}${m.collectorName?` · 🛵 ${m.collectorName}`:''}</div>
+        </div>
+        <span class="badge ${needCode?'b-wait':'b-ready'}">${needCode?'🔑 Code requis':'✓ Prêt'}</span>
+      </div>
+      <span class="carrier ${carrierCls(m.carrier)}">${(m.carrier||'?').toUpperCase()}</span>
+      ${!needCode && m.deliveryAddress ? `
+      <div class="info-box ib-addr" style="display:flex;align-items:flex-start;gap:10px;">
+        <span style="font-size:18px;">📍</span>
+        <div><div style="font-size:14px;font-weight:700;">${m.deliveryAddress}</div><div style="font-size:12px;color:var(--sub);">${m.deliveryCity||''}</div></div>
+      </div>` : needCode ? `
+      <div class="info-box ib-code" style="font-size:13px;line-height:1.6;">
+        🔐 <strong>Code de retrait requis</strong><br>
+        Contacte le destinataire via le chat pour obtenir son code Mondial Relay.
+      </div>` : ''}
+      <div class="info-box ib-earn">
+        <div><div style="font-size:11px;opacity:.6;">Commission</div><div class="earn-num">+${commission}€</div></div>
+        <div style="font-size:11px;opacity:.5;text-align:right;">À encaisser<br>en main propre</div>
+      </div>
+      <div class="btn-row">
+        ${needCode ? `<button class="btn btn-purple btn-sm" onclick="openRelay('${m.id}','${code}')">🔑 Obtenir code</button>` : `<button class="btn btn-primary btn-sm" onclick="openAddrModal('${m.id}','${code}')">📍 Voir adresse</button>`}
+        <button class="btn btn-green btn-sm" onclick="openPinLivreur('${m.id}','${code}')">🔐 Envoyer PIN</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── RECEVEUR ──
+function renderReceveur(active, done) {
+  const el = document.getElementById('receveur-list');
+  if (!active.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucun colis en attente</div><div class="empty-sub">Les livraisons apparaîtront ici.</div></div>'; }
+  else {
+    active.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    el.innerHTML = active.map(m => {
+      const code = 'GS-'+m.id.slice(-8).toUpperCase();
+      const hasRdv = !!m.rdvSlot;
+      const commission = parseFloat(m.commission||0.80).toFixed(2);
+      return `
+      <div class="item-card ${hasRdv?'ready':'urgent'}">
+        <div class="item-head">
+          <div>
+            <div class="item-id">${code}</div>
+            <div class="item-meta">${m.carrier||'?'} · ${m.weight||'?'}kg${m.collectorName?` · 🛵 ${m.collectorName}`:''}</div>
+          </div>
+          <span class="badge ${hasRdv?'b-ready':'b-wait'}">${hasRdv?'📅 RDV':'⏳ Attente'}</span>
+        </div>
+        ${hasRdv?`<div style="background:rgba(37,99,235,.08);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--blue);">📅 ${m.rdvSlot}${m.rdvNote?` · 📝 ${m.rdvNote}`:''}</div>`:''}
+        <div class="info-box ib-pay">
+          <div><div style="font-size:11px;opacity:.7;">💵 À payer au livreur</div><div class="pay-num">${commission}€</div></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-${hasRdv?'outline':'primary'} btn-sm" onclick="openRdv('${m.id}','${code}')">${hasRdv?'✏️ Modifier RDV':'📅 RDV'}</button>
+          <button class="btn btn-green btn-sm" onclick="openPay('${m.id}','${code}')">✅ Valider remise</button>
+          <button class="btn btn-outline btn-sm" onclick="window._activeMid='${m.id}';openReport()">⚠️</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const hel = document.getElementById('receveur-histo');
+  if (!done.length) { hel.innerHTML='<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Aucun historique</div></div>'; return; }
+  done.sort((a,b)=>(b.receivedAt||0)-(a.receivedAt||0));
+  hel.innerHTML = done.map(m => {
+    const code = 'GS-'+m.id.slice(-8).toUpperCase();
+    const d = m.receivedAt ? new Date(m.receivedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) : '—';
+    return `<div class="item-card done" style="margin-bottom:8px;">
+      <div class="item-head"><div><div class="item-id">${code}</div><div class="item-meta">${m.carrier||'—'} · ${d}</div></div><span class="badge b-ok">✓ Reçu</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── LIVREUR ACTIONS ──
+window.openRelay = (id, code) => {
+  window._activeMid = id;
+  const m = window._missions[id]||{};
+  document.getElementById('relay-sub').textContent = (m.carrier||'Mondial Relay') + ' — ' + code;
+  document.getElementById('chat-name').textContent  = m.recipientName||'Destinataire';
+  document.getElementById('relay-code').value = '';
+  document.getElementById('relay-err').style.display='none';
+  document.getElementById('chat-msgs').innerHTML = `<div class="msg me"><div class="msg-bubble">Bonjour ! Je suis le livreur GhostSend. Pouvez-vous me donner votre code de retrait Mondial Relay ?</div><div class="msg-time">À l'instant</div></div>`;
+  document.getElementById('relayModal').classList.add('open');
+};
+
+window.validateRelay = async () => {
+  const code = document.getElementById('relay-code').value.trim();
+  const err  = document.getElementById('relay-err');
+  if (!code || code.length < 4) { err.style.display='block'; return; }
+  const m = window._missions[window._activeMid]||{};
+  if (m.relayPickupCode && code !== String(m.relayPickupCode)) { err.style.display='block'; return; }
+  await update(ref(db,`all_missions/${window._activeMid}`),{relayCodeValidated:true,relayCodeAt:Date.now()});
+  closeModal('relayModal');
+  toast('✅ Code validé ! Adresse débloquée.','ok');
+};
+
+window.openAddrModal = (id, code) => {
+  const m = window._missions[id]||{};
+  const addr = m.deliveryAddress||'Adresse non renseignée';
+  const city = m.deliveryCity||'';
+  window._activeMid = id;
+  toast(`📍 ${addr}${city?', '+city:''}`, 'ok');
+  if (navigator.clipboard) navigator.clipboard.writeText(addr+(city?', '+city:''));
+};
+
+window.openPinLivreur = (id, code) => {
+  window._activeMid = id;
+  const m = window._missions[id]||{};
+  window._curPin = getPin(m);
+  document.getElementById('pinl-sub').textContent = 'Colis '+code;
+  document.getElementById('pin-show').textContent = '●●●●';
+  document.getElementById('pin-show').className = 'pin-digits hidden';
+  document.getElementById('pin-show-sub').textContent = '👆 Appuie pour révéler';
+  document.getElementById('pinLivreurModal').classList.add('open');
+};
+
+window.revealPin = () => {
+  document.getElementById('pin-show').textContent = window._curPin||'0000';
+  document.getElementById('pin-show').className = 'pin-digits';
+  document.getElementById('pin-show-sub').textContent = '✅ Le destinataire saisit ce code';
+};
+
+window.sendPinSMS = async () => {
+  if (!window._activeMid) return;
+  await push(ref(db,'messages'),{
+    missionId:window._activeMid,
+    text:`Bonjour, votre livreur GhostSend est arrivé. Code de remise : ${window._curPin}. Saisissez-le dans votre app pour confirmer la réception.`,
+    from:'deliverer',type:'pin_sms',sentAt:Date.now()
+  });
+  toast('📱 Code envoyé au destinataire !','ok');
+};
+
+// ── CHAT ──
+window.sendMsg = async () => {
+  const inp = document.getElementById('chat-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  addChatMsg(txt,'me');
+  inp.value='';
+  if (window._activeMid) {
+    await push(ref(db,'messages'),{missionId:window._activeMid,text:txt,from:'deliverer',sentAt:Date.now()});
+  }
+};
+function addChatMsg(text, who) {
+  const box = document.getElementById('chat-msgs');
+  if (!box) return;
+  const d = document.createElement('div');
+  d.className = `msg ${who}`;
+  d.innerHTML = `<div class="msg-bubble">${text}</div><div class="msg-time">À l'instant</div>`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── RECEVEUR : RDV ──
+window.openRdv = (id, code) => {
+  window._curRdvId = id;
+  window._selSlot  = null;
+  document.getElementById('rdv-sub').textContent = 'Colis : '+code;
+  document.getElementById('rdv-err').style.display='none';
+  const slots = ['8h-10h','10h-12h','12h-14h','14h-16h','16h-18h','18h-20h'];
+  document.getElementById('rdv-slots').innerHTML = slots.map(s=>
+    `<div onclick="selSlot(this,'${s}')" style="background:var(--mist);border:2px solid var(--line);border-radius:10px;padding:8px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;transition:.2s;">${s}</div>`
+  ).join('');
+  document.getElementById('rdvModal').classList.add('open');
+};
+window.selSlot = (el, s) => {
+  document.querySelectorAll('#rdv-slots div').forEach(d=>{ d.style.background='var(--mist)'; d.style.borderColor='var(--line)'; d.style.color='var(--ink)'; });
+  el.style.background='var(--ink)'; el.style.borderColor='var(--ink)'; el.style.color='white';
+  window._selSlot = s;
+};
+window.confirmRdv = async () => {
+  const err = document.getElementById('rdv-err');
+  if (!window._selSlot) { err.textContent='Sélectionne un créneau.'; err.style.display='block'; return; }
+  const day  = document.getElementById('rdv-day').value;
+  const note = document.getElementById('rdv-note').value.trim();
+  await update(ref(db,`all_missions/${window._curRdvId}`),{rdvSlot:`${day} ${window._selSlot}`,rdvNote:note,rdvSetAt:Date.now()});
+  closeModal('rdvModal');
+  toast('📅 RDV confirmé !','ok');
+};
+
+// ── RECEVEUR : PAIEMENT ──
+window.openPay = (id, code) => {
+  window._activeMid = id;
+  window._pinValue  = '';
+  const m = window._missions[id]||{};
+  const amount = parseFloat(m.commission||0.80).toFixed(2)+'€';
+  document.getElementById('pay-amount').textContent    = amount;
+  document.getElementById('pay-code').textContent      = code;
+  document.getElementById('recap-code').textContent    = code;
+  document.getElementById('recap-amount').textContent  = amount;
+  document.getElementById('recap-collector').textContent = m.collectorName||'Livreur GhostSend';
+  goStep(1);
+  document.getElementById('payModal').classList.add('open');
+};
+
+window.goStep = (s) => {
+  [1,2,3].forEach(i => {
+    document.getElementById('pay-s'+i).style.display = i===s?'block':'none';
+    const sc = document.getElementById('sc'+i);
+    sc.className = 'step-circle'+(i<s?' done':i===s?' active':'');
+    sc.textContent = i<s?'✓':i;
+  });
+  [1,2].forEach(i => document.getElementById('sl'+i).className='step-line'+(i<s?' done':''));
+  if (s===2) { window._pinValue=''; updatePinDisplay(); document.getElementById('pin-err').style.display='none'; }
+};
+
+window.pinPress = (k) => {
+  document.getElementById('pin-err').style.display='none';
+  document.querySelectorAll('.pin-digit').forEach(d=>d.classList.remove('error'));
+  if (k==='back')       window._pinValue = window._pinValue.slice(0,-1);
+  else if (k==='clear') window._pinValue = '';
+  else if (window._pinValue.length<4) window._pinValue += k;
+  updatePinDisplay();
+  if (window._pinValue.length===4) setTimeout(validatePin,200);
+};
+function updatePinDisplay() {
+  for(let i=0;i<4;i++){
+    const el=document.getElementById('pd'+i);
+    el.textContent=window._pinValue[i]?'●':'—';
+    el.className='pin-digit'+(window._pinValue[i]?' filled':'');
+  }
+}
+async function validatePin() {
+  const m = window._missions[window._activeMid]||{};
+  if (window._pinValue===getPin(m)) {
+    await update(ref(db,`all_missions/${window._activeMid}`),{
+      status:'received',receivedAt:Date.now(),paymentConfirmedAt:Date.now(),
+      pinValidated:true,receiverUid:CU?CU.uid:'anon'
+    });
+    goStep(3);
+    toast('✅ Remise confirmée !','ok');
+  } else {
+    document.querySelectorAll('.pin-digit').forEach(d=>d.classList.add('error'));
+    document.getElementById('pin-err').style.display='block';
+    setTimeout(()=>{ window._pinValue=''; updatePinDisplay(); },1000);
+  }
+}
+
+// ── SIGNALEMENT ──
+window.openReport = () => {
+  window._selReport = null;
+  document.querySelectorAll('.report-opt').forEach(o=>{ o.style.borderColor='var(--line)'; o.style.background='white'; o.style.color='var(--ink)'; });
+  document.getElementById('report-detail').value='';
+  document.getElementById('report-err').style.display='none';
+  closeModal('payModal');
+  document.getElementById('reportModal').classList.add('open');
+};
+window.selReport = (el, type) => {
+  document.querySelectorAll('.report-opt').forEach(o=>{ o.style.borderColor='var(--line)'; o.style.background='white'; o.style.color='var(--ink)'; });
+  el.style.borderColor='var(--red)'; el.style.background='var(--red-bg)'; el.style.color='var(--red)';
+  window._selReport = type;
+};
+window.submitReport = async () => {
+  const err = document.getElementById('report-err');
+  if (!window._selReport) { err.style.display='block'; return; }
+  const detail = document.getElementById('report-detail').value.trim();
+  const m = window._missions[window._activeMid]||{};
+  await push(ref(db,'reports'),{missionId:window._activeMid,type:window._selReport,detail,collectorName:m.collectorName||null,reportedBy:CU?CU.uid:'anon',reportedAt:Date.now()});
+  await update(ref(db,`all_missions/${window._activeMid}`),{hasReport:true,reportedAt:Date.now()});
+  closeModal('reportModal');
+  toast('🚨 Signalement envoyé. On te contacte sous 2h.','ok');
+};
+
+// ── QR PROCESSING ──
+window.processQR = (code) => {
+  if (!code) { setScanSt('err','❌ Code vide'); return; }
+  const m = Object.values(window._missions).find(c => 'GS-'+c.id.slice(-8).toUpperCase()===code.toUpperCase()||c.id===code);
+  if (m) {
+    stopScanner();
+    setScanSt('ok','✅ Colis trouvé — '+code);
+    switchMode('livreur');
+    setTimeout(()=>openPinLivreur(m.id,code),400);
+  } else {
+    setScanSt('err','❌ Code inconnu : '+code);
+  }
+};
+
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+window.toast = (msg,type) => {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>t.className='toast',3500);
+};
+</script>
+
+<!-- QR SCANNER + UTILS -->
+<script>
+let _active=false,_stream=null,_frame=null;
+
+function switchMode(m) {
+  ['livreur','receveur'].forEach(n => {
+    document.getElementById('btn'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('active',n===m);
+    document.getElementById('panel-'+n).classList.toggle('active',n===m);
+  });
+  if (m!=='livreur') stopScanner();
+}
+
+async function startScanner() {
+  try {
+    _stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    const v=document.getElementById('video');
+    v.srcObject=_stream; v.play();
+    _active=true;
+    document.getElementById('btnStart').style.display='none';
+    document.getElementById('btnStop').style.display='flex';
+    setScanSt('scan','🔍 Scan en cours... Montre le QR code');
+    requestAnimationFrame(loop);
+  } catch { setScanSt('err','❌ Caméra inaccessible. Utilise la saisie manuelle.'); }
+}
+function stopScanner() {
+  _active=false;
+  if (_frame) cancelAnimationFrame(_frame);
+  if (_stream) { _stream.getTracks().forEach(t=>t.stop()); _stream=null; }
+  const v=document.getElementById('video'); if(v) v.srcObject=null;
+  document.getElementById('btnStart').style.display='flex';
+  document.getElementById('btnStop').style.display='none';
+  setScanSt('idle','📷 Appuie pour démarrer');
+}
+function loop() {
+  if (!_active) return;
+  const v=document.getElementById('video');
+  if (v&&v.readyState===v.HAVE_ENOUGH_DATA&&typeof jsQR!=='undefined') {
+    const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+    const d=c.getContext('2d').getImageData(0,0,c.width,c.height);
+    const qr=jsQR(d.data,d.width,d.height,{inversionAttempts:'dontInvert'});
+    if (qr) { processQR(qr.data); return; }
+  }
+  _frame=requestAnimationFrame(loop);
+}
+function setScanSt(type,msg){
+  const el=document.getElementById('scan-status');
+  el.className='scan-status ss-'+type; el.textContent=msg;
+}
+
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(m=>m.classList.remove('open'))});
+
+window.switchMode=switchMode; window.startScanner=startScanner; window.stopScanner=stopScanner;
+window.setScanSt=setScanSt;
+</script>
+</body>
+</html>
