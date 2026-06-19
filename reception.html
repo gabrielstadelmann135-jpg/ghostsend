@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostSend — Espace Livreur</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #111; --white: #fff;
+  --mist: #f5f5f3; --line: #e3e3e0; --sub: #888;
+  --green: #16a34a; --green-bg: #f0fdf4; --green-line: #bbf7d0; --green-dark: #14532d;
+  --orange: #d97706; --orange-bg: #fffbeb; --orange-line: #fde68a;
+  --red: #dc2626; --red-bg: #fef2f2; --red-line: #fca5a5;
+  --blue: #2563eb; --blue-bg: #eff6ff; --blue-line: #bfdbfe;
+  --purple: #7c3aed; --purple-bg: #f5f3ff; --purple-line: #ddd6fe;
+  --r: 16px; --r-lg: 24px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--mist); color: var(--ink); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+h1,h2,h3 { font-family: 'Fredoka', sans-serif; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,.96); backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid var(--line);
+  height: 62px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+}
+.nav-brand { font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; color:var(--ink); text-decoration:none; display:flex; align-items:center; gap:8px; }
+.nav-back { font-size:13px; font-weight:700; color:var(--sub); text-decoration:none; padding:7px 13px; border-radius:10px; transition:.2s; }
+.nav-back:hover { background:var(--mist); color:var(--ink); }
+.nav-role { background:var(--purple-bg); color:var(--purple); font-size:11px; font-weight:800; padding:4px 11px; border-radius:100px; text-transform:uppercase; letter-spacing:.05em; }
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 28px 20px 80px; }
+
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 26px; }
+.stat { background: var(--white); border: 1.5px solid var(--line); border-radius: var(--r); padding: 16px; text-align: center; }
+.stat-val { font-family:'Fredoka',sans-serif; font-size:28px; font-weight:700; }
+.stat-label { font-size:11px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
+
+.tabs { display:flex; background:var(--white); border:1.5px solid var(--line); border-radius:var(--r); padding:4px; gap:4px; margin-bottom:22px; }
+.tab-btn { flex:1; padding:10px 8px; border:none; background:none; cursor:pointer; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; border-radius:calc(var(--r) - 2px); transition:.2s; color:var(--sub); display:flex; align-items:center; justify-content:center; gap:6px; }
+.tab-btn.active { background:var(--ink); color:var(--white); }
+.tab-content { display:none; }
+.tab-content.active { display:block; animation:fadeIn .2s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+.card { background:var(--white); border:1.5px solid var(--line); border-radius:var(--r-lg); padding:24px; margin-bottom:16px; }
+.card-title { font-family:'Fredoka',sans-serif; font-size:19px; font-weight:700; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+
+/* MISSION CARD */
+.mission-card { background:var(--white); border:2px solid var(--line); border-radius:var(--r); padding:20px; margin-bottom:12px; transition:.2s; }
+.mission-card:hover { border-color:#ccc; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.mission-card.urgent { border-color:var(--orange); background:var(--orange-bg); }
+.mission-card.in-progress { border-color:var(--blue); background:var(--blue-bg); }
+.mission-card.done { opacity:.55; }
+.mission-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
+.mission-id { font-family:'Fredoka',sans-serif; font-size:18px; font-weight:700; }
+.mission-meta { font-size:13px; color:var(--sub); margin-top:3px; line-height:1.6; }
+
+/* CARRIER BADGE */
+.carrier-badge { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:800; margin-bottom:12px; }
+.carrier-mondialrelay { background:#FFF3E0; color:#E65100; border:1.5px solid #FFB74D; }
+.carrier-laposte { background:#E3F2FD; color:#1565C0; border:1.5px solid #90CAF9; }
+.carrier-chronopost { background:#F3E5F5; color:#6A1B9A; border:1.5px solid #CE93D8; }
+.carrier-colissimo { background:#E8F5E9; color:#1B5E20; border:1.5px solid #A5D6A7; }
+.carrier-autre { background:var(--mist); color:var(--sub); border:1.5px solid var(--line); }
+
+/* ADDRESS BOX */
+.address-box { background:var(--mist); border-radius:12px; padding:14px 16px; margin-bottom:12px; display:flex; align-items:flex-start; gap:12px; }
+.address-pin { font-size:22px; flex-shrink:0; }
+.address-text { font-size:14px; font-weight:700; line-height:1.5; }
+.address-sub { font-size:12px; color:var(--sub); margin-top:3px; font-weight:600; }
+
+/* CODE BOX */
+.code-request-box { background:var(--purple-bg); border:1.5px solid var(--purple-line); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+.code-request-title { font-size:13px; font-weight:800; color:var(--purple); margin-bottom:8px; }
+.code-steps { display:flex; flex-direction:column; gap:6px; }
+.code-step { font-size:13px; color:#5b21b6; display:flex; align-items:center; gap:8px; }
+.step-num { background:var(--purple); color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
+
+/* PIN BOX */
+.pin-reveal-box { background:var(--green-bg); border:2px solid var(--green-line); border-radius:12px; padding:16px; margin-bottom:12px; text-align:center; }
+.pin-reveal-label { font-size:12px; font-weight:800; color:var(--green-dark); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+.pin-reveal-digits { font-family:'Fredoka',sans-serif; font-size:40px; font-weight:700; letter-spacing:12px; color:var(--green-dark); }
+.pin-reveal-sub { font-size:12px; color:var(--green); margin-top:6px; font-weight:700; }
+
+.pin-hidden { filter:blur(8px); transition:.3s; cursor:pointer; }
+.pin-hidden:hover { filter:blur(4px); }
+
+/* PAIEMENT ATTENDU */
+.earn-box { background:var(--ink); color:var(--white); border-radius:12px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.earn-label { font-size:12px; opacity:.6; }
+.earn-amount { font-family:'Fredoka',sans-serif; font-size:26px; font-weight:700; }
+
+/* BADGE */
+.badge { display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:100px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+.b-wait   { background:var(--orange-bg); color:var(--orange); }
+.b-prog   { background:var(--blue-bg);   color:var(--blue); }
+.b-ok     { background:var(--green-bg);  color:var(--green-dark); }
+.b-code   { background:var(--purple-bg); color:var(--purple); }
+
+/* MAP PLACEHOLDER */
+.mini-map { background:linear-gradient(135deg,#e8f4e8 0%,#d4ecd4 100%); border-radius:12px; height:140px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; border:1.5px solid #a7d7a7; position:relative; overflow:hidden; }
+.map-placeholder-text { font-size:13px; font-weight:700; color:#2d6a2d; }
+.map-dot { position:absolute; width:16px; height:16px; background:var(--red); border-radius:50%; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,.3); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)} 50%{box-shadow:0 0 0 10px rgba(220,38,38,0)} }
+
+/* CHAT / MESSAGES */
+.chat-box { border:1.5px solid var(--line); border-radius:var(--r); overflow:hidden; margin-bottom:12px; }
+.chat-header { background:var(--ink); color:white; padding:12px 16px; font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.chat-messages { padding:14px; max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; background:var(--mist); }
+.msg { max-width:80%; }
+.msg-them { align-self:flex-start; }
+.msg-me { align-self:flex-end; }
+.msg-bubble { padding:10px 14px; border-radius:14px; font-size:13px; font-weight:600; line-height:1.5; }
+.msg-them .msg-bubble { background:white; border:1.5px solid var(--line); color:var(--ink); border-radius:14px 14px 14px 4px; }
+.msg-me .msg-bubble { background:var(--ink); color:white; border-radius:14px 14px 4px 14px; }
+.msg-time { font-size:10px; color:var(--sub); margin-top:3px; font-weight:700; }
+.msg-me .msg-time { text-align:right; }
+.chat-input { display:flex; gap:8px; padding:10px; border-top:1.5px solid var(--line); background:white; }
+.chat-fi { flex:1; padding:9px 13px; border:1.5px solid var(--line); border-radius:10px; font-family:'Nunito',sans-serif; font-size:14px; outline:none; }
+.chat-fi:focus { border-color:var(--ink); }
+
+/* FORM */
+.fg { margin-bottom:14px; }
+.fl { display:block; font-size:13px; font-weight:700; margin-bottom:5px; }
+.fi { width:100%; padding:11px 14px; border:2px solid var(--line); border-radius:10px; font-family:'Nunito',sans-serif; font-size:14px; color:var(--ink); outline:none; background:var(--white); transition:.2s; }
+.fi:focus { border-color:var(--ink); }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:11px 20px; border-radius:var(--r); font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; cursor:pointer; border:none; transition:.2s; text-decoration:none; }
+.btn-primary  { background:var(--ink);    color:var(--white); }
+.btn-primary:hover  { background:#2a2a2a; transform:translateY(-1px); }
+.btn-green  { background:var(--green);   color:var(--white); }
+.btn-green:hover  { background:#15803d; transform:translateY(-1px); }
+.btn-purple { background:var(--purple);  color:var(--white); }
+.btn-purple:hover { background:#6d28d9; transform:translateY(-1px); }
+.btn-outline{ background:var(--white);   color:var(--ink); border:2px solid var(--line); }
+.btn-outline:hover{ border-color:var(--ink); }
+.btn-full { width:100%; }
+.btn-sm { padding:8px 14px; font-size:13px; }
+
+/* OVERLAY */
+.overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.55); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:20px; }
+.overlay.open { display:flex; }
+.modal { background:var(--white); border-radius:var(--r-lg); padding:32px 28px; max-width:460px; width:100%; position:relative; animation:mIn .3s ease; max-height:90vh; overflow-y:auto; }
+@keyframes mIn { from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none} }
+.modal-x { position:absolute; top:12px; right:12px; background:var(--mist); border:none; cursor:pointer; width:32px; height:32px; border-radius:50%; font-size:16px; display:flex; align-items:center; justify-content:center; }
+.modal-title { font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; margin-bottom:5px; }
+.modal-sub   { font-size:13px; color:var(--sub); margin-bottom:22px; line-height:1.5; }
+
+/* TOAST */
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(120px); background:var(--ink); color:var(--white); padding:12px 22px; border-radius:12px; font-size:14px; font-weight:600; z-index:999; transition:.3s; white-space:nowrap; pointer-events:none; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.ok  { background:var(--green); }
+
+/* EMPTY */
+.empty { text-align:center; padding:44px 20px; }
+.empty-icon  { font-size:40px; margin-bottom:10px; }
+.empty-title { font-family:'Fredoka',sans-serif; font-size:18px; font-weight:700; margin-bottom:5px; }
+.empty-sub   { font-size:13px; color:var(--sub); }
+
+/* STATUS BAR */
+.status-bar { display:flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; margin-bottom:14px; font-size:13px; font-weight:700; }
+.sb-info { background:var(--blue-bg); color:var(--blue); border:1.5px solid var(--blue-line); }
+.sb-warn { background:var(--orange-bg); color:var(--orange); border:1.5px solid var(--orange-line); }
+.sb-ok   { background:var(--green-bg); color:var(--green-dark); border:1.5px solid var(--green-line); }
+
+/* LIVE DOT */
+.live { display:inline-flex; align-items:center; gap:5px; background:var(--green-bg); color:var(--green-dark); font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; }
+.live-dot { width:5px; height:5px; background:var(--green); border-radius:50%; animation:blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+
+/* ROUTE CARD */
+.route-card { background:var(--white); border:2px solid var(--line); border-radius:var(--r); padding:0; overflow:hidden; margin-bottom:12px; }
+.route-header { background:var(--ink); color:white; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+.route-stop { display:flex; align-items:flex-start; gap:14px; padding:14px 18px; border-bottom:1.5px solid var(--mist); }
+.route-stop:last-child { border-bottom:none; }
+.stop-num { background:var(--ink); color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0; margin-top:2px; }
+.stop-info { flex:1; }
+.stop-addr { font-size:14px; font-weight:700; }
+.stop-detail { font-size:12px; color:var(--sub); margin-top:2px; }
+.stop-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:100px; }
+
+@media(max-width:640px){
+  .wrap { padding:16px 14px 80px; }
+  .stats { grid-template-columns:repeat(2,1fr); }
+  nav { padding:0 14px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">👻 GhostSend</a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="nav-role">🛵 Livreur</div>
+    <div class="live"><div class="live-dot"></div>En service</div>
+    <a class="nav-back" href="index.html">← Retour</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div style="margin-bottom:24px;">
+    <h1 style="font-size:clamp(22px,4vw,32px);font-weight:700;margin-bottom:5px;">🛵 Espace Livreur</h1>
+    <p style="font-size:14px;color:var(--sub);">Tes missions du jour, les codes de remise à obtenir, et les adresses à livrer.</p>
+  </div>
+
+  <!-- ALERTE CODE MONDIAL RELAY -->
+  <div class="status-bar sb-warn" id="alerteCode" style="display:none;">
+    ⚠️ Tu as des colis Mondial Relay sans code de retrait — demande le code au destinataire avant de partir !
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-label">Missions</div></div>
+    <div class="stat"><div class="stat-val" id="s-code">—</div><div class="stat-label">Codes à obtenir</div></div>
+    <div class="stat"><div class="stat-val" id="s-auj">—</div><div class="stat-label">Aujourd'hui</div></div>
+    <div class="stat"><div class="stat-val" id="s-done">—</div><div class="stat-label">Livrés</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('missions')">📋 Mes missions</button>
+    <button class="tab-btn" onclick="switchTab('route')">🗺️ Ma tournée</button>
+    <button class="tab-btn" onclick="switchTab('historique')">✅ Historique</button>
+  </div>
+
+  <!-- ── TAB : MISSIONS ── -->
+  <div class="tab-content active" id="tab-missions">
+    <div class="card">
+      <div class="card-title">📦 Colis à livrer <span style="font-family:'Nunito';font-size:13px;font-weight:600;color:var(--sub);">(zone Paris / Île-de-France)</span></div>
+      <div id="missions-list">
+        <div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucune mission assignée</div><div class="empty-sub">Les colis à livrer dans ta zone apparaîtront ici.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB : TOURNÉE ── -->
+  <div class="tab-content" id="tab-route">
+    <div class="card">
+      <div class="card-title">🗺️ Optimisation de tournée</div>
+      <div id="route-content">
+        <div class="empty"><div class="empty-icon">🗺️</div><div class="empty-title">Aucune tournée planifiée</div><div class="empty-sub">Accepte des missions pour générer ta tournée optimisée.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB : HISTORIQUE ── -->
+  <div class="tab-content" id="tab-historique">
+    <div class="card">
+      <div class="card-title">✅ Livraisons effectuées</div>
+      <div id="histo-list">
+        <div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Aucun historique</div><div class="empty-sub">Les livraisons confirmées apparaîtront ici.</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ MODAL : DÉTAIL MISSION ═══ -->
+<div class="overlay" id="missionModal">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-x" onclick="closeModal('missionModal')">✕</button>
+    <div class="modal-title" id="mm-title">Mission GS-XXXXXXXX</div>
+    <div class="modal-sub" id="mm-sub">Détail de la livraison</div>
+    <div id="mm-body"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : OBTENIR CODE MONDIAL RELAY ═══ -->
+<div class="overlay" id="codeModal">
+  <div class="modal" style="max-width:480px;">
+    <button class="modal-x" onclick="closeModal('codeModal')">✕</button>
+    <div class="modal-title">🔐 Obtenir le code de retrait</div>
+    <div class="modal-sub" id="code-modal-sub">Mondial Relay — Colis GS-XXXXXXXX</div>
+
+    <!-- Étapes pour obtenir le code -->
+    <div style="background:var(--blue-bg);border:1.5px solid var(--blue-line);border-radius:var(--r);padding:16px;margin-bottom:18px;">
+      <div style="font-size:13px;font-weight:800;color:var(--blue);margin-bottom:10px;">📋 Comment ça marche</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1e40af;">
+          <div style="background:var(--blue);color:white;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">1</div>
+          <div>Le <strong>vendeur</strong> a reçu un code de retrait Mondial Relay par email/SMS</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1e40af;">
+          <div style="background:var(--blue);color:white;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">2</div>
+          <div>Envoie une demande de code via le <strong>chat intégré</strong> ci-dessous</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#1e40af;">
+          <div style="background:var(--blue);color:white;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">3</div>
+          <div>Une fois reçu, saisis le code pour <strong>débloquer l'adresse</strong> de livraison</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat avec le destinataire -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:800;margin-bottom:8px;">💬 Chat avec le destinataire</div>
+      <div class="chat-box">
+        <div class="chat-header">
+          <div style="width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div>
+          <div>
+            <div id="chat-recipient-name">Destinataire</div>
+            <div style="font-size:10px;opacity:.6;font-weight:600;">En ligne</div>
+          </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="msg msg-me">
+            <div class="msg-bubble">Bonjour ! Je suis le livreur GhostSend pour votre colis. Pouvez-vous me communiquer votre code de retrait Mondial Relay ?</div>
+            <div class="msg-time">Il y a 2 min · Lu ✓✓</div>
+          </div>
+        </div>
+        <div class="chat-input">
+          <input type="text" class="chat-fi" id="chat-input" placeholder="Écrire un message..." onkeypress="if(event.key==='Enter')sendChatMsg()">
+          <button class="btn btn-primary btn-sm" onclick="sendChatMsg()">Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Saisie manuelle du code reçu -->
+    <div style="border-top:1.5px solid var(--line);padding-top:16px;">
+      <div style="font-size:13px;font-weight:800;margin-bottom:8px;">✏️ Saisir le code reçu</div>
+      <div style="display:flex;gap:10px;">
+        <input type="text" class="fi" id="relay-code-input" placeholder="Ex: 45392 ou 8 chiffres" style="font-family:'Fredoka',sans-serif;font-size:18px;letter-spacing:4px;text-align:center;" oninput="this.value=this.value.replace(/[^0-9A-Za-z]/g,'').toUpperCase()">
+        <button class="btn btn-green" onclick="validateRelayCode()">✓ Valider</button>
+      </div>
+      <div style="color:var(--red);font-size:13px;font-weight:700;display:none;margin-top:8px;" id="relay-code-err">Code invalide ou ne correspond pas à ce colis.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : GÉNÉRER & ENVOYER PIN ═══ -->
+<div class="overlay" id="pinModal">
+  <div class="modal" style="max-width:440px;">
+    <button class="modal-x" onclick="closeModal('pinModal')">✕</button>
+    <div class="modal-title">🔐 Code de remise</div>
+    <div class="modal-sub" id="pin-modal-sub">Communique ce code au destinataire pour valider la remise.</div>
+
+    <div class="pin-reveal-box" id="pin-reveal-box">
+      <div class="pin-reveal-label">Code PIN de remise</div>
+      <div class="pin-reveal-digits pin-hidden" id="pin-digits" onclick="revealPin()">●●●●</div>
+      <div class="pin-reveal-sub" id="pin-reveal-sub">👆 Appuie pour révéler (face au destinataire)</div>
+    </div>
+
+    <div class="status-bar sb-info" style="margin-bottom:16px;">
+      ℹ️ Le destinataire saisit ce code dans son application GhostSend pour confirmer la réception.
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-purple btn-full" onclick="sendPinSMS()">📱 Envoyer le code par SMS</button>
+      <button class="btn btn-primary btn-full" onclick="confirmDeliveryDone()">✅ Remise effectuée — Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : DÉTAILS ADRESSE DÉBLOQUÉE ═══ -->
+<div class="overlay" id="addressModal">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-x" onclick="closeModal('addressModal')">✕</button>
+    <div class="modal-title">📍 Adresse de livraison</div>
+    <div class="modal-sub" id="addr-modal-sub">Code validé — Adresse débloquée</div>
+    <div style="background:var(--green-bg);border:2px solid var(--green-line);border-radius:var(--r);padding:20px;margin-bottom:18px;text-align:center;">
+      <div style="font-size:12px;font-weight:800;color:var(--green-dark);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">✓ Adresse débloquée</div>
+      <div id="addr-full" style="font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;line-height:1.4;"></div>
+      <div id="addr-city" style="font-size:14px;color:var(--green-dark);margin-top:6px;font-weight:700;"></div>
+    </div>
+    <div id="addr-note-box" style="display:none;background:var(--orange-bg);border:1.5px solid var(--orange-line);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#78350f;"></div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <a class="btn btn-primary btn-full" id="addr-maps-link" href="#" target="_blank" onclick="openMaps(event)">🗺️ Ouvrir dans Maps</a>
+      <button class="btn btn-outline btn-full" onclick="copyAddress()">📋 Copier</button>
+    </div>
+    <button class="btn btn-green btn-full" onclick="startDelivery()">🛵 Démarrer la livraison →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══ FIREBASE ═══ -->
+<script type="module">
+import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, onValue, push, update, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const cfg = {
+  apiKey:"AIzaSyAe0ZQXMA-iMNLtyBSpMXPp9Qz9FJ4yF-A",
+  authDomain:"ghostly-fbe01.firebaseapp.com",
+  databaseURL:"https://ghostly-fbe01-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"ghostly-fbe01",
+  storageBucket:"ghostly-fbe01.firebasestorage.app",
+  messagingSenderId:"290927219079",
+  appId:"1:290927219079:web:d7cd006945d9fe84a74322"
+};
+const app  = initializeApp(cfg);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+let CU = null;
+window._missions = {};
+window._activeMissionId = null;
+window._activeCodeMissionId = null;
+window._pinRevealed = false;
+
+// ── Générer un PIN 4 chiffres à partir du timestamp ou d'un champ dédié
+function getMissionPin(m) {
+  if (m.securityPin) return String(m.securityPin).padStart(4,'0');
+  if (m.createdAt)   return String(m.createdAt).slice(-4);
+  return '0000';
+}
+
+// ── Déterminer la classe transporteur
+function getCarrierClass(carrier) {
+  if (!carrier) return 'carrier-autre';
+  const c = carrier.toLowerCase();
+  if (c.includes('mondial') || c.includes('relay')) return 'carrier-mondialrelay';
+  if (c.includes('la poste') || c.includes('laposte')) return 'carrier-laposte';
+  if (c.includes('chrono')) return 'carrier-chronopost';
+  if (c.includes('colissimo')) return 'carrier-colissimo';
+  return 'carrier-autre';
+}
+
+// ── Mondial Relay nécessite-t-il un code ?
+function needsRelayCode(m) {
+  const c = (m.carrier || '').toLowerCase();
+  return (c.includes('mondial') || c.includes('relay')) && !m.relayCodeValidated;
+}
+
+onAuthStateChanged(auth, user => {
+  CU = user;
+  if (user) listenMissions(user.uid);
+  else listenMissions('demo'); // mode demo sans auth
+});
+
+function listenMissions(uid) {
+  onValue(ref(db, 'all_missions'), snap => {
+    const d = snap.val() || {};
+    window._missions = {};
+    Object.entries(d).forEach(([id, m]) => {
+      if (!m) return;
+      // On affiche toutes les missions non encore reçues
+      if (m.status !== 'received' && m.status !== 'collected_confirmed') {
+        window._missions[id] = { id, ...m };
+      } else {
+        window._missions[id] = { id, ...m }; // garder pour historique
+      }
+    });
+    renderAll();
+  });
+
+  // Écouter les messages entrants
+  onValue(ref(db, 'messages'), snap => {
+    const msgs = snap.val() || {};
+    Object.entries(msgs).forEach(([id, msg]) => {
+      if (msg.missionId === window._activeMissionId && msg.from === 'recipient' && !msg._shown) {
+        addChatMessage(msg.text, 'them', 'À l\'instant');
+        update(ref(db, `messages/${id}`), { _shown: true });
+      }
+    });
+  });
+}
+
+function renderAll() {
+  const arr = Object.values(window._missions);
+  const active   = arr.filter(m => m.status !== 'received' && m.status !== 'collected_confirmed');
+  const done     = arr.filter(m => m.status === 'received' || m.status === 'collected_confirmed');
+  const needCode = active.filter(m => needsRelayCode(m));
+
+  document.getElementById('s-total').textContent = active.length;
+  document.getElementById('s-code').textContent  = needCode.length;
+  document.getElementById('s-auj').textContent   = active.filter(m => m.rdvSlot && m.rdvSlot.includes("Aujourd")).length;
+  document.getElementById('s-done').textContent  = done.length;
+
+  if (needCode.length > 0) {
+    document.getElementById('alerteCode').style.display = 'flex';
+  }
+
+  renderMissions(active);
+  renderRoute(active);
+  renderHistory(done);
+}
+
+function renderMissions(arr) {
+  const el = document.getElementById('missions-list');
+  if (!arr.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Aucune mission</div><div class="empty-sub">Les colis à livrer dans ta zone apparaîtront ici.</div></div>`;
+    return;
+  }
+  arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  el.innerHTML = arr.map(m => {
+    const code = 'GS-'+m.id.slice(-8).toUpperCase();
+    const carrierCls = getCarrierClass(m.carrier);
+    const hasCode  = needsRelayCode(m);
+    const inProg   = m.status === 'in_delivery';
+    const commission = m.commission ? parseFloat(m.commission).toFixed(2) : '0.80';
+    const addrReady = m.relayCodeValidated || !needsRelayCode(m);
+
+    return `
+    <div class="mission-card ${inProg ? 'in-progress' : hasCode ? 'urgent' : ''}">
+      <div class="mission-head">
+        <div>
+          <div class="mission-id">${code}</div>
+          <div class="mission-meta">${m.weight||'?'}kg · ${m.collectorName||'Livreur'}</div>
+        </div>
+        <span class="badge ${inProg ? 'b-prog' : hasCode ? 'b-wait' : 'b-ok'}">${inProg ? '🛵 En cours' : hasCode ? '🔑 Code requis' : '✓ Prêt'}</span>
+      </div>
+
+      <span class="carrier-badge ${carrierCls}">
+        ${(m.carrier||'Transporteur inconnu').toUpperCase()}
+      </span>
+
+      ${hasCode ? `
+      <div class="code-request-box">
+        <div class="code-request-title">🔐 Code de retrait requis avant livraison</div>
+        <div class="code-steps">
+          <div class="code-step"><div class="step-num">1</div> Contacte le destinataire via le chat</div>
+          <div class="code-step"><div class="step-num">2</div> Il te communique son code Mondial Relay</div>
+          <div class="code-step"><div class="step-num">3</div> L'adresse sera débloquée automatiquement</div>
+        </div>
+      </div>
+      ` : `
+      <div class="address-box">
+        <div class="address-pin">📍</div>
+        <div>
+          <div class="address-text">${m.deliveryAddress || '12 Rue de la Paix, Paris 75001'}</div>
+          <div class="address-sub">${m.deliveryCity || 'Paris, Île-de-France'}</div>
+        </div>
+      </div>
+      `}
+
+      <div class="earn-box">
+        <div>
+          <div class="earn-label">Commission livreur</div>
+          <div class="earn-amount">${commission}€</div>
+        </div>
+        <div style="text-align:right;font-size:12px;opacity:.6;">
+          À encaisser<br>en main propre
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${hasCode ? `<button class="btn btn-purple btn-sm" onclick="openCodeModal('${m.id}','${code}')">🔑 Obtenir le code</button>` : ''}
+        ${addrReady && !hasCode ? `<button class="btn btn-primary btn-sm" onclick="openAddressModal('${m.id}','${code}')">📍 Voir l'adresse</button>` : ''}
+        <button class="btn btn-green btn-sm" onclick="openPinModal('${m.id}','${code}')">🔐 Envoyer PIN remise</button>
+        <button class="btn btn-outline btn-sm" onclick="openMissionDetail('${m.id}','${code}')">📋 Détails</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderRoute(arr) {
+  const el = document.getElementById('route-content');
+  const deliverable = arr.filter(m => !needsRelayCode(m) || m.relayCodeValidated);
+  if (!deliverable.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-title">Aucune tournée planifiée</div><div class="empty-sub">Les missions avec adresses débloquées apparaîtront ici.</div></div>`;
+    return;
+  }
+  el.innerHTML = `
+  <div class="route-card">
+    <div class="route-header">
+      <div>
+        <div style="font-family:'Fredoka',sans-serif;font-size:16px;font-weight:700;">🗺️ Tournée optimisée</div>
+        <div style="font-size:11px;opacity:.6;margin-top:2px;">${deliverable.length} arrêt(s) · estimé ~${deliverable.length*12} min</div>
+      </div>
+      <div style="font-size:11px;background:rgba(255,255,255,.15);padding:4px 10px;border-radius:100px;font-weight:700;">📍 Paris</div>
+    </div>
+    ${deliverable.map((m,i) => {
+      const code = 'GS-'+m.id.slice(-8).toUpperCase();
+      const commission = m.commission ? parseFloat(m.commission).toFixed(2) : '0.80';
+      return `
+      <div class="route-stop">
+        <div class="stop-num">${i+1}</div>
+        <div class="stop-info">
+          <div class="stop-addr">${m.deliveryAddress || '12 Rue de la Paix, Paris 75001'}</div>
+          <div class="stop-detail">${code} · ${m.carrier||'Transporteur'} · 💵 ${commission}€</div>
+        </div>
+        <span class="stop-badge" style="background:var(--green-bg);color:var(--green-dark);">✓ Prêt</span>
+      </div>`;
+    }).join('')}
+  </div>
+  <button class="btn btn-primary btn-full" onclick="showToast('🗺️ Navigation GPS ouverte !','ok')">🗺️ Lancer la navigation GPS</button>`;
+}
+
+function renderHistory(arr) {
+  const el = document.getElementById('histo-list');
+  if (!arr.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Aucun historique</div><div class="empty-sub">Tes livraisons effectuées apparaîtront ici.</div></div>`;
+    return;
+  }
+  arr.sort((a,b)=>(b.receivedAt||b.createdAt||0)-(a.receivedAt||a.createdAt||0));
+  el.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;">' + arr.map(m => {
+    const code = 'GS-'+m.id.slice(-8).toUpperCase();
+    const d = m.receivedAt ? new Date(m.receivedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    const commission = m.commission ? parseFloat(m.commission).toFixed(2) : '0.80';
+    return `
+    <div class="mission-card done">
+      <div class="mission-head">
+        <div>
+          <div class="mission-id">${code}</div>
+          <div class="mission-meta">${m.carrier||'—'} · Livré le ${d}</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="badge b-ok">✓ Livré</span>
+          <div style="font-family:'Fredoka',sans-serif;font-size:16px;font-weight:700;color:var(--green-dark);margin-top:4px;">+${commission}€</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ── MODAL CODE MONDIAL RELAY
+window.openCodeModal = (id, code) => {
+  window._activeCodeMissionId = id;
+  window._activeMissionId = id;
+  const m = window._missions[id] || {};
+  document.getElementById('code-modal-sub').textContent = (m.carrier||'Mondial Relay') + ' — ' + code;
+  document.getElementById('chat-recipient-name').textContent = m.recipientName || 'Destinataire';
+  document.getElementById('relay-code-input').value = '';
+  document.getElementById('relay-code-err').style.display = 'none';
+  document.getElementById('codeModal').classList.add('open');
+  loadChatHistory(id);
+};
+
+window.validateRelayCode = async () => {
+  const code = document.getElementById('relay-code-input').value.trim();
+  const err  = document.getElementById('relay-code-err');
+  if (!code || code.length < 4) { err.style.display='block'; return; }
+  const m = window._missions[window._activeCodeMissionId] || {};
+  // Vérif: le code doit correspondre au relayPickupCode stocké, ou accepter tout code si pas défini (demo)
+  const expected = m.relayPickupCode;
+  if (expected && code !== String(expected)) {
+    err.style.display = 'block'; return;
+  }
+  await update(ref(db, `all_missions/${window._activeCodeMissionId}`), {
+    relayCodeValidated: true,
+    relayCodeEnteredBy: CU ? CU.uid : 'livreur',
+    relayCodeEnteredAt: Date.now()
+  });
+  closeModal('codeModal');
+  showToast('✅ Code validé ! Adresse débloquée.', 'ok');
+  openAddressModal(window._activeCodeMissionId, 'GS-' + window._activeCodeMissionId.slice(-8).toUpperCase());
+};
+
+// ── CHAT
+function loadChatHistory(missionId) {
+  const box = document.getElementById('chat-messages');
+  // Garder le message initial
+  box.innerHTML = `
+    <div class="msg msg-me">
+      <div class="msg-bubble">Bonjour ! Je suis le livreur GhostSend pour votre colis. Pouvez-vous me communiquer votre code de retrait Mondial Relay ?</div>
+      <div class="msg-time">Il y a 2 min · Lu ✓✓</div>
+    </div>`;
+}
+
+window.sendChatMsg = async () => {
+  const inp  = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  addChatMessage(text, 'me', 'À l\'instant');
+  inp.value = '';
+  // Sauvegarder en base
+  if (window._activeMissionId) {
+    await push(ref(db, 'messages'), {
+      missionId: window._activeMissionId,
+      text, from: 'deliverer',
+      sentAt: Date.now(),
+      delivererUid: CU ? CU.uid : 'anonymous'
+    });
+  }
+};
+
+function addChatMessage(text, who, time) {
+  const box = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg msg-${who === 'me' ? 'me' : 'them'}`;
+  div.innerHTML = `<div class="msg-bubble">${text}</div><div class="msg-time">${time}</div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── MODAL ADRESSE
+window.openAddressModal = (id, code) => {
+  window._activeMissionId = id;
+  const m = window._missions[id] || {};
+  const addr = m.deliveryAddress || '12 Rue de la Paix, Paris 75001';
+  const city = m.deliveryCity || 'Paris, Île-de-France';
+  document.getElementById('addr-modal-sub').textContent = code + ' — Code validé ✓';
+  document.getElementById('addr-full').textContent = addr;
+  document.getElementById('addr-city').textContent  = city;
+  window._currentAddr = addr + ', ' + city;
+  const noteBox = document.getElementById('addr-note-box');
+  if (m.rdvNote) { noteBox.innerHTML = '📝 Note : ' + m.rdvNote; noteBox.style.display = 'block'; }
+  else noteBox.style.display = 'none';
+  document.getElementById('addressModal').classList.add('open');
+};
+
+window.openMaps = (e) => {
+  e.preventDefault();
+  const q = encodeURIComponent(window._currentAddr || 'Paris, France');
+  window.open('https://maps.google.com?q=' + q, '_blank');
+};
+
+window.copyAddress = () => {
+  if (navigator.clipboard) navigator.clipboard.writeText(window._currentAddr || '');
+  showToast('📋 Adresse copiée !', 'ok');
+};
+
+window.startDelivery = async () => {
+  if (window._activeMissionId) {
+    await update(ref(db, `all_missions/${window._activeMissionId}`), { status:'in_delivery', deliveryStartedAt:Date.now() });
+  }
+  closeModal('addressModal');
+  showToast('🛵 Livraison démarrée !', 'ok');
+};
+
+// ── MODAL PIN REMISE
+window.openPinModal = (id, code) => {
+  window._activeMissionId = id;
+  window._pinRevealed = false;
+  const m = window._missions[id] || {};
+  const pin = getMissionPin(m);
+  document.getElementById('pin-modal-sub').textContent = 'Colis ' + code + ' — Montre ce code au destinataire';
+  document.getElementById('pin-digits').textContent = '●●●●';
+  document.getElementById('pin-digits').className = 'pin-reveal-digits pin-hidden';
+  document.getElementById('pin-reveal-sub').textContent = '👆 Appuie pour révéler (face au destinataire)';
+  window._currentPin = pin;
+  document.getElementById('pinModal').classList.add('open');
+};
+
+window.revealPin = () => {
+  if (!window._pinRevealed) {
+    document.getElementById('pin-digits').textContent = window._currentPin || '0000';
+    document.getElementById('pin-digits').className = 'pin-reveal-digits';
+    document.getElementById('pin-reveal-sub').textContent = '✅ Code affiché — Le destinataire le saisit dans son app';
+    window._pinRevealed = true;
+  }
+};
+
+window.sendPinSMS = async () => {
+  const m = window._missions[window._activeMissionId] || {};
+  await push(ref(db, 'messages'), {
+    missionId: window._activeMissionId,
+    text: `Bonjour, votre livreur GhostSend est arrivé. Votre code de remise est : ${window._currentPin}. Saisissez-le dans votre application pour confirmer la réception.`,
+    from: 'deliverer', type: 'pin_sms',
+    sentAt: Date.now()
+  });
+  showToast('📱 Code envoyé par message au destinataire !', 'ok');
+};
+
+window.confirmDeliveryDone = () => {
+  closeModal('pinModal');
+  showToast('✅ En attente de confirmation du destinataire…');
+};
+
+// ── DÉTAIL MISSION
+window.openMissionDetail = (id, code) => {
+  const m = window._missions[id] || {};
+  const commission = m.commission ? parseFloat(m.commission).toFixed(2) : '0.80';
+  document.getElementById('mm-title').textContent = code;
+  document.getElementById('mm-sub').textContent   = (m.carrier||'Transporteur') + ' · ' + (m.weight||'?') + ' kg';
+  document.getElementById('mm-body').innerHTML = `
+    <div style="background:var(--mist);border-radius:var(--r);padding:16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;font-size:14px;"><span style="color:var(--sub);font-weight:700;">Transporteur</span><strong>${m.carrier||'—'}</strong></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;font-size:14px;"><span style="color:var(--sub);font-weight:700;">Poids</span><strong>${m.weight||'?'} kg</strong></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;font-size:14px;"><span style="color:var(--sub);font-weight:700;">Destinataire</span><strong>${m.recipientName||'—'}</strong></div>
+      <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;font-size:14px;"><span style="color:var(--sub);font-weight:700;">Commission</span><strong style="color:var(--green-dark);">${commission}€</strong></div>
+      ${m.rdvSlot ? `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;"><span style="color:var(--sub);font-weight:700;">RDV</span><strong>${m.rdvSlot}</strong></div>` : ''}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      ${needsRelayCode(m) ? `<button class="btn btn-purple btn-sm" onclick="closeModal('missionModal');openCodeModal('${id}','${code}')">🔑 Obtenir code Relay</button>` : `<button class="btn btn-primary btn-sm" onclick="closeModal('missionModal');openAddressModal('${id}','${code}')">📍 Voir adresse</button>`}
+      <button class="btn btn-green btn-sm" onclick="closeModal('missionModal');openPinModal('${id}','${code}')">🔐 Envoyer PIN</button>
+    </div>`;
+  document.getElementById('missionModal').classList.add('open');
+};
+
+window.closeModal  = (id) => document.getElementById(id).classList.remove('open');
+window.showToast   = (msg, type) => {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  setTimeout(() => t.className='toast', 3500);
+};
+window.switchTab = (name) => {
+  ['missions','route','historique'].forEach((n,i) => {
+    document.querySelectorAll('.tab-btn')[i].classList.toggle('active', n===name);
+    document.getElementById('tab-'+n).classList.toggle('active', n===name);
+  });
+};
+</script>
+
+<script>
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay').forEach(m=>m.classList.remove('open')); });
+</script>
+</body>
+</html>
